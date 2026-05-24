@@ -1,0 +1,11 @@
+{
+  "experiment_id": "file-basic",
+  "name": "Linux 文件管理基础实验",
+  "system": "openEuler",
+  "objective": "掌握 Linux 常用文件与目录管理命令",
+  "steps": [
+    {"id": 1, "title": "查看当前目录", "hint": "使用 pwd 命令查看当前所在路径", "keywords": ["pwd"], "goal": "确认当前工作目录。", "try_commands": ["pwd"], "success_hint": "输出 /home/student 一类路径。", "coach_focus": "解释当前工作目录。"},
+    {"id": 2, "title": "创建实验目录", "hint": "使用 mkdir 创建 linux_lab 目录", "keywords": ["mkdir", "linux_lab"], "goal": "创建实验目录。", "try_commands": ["mkdir linux_lab", "ls -l"], "success_hint": "能在 ls 输出中看到 linux_lab。", "coach_focus": "说明无输出也可能是成功。"},
+    {"id": 3, "title": "创建文件", "hint": "使用 touch 创建 hello.txt 文件", "keywords": ["touch", "hello.txt"], "goal": "创建空文本文件。", "try_commands": ["touch hello.txt", "ls -l hello.txt"], "success_hint": "能看到 hello.txt 文件。", "coach_focus": "解释 touch 的作用。"}
+  ]
+}

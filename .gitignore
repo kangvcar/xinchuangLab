@@ -1,0 +1,13 @@
+backend/data/
+backend/generated/
+backend/**/*.log
+backend/**/__pycache__/
+backend/.pytest_cache/
+
+frontend/node_modules/
+frontend/dist/
+frontend/**/*.log
+
+.env
+backend/.env
+
