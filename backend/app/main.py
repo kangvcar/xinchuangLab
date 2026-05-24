@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +19,8 @@ from .experiments import sync_experiments
 from .knowledge import KnowledgeBase
 from .log_processor import LogProcessor
 from .report_service import ReportService
-from .schemas import CreateSessionRequest, SimulateTerminalRequest
+from .schemas import ConfirmStepRequest, CreateSessionRequest, SimulateTerminalRequest
+from .step_verifier import StepVerifier
 from .websocket_manager import WebSocketManager
 
 
@@ -28,6 +31,7 @@ knowledge_base = KnowledgeBase(settings.knowledge_dir)
 coach_provider: CoachProvider = create_coach_provider(settings)
 ws_manager = WebSocketManager()
 report_service = ReportService(db, settings.reports_dir)
+verifier = StepVerifier()
 recent_command_fingerprints: dict[str, list[str]] = {}
 session_terminal_buffers: dict[str, str] = {}
 
@@ -78,6 +82,17 @@ async def create_session(payload: CreateSessionRequest) -> dict[str, Any]:
     experiment = db.get_experiment(payload.experiment_id)
     if not experiment:
         raise HTTPException(status_code=404, detail="experiment not found")
+    
+    # 清理同学生的旧 running session 及其容器
+    old_sessions = db.list_sessions()
+    for old in old_sessions:
+        if old["student_id"] == payload.student_id and old["status"] == "running":
+            try:
+                await docker_manager.stop(old)
+            except Exception:
+                pass  # 旧容器可能已不存在，忽略错误
+            db.update_session_status(old["id"], "stopped")
+    
     session_id = f"{payload.student_id}-{payload.experiment_id}-{uuid.uuid4().hex[:8]}"
     runtime = await docker_manager.start(
         session_id=session_id,
@@ -93,6 +108,9 @@ async def create_session(payload: CreateSessionRequest) -> dict[str, Any]:
         terminal_url=runtime.terminal_url,
         runtime_mode=runtime.mode,
     )
+    experiment = db.get_experiment(payload.experiment_id)
+    if experiment:
+        db.init_step_progress(session_id, experiment.get("task_config", {}).get("steps", []))
     return session
 
 
@@ -129,6 +147,8 @@ async def reset_session(session_id: str) -> dict[str, Any]:
         experiment=experiment,
     )
     db.update_session_status(session_id, "running")
+    if experiment:
+        db.reset_step_progress(session_id, experiment.get("task_config", {}).get("steps", []))
     with db.connect() as conn:
         conn.execute(
             """
@@ -141,6 +161,50 @@ async def reset_session(session_id: str) -> dict[str, Any]:
     refreshed = db.get_session(session_id)
     assert refreshed is not None
     return refreshed
+
+
+@app.get("/api/sessions/{session_id}/steps")
+async def get_steps(session_id: str) -> dict[str, Any]:
+    session = db.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="session not found")
+    progress = db.get_step_progress(session_id)
+    experiment = db.get_experiment(session["experiment_id"])
+    steps = experiment.get("task_config", {}).get("steps", []) if experiment else []
+    step_map = {s["id"]: s for s in steps}
+    return {
+        "progress": progress,
+        "steps": [
+            {
+                "id": s["id"],
+                "title": s.get("title", ""),
+                "hint": s.get("hint", ""),
+                "goal": s.get("goal", ""),
+                "try_commands": s.get("try_commands", []),
+                "success_hint": s.get("success_hint", ""),
+                "coach_focus": s.get("coach_focus", ""),
+            }
+            for s in steps
+        ],
+    }
+
+
+@app.post("/api/sessions/{session_id}/steps/{step_id}/confirm")
+async def confirm_step(session_id: str, step_id: int) -> dict[str, Any]:
+    session = db.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="session not found")
+    progress = db.get_step_progress(session_id)
+    progress_map = {p["step_id"]: p for p in progress}
+    current = progress_map.get(step_id)
+    if not current:
+        raise HTTPException(status_code=404, detail="step not found")
+    if current["status"] != "completed":
+        raise HTTPException(status_code=400, detail="step is not completed yet")
+    next_step_id = db.get_next_step_id(session_id, step_id)
+    db.confirm_step(session_id, step_id, next_step_id)
+    updated_progress = db.get_step_progress(session_id)
+    return {"status": "confirmed", "step_id": step_id, "next_step_id": next_step_id, "progress": updated_progress}
 
 
 @app.get("/api/sessions/{session_id}/logs")
@@ -218,6 +282,52 @@ async def terminal_log_socket(websocket: WebSocket) -> None:
         return
 
 
+async def _check_step_progress(session_id: str, session: dict[str, Any]) -> None:
+    """检查当前 pending 步骤是否可以通过最新终端内容完成。
+    
+    使用累积终端缓冲区解析命令，解决 ttyd 按字符分块发送导致
+    单条消息无法完整解析命令的问题。
+    """
+    progress = db.get_step_progress(session_id)
+    pending = [p for p in progress if p["status"] == "pending"]
+    if not pending:
+        return
+    experiment = db.get_experiment(session["experiment_id"])
+    if not experiment:
+        return
+    steps = experiment.get("task_config", {}).get("steps", [])
+    step_map = {s["id"]: s for s in steps}
+    logs = db.list_terminal_logs(session_id, limit=50)
+    log_contents = [log["clean_content"] for log in logs]
+    # 使用累积终端缓冲区解析最新命令事件
+    stream_context = log_processor.clean(session_terminal_buffers.get(session_id, ""))
+    if stream_context:
+        log_contents.append(stream_context)
+    command_event = log_processor.parse_command_event(stream_context)
+    for item in pending:
+        step = step_map.get(item["step_id"])
+        if not step:
+            continue
+        if verifier.verify(step, command_event, log_contents):
+            detected_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+            db.update_step_status(session_id, step["id"], "completed", detected_at)
+            # 自动解锁下一步为 pending
+            next_step_id = db.get_next_step_id(session_id, step["id"])
+            if next_step_id is not None:
+                db.update_step_status(session_id, next_step_id, "pending")
+            await ws_manager.send_json(
+                session_id,
+                {
+                    "type": "step_completed",
+                    "payload": {
+                        "step_id": step["id"],
+                        "title": step.get("title", ""),
+                    },
+                },
+            )
+            break
+
+
 async def _ingest_terminal_event(
     *,
     session_id: str,
@@ -234,38 +344,57 @@ async def _ingest_terminal_event(
     raw_ref = _write_raw_log(session_id, content, source)
     log = db.add_terminal_log(session_id, clean_content=clean_content, raw_ref=raw_ref)
     await ws_manager.send_json(session_id, {"type": "terminal_log", "payload": log})
-    ai_record = None
+
+    # 先累积终端缓冲区，再用累积内容检查步骤
+    # （ttyd 按字符分块发送，单条消息可能不完整）
+    _append_terminal_buffer(session_id, content)
+    await _check_step_progress(session_id, session)
+
+    # AI 分析异步执行，不阻塞 API 响应
+    asyncio.create_task(_analyze_async(session_id, session, content))
+
+    return {"log": log, "ai_record": None, "status": "analyzing"}
+
+
+async def _analyze_async(session_id: str, session: dict[str, Any], content: str) -> None:
+    """后台异步执行 AI 分析，结果通过 WebSocket 推送。"""
     stream_context = log_processor.clean(_append_terminal_buffer(session_id, content))
     command_event = log_processor.parse_command_event(stream_context)
-    if command_event and not _is_duplicate_command_event(session_id, command_event):
-        experiment = db.get_experiment(session["experiment_id"])
-        if experiment:
-            await ws_manager.send_json(
-                session_id,
-                {
-                    "type": "ai_pending",
-                    "payload": {
-                        "session_id": session_id,
-                        "command": command_event.command,
-                        "trigger_reason": command_event.trigger_reason,
-                    },
-                },
-            )
-            command_context = log_processor.command_context(command_event)
-            try:
-                ai_text = await coach_provider.explain(
-                    experiment=experiment,
-                    command_context=command_context,
-                    knowledge_context=knowledge_base.load_context(session["experiment_id"]),
-                )
-            except Exception as exc:
-                ai_text = (
-                    f"我已经看到你执行了 `{command_event.command}`，不过这次 AI 服务暂时没有成功返回：{exc}\n\n"
-                    "你可以先继续观察终端输出，按任务步骤往下做；这些日志已经保存，稍后仍然可以在记录里回看。"
-                )
-            ai_record = db.add_ai_record(session_id, command_context, ai_text)
-            await ws_manager.send_json(session_id, {"type": "ai_coach", "payload": ai_record})
-    return {"log": log, "ai_record": ai_record}
+    if not command_event or _is_duplicate_command_event(session_id, command_event):
+        return
+
+    experiment = db.get_experiment(session["experiment_id"])
+    if not experiment:
+        return
+
+    await ws_manager.send_json(
+        session_id,
+        {
+            "type": "ai_pending",
+            "payload": {
+                "session_id": session_id,
+                "command": command_event.command,
+                "trigger_reason": command_event.trigger_reason,
+            },
+        },
+    )
+
+    command_context = log_processor.command_context(command_event)
+    step_progress = db.get_step_progress(session_id)
+    try:
+        ai_text = await coach_provider.explain(
+            experiment=experiment,
+            command_context=command_context,
+            knowledge_context=knowledge_base.load_context(session["experiment_id"]),
+            step_progress=step_progress,
+        )
+    except Exception as exc:
+        ai_text = (
+            f"我已经看到你执行了 `{command_event.command}`，不过这次 AI 服务暂时没有成功返回：{exc}\n\n"
+            "你可以先继续观察终端输出，按任务步骤往下做；这些日志已经保存，稍后仍然可以在记录里回看。"
+        )
+    ai_record = db.add_ai_record(session_id, command_context, ai_text)
+    await ws_manager.send_json(session_id, {"type": "ai_coach", "payload": ai_record})
 
 
 def _is_duplicate_command_event(session_id: str, command_event: Any) -> bool:

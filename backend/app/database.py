@@ -72,8 +72,90 @@ class Database:
                     created_at TEXT NOT NULL,
                     FOREIGN KEY (session_id) REFERENCES lab_session(id)
                 );
+
+                CREATE TABLE IF NOT EXISTS step_progress (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id TEXT NOT NULL,
+                    step_id INTEGER NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'locked',
+                    detected_at TEXT,
+                    confirmed_at TEXT,
+                    UNIQUE(session_id, step_id)
+                );
                 """
             )
+
+    def init_step_progress(self, session_id: str, steps: list[dict[str, Any]]) -> None:
+        """初始化会话的步骤进度；按 step.id 排序，第一个为 pending，其余为 locked。"""
+        sorted_steps = sorted(steps, key=lambda s: s["id"])
+        with self.connect() as conn:
+            for i, step in enumerate(sorted_steps):
+                status = "pending" if i == 0 else "locked"
+                conn.execute(
+                    """
+                    INSERT INTO step_progress (session_id, step_id, status, detected_at, confirmed_at)
+                    VALUES (?, ?, ?, NULL, NULL)
+                    ON CONFLICT(session_id, step_id) DO NOTHING
+                    """,
+                    (session_id, step["id"], status),
+                )
+
+    def reset_step_progress(self, session_id: str, steps: list[dict[str, Any]]) -> None:
+        """重置会话的步骤进度；先删除旧记录，再重新初始化。"""
+        with self.connect() as conn:
+            conn.execute("DELETE FROM step_progress WHERE session_id = ?", (session_id,))
+        self.init_step_progress(session_id, steps)
+
+    def get_step_progress(self, session_id: str) -> list[dict[str, Any]]:
+        with self.connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT step_id, status, detected_at, confirmed_at
+                FROM step_progress
+                WHERE session_id = ?
+                ORDER BY step_id
+                """,
+                (session_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def update_step_status(
+        self,
+        session_id: str,
+        step_id: int,
+        status: str,
+        detected_at: str | None = None,
+    ) -> None:
+        with self.connect() as conn:
+            conn.execute(
+                """
+                UPDATE step_progress
+                SET status = ?, detected_at = COALESCE(?, detected_at)
+                WHERE session_id = ? AND step_id = ?
+                """,
+                (status, detected_at, session_id, step_id),
+            )
+
+    def confirm_step(self, session_id: str, step_id: int, next_step_id: int | None = None) -> None:
+        confirmed_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        with self.connect() as conn:
+            conn.execute(
+                """
+                UPDATE step_progress
+                SET status = 'confirmed', confirmed_at = ?
+                WHERE session_id = ? AND step_id = ?
+                """,
+                (confirmed_at, session_id, step_id),
+            )
+            if next_step_id is not None:
+                conn.execute(
+                    """
+                    UPDATE step_progress
+                    SET status = 'pending'
+                    WHERE session_id = ? AND step_id = ? AND status = 'locked'
+                    """,
+                    (session_id, next_step_id),
+                )
 
     def upsert_experiment(self, config: dict[str, Any]) -> None:
         experiment_id = config["experiment_id"]
@@ -267,6 +349,20 @@ class Database:
             "pdf_path": str(pdf_path) if pdf_path else None,
             "created_at": created_at,
         }
+
+    def get_next_step_id(self, session_id: str, current_step_id: int) -> int | None:
+        """获取当前步骤之后下一个 locked 或 pending 的 step_id。"""
+        with self.connect() as conn:
+            row = conn.execute(
+                """
+                SELECT step_id FROM step_progress
+                WHERE session_id = ? AND step_id > ?
+                ORDER BY step_id
+                LIMIT 1
+                """,
+                (session_id, current_step_id),
+            ).fetchone()
+        return row["step_id"] if row else None
 
     def _experiment_row(self, row: sqlite3.Row) -> dict[str, Any]:
         task_config = json.loads(row["task_config"])

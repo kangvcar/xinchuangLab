@@ -41,7 +41,10 @@ class DockerManager:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        await process.communicate()
+        stdout, stderr = await process.communicate()
+        if process.returncode != 0:
+            error_msg = stderr.decode("utf-8", errors="ignore").strip() or "docker rm failed"
+            raise RuntimeError(error_msg)
 
     async def _start_docker(self, *, session_id: str, student_id: str, experiment: dict) -> RuntimeInfo:
         image_name = experiment["image_name"]

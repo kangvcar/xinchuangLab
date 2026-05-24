@@ -87,8 +87,6 @@ class LogProcessor:
                 output_lines.append(line)
             output = "\n".join(output_lines).strip()
             is_error = bool(ERROR_RE.search(output or clean_content))
-            if not output and not is_error and not completed_by_prompt:
-                return None
             context_lines = [lines[prompt_match_index], *output_lines]
             if completion_line:
                 context_lines.append(completion_line)
@@ -118,8 +116,6 @@ class LogProcessor:
             output_lines.append(line)
         output = "\n".join(output_lines).strip()
         is_error = bool(ERROR_RE.search(output or clean_content))
-        if not output and not is_error and not completed_by_prompt:
-            return None
         if first_line.startswith("/") and not output and completed_by_prompt:
             return None
         context_lines = [first_line, *output_lines]

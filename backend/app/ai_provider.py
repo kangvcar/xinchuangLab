@@ -15,6 +15,7 @@ class CoachProvider:
         experiment: dict,
         command_context: str,
         knowledge_context: str,
+        step_progress: list[dict[str, Any]] | None = None,
     ) -> str:
         raise NotImplementedError
 
@@ -28,6 +29,7 @@ class MockCoachProvider(CoachProvider):
         experiment: dict,
         command_context: str,
         knowledge_context: str,
+        step_progress: list[dict[str, Any]] | None = None,
     ) -> str:
         processor = LogProcessor()
         command = processor.extract_latest_command(command_context)
@@ -55,22 +57,45 @@ class DeepSeekCoachProvider(CoachProvider):
         experiment: dict,
         command_context: str,
         knowledge_context: str,
+        step_progress: list[dict[str, Any]] | None = None,
     ) -> str:
         if not self.settings.deepseek_api_key:
             raise RuntimeError("DEEPSEEK_API_KEY is not configured")
 
+        # 构建步骤进度描述
+        progress_text = ""
+        if step_progress:
+            status_map = {
+                "locked": "未解锁",
+                "pending": "进行中",
+                "completed": "已检测完成",
+                "confirmed": "已确认完成",
+            }
+            steps = experiment.get("task_config", {}).get("steps", [])
+            step_title_map = {s["id"]: s.get("title", f"步骤{s['id']}") for s in steps}
+            lines = []
+            for p in step_progress:
+                title = step_title_map.get(p["step_id"], f"步骤{p['step_id']}")
+                status = status_map.get(p["status"], p["status"])
+                lines.append(f"- 步骤{p['step_id']}「{title}」：{status}")
+            progress_text = "\n".join(lines)
+        else:
+            progress_text = "暂无进度信息"
+
         prompt = (
             "你是一名坐在学生旁边的 Linux 实操陪练老师，正在指导高职学生完成信创 Linux openEuler 课堂实验。\n"
-            "请根据实验目标、任务配置、知识库和学生刚执行的命令，自然地讲解和引导。\n"
+            "请根据实验目标、任务配置、知识库、学生当前步骤进度和学生刚执行的命令，自然地讲解和引导。\n"
             "输出要求：\n"
             "1. 不要使用固定标题模板，不要写“刚才做了什么/结果怎么看/下一步建议”这种机械分段。\n"
             "2. 用 2 到 5 个短段落，语气像真人陪练：具体、鼓励、能指出学生当前状态。\n"
             "3. 如果命令成功，解释它的作用、输出该怎么看、和当前实验步骤的关系。\n"
             "4. 如果命令失败，先稳定学生情绪，再指出可能原因，给一个最小可执行修正方向。\n"
-            "5. 不要替学生一次性完成整套实验，不要输出长篇理论，不要编造终端没有出现的信息。\n\n"
+            "5. 不要替学生一次性完成整套实验，不要输出长篇理论，不要编造终端没有出现的信息。\n"
+            "6. 不要假设学生已经完成了尚未解锁的步骤，只根据当前已确认的进度来评价。\n\n"
             f"实验名称：{experiment['name']}\n"
             f"实验目标：{experiment['task_config'].get('objective', '')}\n"
             f"任务配置：{experiment['task_config']}\n\n"
+            f"学生当前步骤进度：\n{progress_text}\n\n"
             f"知识库：\n{knowledge_context}\n\n"
             f"最近终端片段：\n{command_context}"
         )

@@ -11,3 +11,6 @@ class CreateSessionRequest(BaseModel):
 class SimulateTerminalRequest(BaseModel):
     command: str = Field(min_length=1, max_length=500)
 
+
+class ConfirmStepRequest(BaseModel):
+    step_id: int = Field(..., ge=1)
