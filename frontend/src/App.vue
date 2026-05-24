@@ -7,6 +7,7 @@ import {
   Clock3,
   FileText,
   FlaskConical,
+  Leaf,
   Maximize2,
   Play,
   Plus,
@@ -228,19 +229,20 @@ function closeCoachSocket() {
 
       <button class="back-button">
         <ArrowLeft :size="17" />
-        <span>Back</span>
+        <span>返回</span>
       </button>
 
       <nav class="main-nav" aria-label="课程导航">
-        <button>Learn <ChevronDown :size="14" /></button>
-        <button>Practice <ChevronDown :size="14" /></button>
-        <button>Challenge <ChevronDown :size="14" /></button>
-        <button>Pricing</button>
-        <button>Resources <ChevronDown :size="14" /></button>
+        <button>学习 <ChevronDown :size="14" /></button>
+        <button>练习 <ChevronDown :size="14" /></button>
+        <button>挑战 <ChevronDown :size="14" /></button>
+        <button>定价</button>
+        <button>资源 <ChevronDown :size="14" /></button>
       </nav>
 
       <button class="signup-button" :disabled="busy" @click="startSession">
-        {{ activeSession ? 'Running' : 'Start Lab' }}
+        <Leaf :size="16" />
+        {{ activeSession ? '运行中' : '开始实验' }}
       </button>
     </header>
 
@@ -248,10 +250,18 @@ function closeCoachSocket() {
       <aside class="left-stack">
         <section class="task-panel">
           <header class="task-tabs">
-            <button :class="{ active: activeGuideTab === 'task' }" @click="activeGuideTab = 'task'">Task</button>
-            <button :class="{ active: activeGuideTab === 'hint' }" @click="activeGuideTab = 'hint'">Hint</button>
-            <button :class="{ active: activeGuideTab === 'solution' }" @click="activeGuideTab = 'solution'">Solution</button>
-            <button :class="{ active: activeGuideTab === 'ai' }" @click="activeGuideTab = 'ai'">AI Assistant</button>
+            <button :class="{ active: activeGuideTab === 'task' }" @click="activeGuideTab = 'task'">
+              <FileText :size="14" style="margin-right:4px" /> 任务
+            </button>
+            <button :class="{ active: activeGuideTab === 'hint' }" @click="activeGuideTab = 'hint'">
+              提示
+            </button>
+            <button :class="{ active: activeGuideTab === 'solution' }" @click="activeGuideTab = 'solution'">
+              思路
+            </button>
+            <button :class="{ active: activeGuideTab === 'ai' }" @click="activeGuideTab = 'ai'">
+              <Bot :size="14" style="margin-right:4px" /> AI 助手
+            </button>
             <span class="panel-timer">
               <Clock3 :size="16" />
               {{ timerText }}
@@ -260,7 +270,7 @@ function closeCoachSocket() {
 
           <div class="task-scroll">
             <template v-if="activeGuideTab === 'task'">
-              <p class="question-count">STEP {{ currentQuestion }} OF {{ currentSteps.length || 1 }}</p>
+              <p class="question-count">步骤 {{ currentQuestion }} / {{ currentSteps.length || 1 }}</p>
               <div class="question-progress">
                 <span
                   v-for="step in currentSteps"
@@ -275,19 +285,19 @@ function closeCoachSocket() {
                 <p>{{ currentInstruction.goal ?? currentInstruction.hint }}</p>
 
                 <div class="try-block" v-if="currentInstruction.try_commands?.length">
-                  <strong>建议先试试</strong>
+                  <strong>🌱 建议先试试</strong>
                   <div>
                     <code v-for="item in currentInstruction.try_commands" :key="item">{{ item }}</code>
                   </div>
                 </div>
 
                 <div class="success-hint">
-                  <strong>完成判断</strong>
+                  <strong>✅ 完成判断</strong>
                   <span>{{ currentInstruction.success_hint ?? currentInstruction.hint }}</span>
                 </div>
 
                 <div class="coach-focus" v-if="currentInstruction.coach_focus">
-                  <strong>陪练关注</strong>
+                  <strong>🎯 陪练关注</strong>
                   <span>{{ currentInstruction.coach_focus }}</span>
                 </div>
               </div>
@@ -309,7 +319,7 @@ function closeCoachSocket() {
               <div class="task-actions">
                 <label>
                   <span>学生编号</span>
-                  <input v-model="studentId" />
+                  <input v-model="studentId" placeholder="请输入学号" />
                 </label>
                 <button class="primary-button" :disabled="busy" @click="startSession">
                   <Play :size="16" />
@@ -319,19 +329,19 @@ function closeCoachSocket() {
             </template>
 
             <template v-else-if="activeGuideTab === 'hint'">
-              <h2>实验提示</h2>
+              <h2>🌿 实验提示</h2>
               <p>先用 <code>pwd</code> 确认当前位置，再用 <code>ls -l</code> 观察目录内容。</p>
               <p>创建目录时建议使用 <code>mkdir linux_lab</code>，创建文件时使用 <code>touch hello.txt</code>。</p>
             </template>
 
             <template v-else-if="activeGuideTab === 'solution'">
-              <h2>参考思路</h2>
+              <h2>💡 参考思路</h2>
               <p>本区域只给出思路，不直接替学生完成实验。请根据左侧步骤在右侧终端逐条执行，并观察 AI 陪练解释。</p>
             </template>
 
             <template v-else>
-              <h2>AI Assistant</h2>
-              <p>AI 会根据右侧 Docker 终端捕获到的真实命令输出，在下方“AI 陪练输出”区域给出即时分析。</p>
+              <h2>🤖 AI Assistant</h2>
+              <p>AI 会根据右侧 Docker 终端捕获到的真实命令输出，在下方「AI 陪练输出」区域给出即时分析。</p>
             </template>
           </div>
         </section>
@@ -381,7 +391,7 @@ function closeCoachSocket() {
             <span class="terminal-runtime" v-if="activeSession">Docker · openEuler</span>
             <button :disabled="!activeSession" @click="stopSession">
               <Square :size="13" />
-              Stop Lab
+              停止实验
             </button>
             <button title="重置实验" :disabled="!activeSession || busy" @click="resetSession">
               <RefreshCcw :size="16" />
@@ -409,7 +419,7 @@ function closeCoachSocket() {
             </div>
             <form class="command-line" @submit.prevent="sendMockCommand">
               <span>student@lab:~$</span>
-              <input v-model="command" :disabled="busy" autocomplete="off" />
+              <input v-model="command" :disabled="busy" autocomplete="off" placeholder="输入命令..." />
               <button :disabled="busy">
                 <Send :size="16" />
               </button>
@@ -418,11 +428,11 @@ function closeCoachSocket() {
 
           <div v-else class="terminal-launch">
             <Terminal :size="42" />
-            <h1>Ready to start your Linux lab?</h1>
+            <h1>准备好开始你的 Linux 实验了吗？</h1>
             <p>启动后右侧将进入真实 Docker 容器终端，每次执行命令都会被旁路捕获并发送给 AI 陪练。</p>
             <button class="primary-button" :disabled="busy" @click="startSession">
               <Play :size="17" />
-              {{ busy ? '正在启动 Docker...' : 'Start Lab' }}
+              {{ busy ? '正在启动 Docker...' : '开始实验' }}
             </button>
           </div>
         </div>
