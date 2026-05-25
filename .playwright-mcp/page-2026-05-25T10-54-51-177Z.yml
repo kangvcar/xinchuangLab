@@ -1,0 +1,100 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - img [ref=e7]
+      - strong [ref=e9]: Linux AI 实训平台
+    - generic [ref=e10]:
+      - generic [ref=e11]: 实验模块
+      - combobox [ref=e12] [cursor=pointer]:
+        - text: file-basic
+        - img [ref=e14]
+      - textbox [ref=e16]: file-basic
+    - generic [ref=e17]:
+      - generic [ref=e123]:
+        - img [ref=e124]
+        - text: 60:00
+      - button "运行中" [disabled] [ref=e127]: 运行中
+      - link "教师端" [ref=e21] [cursor=pointer]:
+        - /url: /teacher
+  - main [ref=e22]:
+    - complementary [ref=e23]:
+      - generic [ref=e24]:
+        - navigation [ref=e25]:
+          - button "1 查看当前目录" [ref=e71] [cursor=pointer]:
+            - generic [ref=e72]: "1"
+            - generic [ref=e73]: 查看当前目录
+          - button "2 查看目录内容" [disabled] [ref=e75]:
+            - generic [ref=e76]: "2"
+            - generic [ref=e77]: 查看目录内容
+          - button "3 创建实验目录" [disabled] [ref=e79]:
+            - generic [ref=e80]: "3"
+            - generic [ref=e81]: 创建实验目录
+          - button "4 创建实验文件" [disabled] [ref=e83]:
+            - generic [ref=e84]: "4"
+            - generic [ref=e85]: 创建实验文件
+          - button "5 复制与移动文件" [disabled] [ref=e87]:
+            - generic [ref=e88]: "5"
+            - generic [ref=e89]: 复制与移动文件
+          - button "6 删除测试文件" [disabled] [ref=e91]:
+            - generic [ref=e92]: "6"
+            - generic [ref=e93]: 删除测试文件
+        - generic [ref=e26]:
+          - generic [ref=e27]:
+            - generic [ref=e94]:
+              - img [ref=e95]
+              - text: Docker 容器 · Linux 文件管理基础实验
+            - heading "查看当前目录" [level=2] [ref=e97]
+            - paragraph [ref=e98]: 确认你当前站在文件系统的哪个位置，为后续创建目录和文件打基础。
+            - generic [ref=e99]:
+              - strong [ref=e100]:
+                - img [ref=e101]
+                - text: 建议先试试
+              - code [ref=e106]: pwd
+            - generic [ref=e107]:
+              - strong [ref=e108]:
+                - img [ref=e109]
+                - text: 完成判断
+              - text: 终端输出类似 /home/student 的绝对路径。
+            - generic [ref=e112]:
+              - strong [ref=e113]:
+                - img [ref=e114]
+                - text: 陪练关注
+              - text: 解释绝对路径、当前工作目录和 home 目录的关系。
+          - generic [ref=e118]:
+            - generic [ref=e119]:
+              - generic [ref=e120]: 实验进度
+              - generic [ref=e121]: 0%
+            - progressbar [ref=e122]: x
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - img [ref=e34]
+            - generic [ref=e37]: AI 陪练输出
+          - generic [ref=e38]: 实验环境已就绪
+        - article [ref=e40]:
+          - img [ref=e42]
+          - strong [ref=e44]: 等待第一条终端日志
+          - generic [ref=e45]: 在右侧终端执行命令后，AI 会实时分析操作、输出和下一步建议。
+    - generic [ref=e46]:
+      - generic [ref=e47]:
+        - generic [ref=e129]:
+          - generic [ref=e130]: Linux 文件管理基础实验
+          - generic [ref=e131]: Docker 容器
+        - generic [ref=e48]:
+          - link "新窗口" [ref=e132] [cursor=pointer]:
+            - /url: http://localhost:50066
+            - img [ref=e133]
+            - text: 新窗口
+          - button "停止" [ref=e49] [cursor=pointer]:
+            - img [ref=e50]
+            - text: 停止
+          - button "重置实验" [ref=e52] [cursor=pointer]:
+            - img [ref=e53]
+          - button "生成报告" [ref=e58] [cursor=pointer]:
+            - img [ref=e59]
+      - iframe [ref=e137]:
+        - generic [ref=f8e3]:
+          - generic [ref=f8e5]:
+            - generic:
+              - textbox "Terminal input" [active]
+          - generic [ref=f8e8]: 103x27

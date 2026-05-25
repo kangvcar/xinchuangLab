@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import json
+import secrets
 import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -62,6 +63,13 @@ settings.builds_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/reports-static", StaticFiles(directory=settings.reports_dir), name="reports-static")
 
 
+def require_admin_password(x_admin_password: str | None = Header(default=None)) -> None:
+    if not settings.admin_password:
+        return
+    if not secrets.compare_digest(x_admin_password or "", settings.admin_password):
+        raise HTTPException(status_code=401, detail="教师端密码错误")
+
+
 @app.on_event("startup")
 async def startup() -> None:
     db.initialize()
@@ -94,12 +102,23 @@ async def list_experiments() -> list[dict[str, Any]]:
 
 
 @app.get("/api/admin/experiments")
-async def admin_list_experiments() -> list[dict[str, Any]]:
+async def admin_list_experiments(_admin: None = Depends(require_admin_password)) -> list[dict[str, Any]]:
     return db.list_experiments()
 
 
+@app.post("/api/admin/auth")
+async def admin_auth(payload: dict[str, Any]) -> dict[str, bool]:
+    password = str(payload.get("password") or "")
+    if not settings.admin_password or secrets.compare_digest(password, settings.admin_password):
+        return {"ok": True}
+    raise HTTPException(status_code=401, detail="教师端密码错误")
+
+
 @app.post("/api/admin/experiments")
-async def admin_save_experiment(payload: dict[str, Any]) -> dict[str, Any]:
+async def admin_save_experiment(
+    payload: dict[str, Any],
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, Any]:
     experiment_id = str(payload.get("experiment_id") or payload.get("id") or "").strip()
     if not experiment_id:
         raise HTTPException(status_code=400, detail="experiment_id is required")
@@ -119,7 +138,11 @@ async def admin_save_experiment(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 @app.put("/api/admin/experiments/{experiment_id}")
-async def admin_update_experiment(experiment_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+async def admin_update_experiment(
+    experiment_id: str,
+    payload: dict[str, Any],
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, Any]:
     existing = db.get_experiment(experiment_id)
     config = dict(payload)
     config["experiment_id"] = experiment_id
@@ -141,7 +164,11 @@ async def admin_update_experiment(experiment_id: str, payload: dict[str, Any]) -
 
 
 @app.put("/api/admin/experiments/{experiment_id}/steps")
-async def admin_update_steps(experiment_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+async def admin_update_steps(
+    experiment_id: str,
+    payload: dict[str, Any],
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, Any]:
     experiment = db.get_experiment(experiment_id)
     if not experiment:
         raise HTTPException(status_code=404, detail="experiment not found")
@@ -158,7 +185,10 @@ async def admin_update_steps(experiment_id: str, payload: dict[str, Any]) -> dic
 
 
 @app.delete("/api/admin/experiments/{experiment_id}")
-async def admin_delete_experiment(experiment_id: str) -> dict[str, str]:
+async def admin_delete_experiment(
+    experiment_id: str,
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, str]:
     experiment = db.get_experiment(experiment_id)
     if not experiment:
         raise HTTPException(status_code=404, detail="experiment not found")
@@ -169,7 +199,10 @@ async def admin_delete_experiment(experiment_id: str) -> dict[str, str]:
 
 
 @app.post("/api/admin/experiments/import")
-async def admin_import_experiment(payload: dict[str, Any]) -> dict[str, Any]:
+async def admin_import_experiment(
+    payload: dict[str, Any],
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, Any]:
     text = str(payload.get("text", "") or "")
     if not text.strip():
         raise HTTPException(status_code=400, detail="text is required")
@@ -186,7 +219,10 @@ async def admin_import_experiment(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 @app.post("/api/admin/experiments/import-file")
-async def admin_import_experiment_file(file: UploadFile = File(...)) -> dict[str, Any]:
+async def admin_import_experiment_file(
+    file: UploadFile = File(...),
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, Any]:
     filename = file.filename or "uploaded.txt"
     suffix = Path(filename).suffix.lower()
     if suffix not in SUPPORTED_IMPORT_EXTENSIONS:
@@ -203,7 +239,10 @@ async def admin_import_experiment_file(file: UploadFile = File(...)) -> dict[str
 
 
 @app.post("/api/admin/experiments/build")
-async def admin_build_experiment(payload: dict[str, Any]) -> dict[str, Any]:
+async def admin_build_experiment(
+    payload: dict[str, Any],
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, Any]:
     try:
         return await build_service.start_build(payload)
     except ExperimentBuildError as exc:
@@ -213,7 +252,10 @@ async def admin_build_experiment(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 @app.get("/api/admin/experiments/builds/{build_id}")
-async def admin_get_experiment_build(build_id: str) -> dict[str, Any]:
+async def admin_get_experiment_build(
+    build_id: str,
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, Any]:
     build = db.get_experiment_build(build_id)
     if not build:
         raise HTTPException(status_code=404, detail="build not found")

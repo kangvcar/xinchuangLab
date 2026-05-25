@@ -1,0 +1,91 @@
+- generic [ref=e71]:
+  - banner [ref=e72]:
+    - generic [ref=e73]:
+      - img [ref=e75]
+      - strong [ref=e77]: Linux AI 实训平台
+    - generic [ref=e78]:
+      - generic [ref=e79]: 实验模块
+      - combobox [active] [ref=e80] [cursor=pointer]:
+        - text: regex-advanced
+        - img [ref=e82]
+      - textbox [ref=e84]: regex-advanced
+    - generic [ref=e85]:
+      - button "开始实验" [ref=e86] [cursor=pointer]:
+        - img [ref=e87]
+        - text: 开始实验
+      - link "教师端" [ref=e89] [cursor=pointer]:
+        - /url: /teacher
+  - main [ref=e90]:
+    - complementary [ref=e91]:
+      - generic [ref=e92]:
+        - navigation [ref=e93]:
+          - button "1 日志时间戳提取" [disabled] [ref=e201]:
+            - generic [ref=e95]: "1"
+            - generic [ref=e96]: 日志时间戳提取
+          - button "2 HTML 属性提取" [disabled] [ref=e202]:
+            - generic [ref=e99]: "2"
+            - generic [ref=e100]: HTML 属性提取
+          - button "3 密码强度验证" [disabled] [ref=e203]:
+            - generic [ref=e103]: "3"
+            - generic [ref=e104]: 密码强度验证
+          - button "4 千分位数字格式化" [disabled] [ref=e204]:
+            - generic [ref=e107]: "4"
+            - generic [ref=e108]: 千分位数字格式化
+          - button "5 Markdown 链接提取" [disabled] [ref=e205]:
+            - generic [ref=e111]: "5"
+            - generic [ref=e112]: Markdown 链接提取
+          - button "6 Apache 日志分析器" [disabled] [ref=e206]:
+            - generic [ref=e115]: "6"
+            - generic [ref=e116]: Apache 日志分析器
+        - generic [ref=e117]:
+          - generic [ref=e118]:
+            - generic [ref=e119]:
+              - img [ref=e120]
+              - text: 未启动 · 正则表达式进阶实验
+            - heading "日志时间戳提取" [level=2] [ref=e207]
+            - paragraph [ref=e123]: 从系统日志中提取日期时间部分。
+            - generic [ref=e124]:
+              - strong [ref=e125]:
+                - img [ref=e126]
+                - text: 建议先试试
+              - code [ref=e208]: grep -oP '\[([\d\-:\s]+)\]' regex_lab/sample_log.txt
+            - generic [ref=e132]:
+              - strong [ref=e133]:
+                - img [ref=e134]
+                - text: 完成判断
+              - text: 使用捕获组提取方括号内的内容。
+            - generic [ref=e137]:
+              - strong [ref=e138]:
+                - img [ref=e139]
+                - text: 陪练关注
+              - text: 提醒学生注意转义方括号和捕获组的使用。
+          - generic [ref=e143]:
+            - generic [ref=e144]:
+              - generic [ref=e145]: 实验进度
+              - generic [ref=e146]: 0%
+            - progressbar [ref=e147]: x
+      - generic [ref=e148]:
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - img [ref=e151]
+            - generic [ref=e154]: AI 陪练输出
+          - generic [ref=e155]: 已切换实验模块
+        - article [ref=e157]:
+          - img [ref=e159]
+          - strong [ref=e161]: 等待第一条终端日志
+          - generic [ref=e162]: 在右侧终端执行命令后，AI 会实时分析操作、输出和下一步建议。
+    - generic [ref=e163]:
+      - generic [ref=e165]:
+        - button "停止" [disabled] [ref=e166]:
+          - img [ref=e167]
+          - text: 停止
+        - button "重置实验" [disabled] [ref=e169]:
+          - img [ref=e170]
+        - button "生成报告" [disabled] [ref=e175]:
+          - img [ref=e176]
+      - generic [ref=e180]:
+        - img [ref=e182]
+        - heading "Linux 实验终端" [level=1] [ref=e184]
+        - button "开始实验" [ref=e185] [cursor=pointer]:
+          - img [ref=e186]
+          - text: 开始实验

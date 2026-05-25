@@ -65,6 +65,7 @@ class Settings:
     deepseek_api_key: str = os.getenv("DEEPSEEK_API_KEY", "")
     deepseek_base_url: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com").rstrip("/")
     deepseek_model: str = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+    admin_password: str = os.getenv("ADMIN_PASSWORD", "linuxai")
     database_path: Path = BACKEND_ROOT / "data" / "linux_ai_lab.db"
     reports_dir: Path = BACKEND_ROOT / "generated" / "reports"
     raw_logs_dir: Path = BACKEND_ROOT / "generated" / "raw_logs"

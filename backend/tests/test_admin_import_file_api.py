@@ -3,6 +3,9 @@ from fastapi.testclient import TestClient
 from app import main
 
 
+ADMIN_HEADERS = {"X-Admin-Password": "linuxai"}
+
+
 def test_import_file_endpoint_accepts_markdown(monkeypatch) -> None:
     async def fake_design(*, text: str, filename: str, settings):
         return {
@@ -25,6 +28,7 @@ def test_import_file_endpoint_accepts_markdown(monkeypatch) -> None:
 
     response = client.post(
         "/api/admin/experiments/import-file",
+        headers=ADMIN_HEADERS,
         files={"file": ("demo.md", b"# Demo\n\npwd", "text/markdown")},
     )
 
@@ -39,6 +43,7 @@ def test_import_file_endpoint_rejects_unknown_extension() -> None:
 
     response = client.post(
         "/api/admin/experiments/import-file",
+        headers=ADMIN_HEADERS,
         files={"file": ("demo.pdf", b"%PDF", "application/pdf")},
     )
 
@@ -62,6 +67,7 @@ def test_import_file_endpoint_returns_diagnostic_payload_for_ai_normalize_failur
 
     response = client.post(
         "/api/admin/experiments/import-file",
+        headers=ADMIN_HEADERS,
         files={"file": ("demo.md", b"# Demo\n\npwd", "text/markdown")},
     )
 
@@ -70,3 +76,24 @@ def test_import_file_endpoint_returns_diagnostic_payload_for_ai_normalize_failur
     assert payload["draft"] is None
     assert "AI 草稿规范化失败" in payload["warnings"][0]
     assert "step1" in payload["raw_output"]
+
+
+def test_admin_endpoint_requires_teacher_password() -> None:
+    client = TestClient(main.app)
+
+    response = client.post(
+        "/api/admin/experiments/import-file",
+        files={"file": ("demo.md", b"# Demo\n\npwd", "text/markdown")},
+    )
+
+    assert response.status_code == 401
+    assert "教师端密码错误" in response.json()["detail"]
+
+
+def test_admin_auth_accepts_teacher_password() -> None:
+    client = TestClient(main.app)
+
+    response = client.post("/api/admin/auth", json={"password": "linuxai"})
+
+    assert response.status_code == 200
+    assert response.json() == {"ok": True}

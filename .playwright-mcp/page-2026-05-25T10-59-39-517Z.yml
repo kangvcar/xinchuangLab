@@ -1,0 +1,91 @@
+- generic [ref=e71]:
+  - banner [ref=e72]:
+    - generic [ref=e73]:
+      - img [ref=e75]
+      - strong [ref=e77]: Linux AI 实训平台
+    - generic [ref=e78]:
+      - generic [ref=e79]: 实验模块
+      - combobox [ref=e80] [cursor=pointer]:
+        - text: file-basic
+        - img [ref=e82]
+      - textbox [ref=e84]: file-basic
+    - generic [ref=e85]:
+      - button "开始实验" [ref=e86] [cursor=pointer]:
+        - img [ref=e87]
+        - text: 开始实验
+      - link "教师端" [ref=e89] [cursor=pointer]:
+        - /url: /teacher
+  - main [ref=e90]:
+    - complementary [ref=e91]:
+      - generic [ref=e92]:
+        - navigation [ref=e93]:
+          - button "1 查看当前目录" [disabled] [ref=e94]:
+            - generic [ref=e95]: "1"
+            - generic [ref=e96]: 查看当前目录
+          - button "2 查看目录内容" [disabled] [ref=e98]:
+            - generic [ref=e99]: "2"
+            - generic [ref=e100]: 查看目录内容
+          - button "3 创建实验目录" [disabled] [ref=e102]:
+            - generic [ref=e103]: "3"
+            - generic [ref=e104]: 创建实验目录
+          - button "4 创建实验文件" [disabled] [ref=e106]:
+            - generic [ref=e107]: "4"
+            - generic [ref=e108]: 创建实验文件
+          - button "5 复制与移动文件" [disabled] [ref=e110]:
+            - generic [ref=e111]: "5"
+            - generic [ref=e112]: 复制与移动文件
+          - button "6 删除测试文件" [disabled] [ref=e114]:
+            - generic [ref=e115]: "6"
+            - generic [ref=e116]: 删除测试文件
+        - generic [ref=e117]:
+          - generic [ref=e118]:
+            - generic [ref=e119]:
+              - img [ref=e120]
+              - text: 未启动 · Linux 文件管理基础实验
+            - heading "查看当前目录" [level=2] [ref=e122]
+            - paragraph [ref=e123]: 确认你当前站在文件系统的哪个位置，为后续创建目录和文件打基础。
+            - generic [ref=e124]:
+              - strong [ref=e125]:
+                - img [ref=e126]
+                - text: 建议先试试
+              - code [ref=e131]: pwd
+            - generic [ref=e132]:
+              - strong [ref=e133]:
+                - img [ref=e134]
+                - text: 完成判断
+              - text: 终端输出类似 /home/student 的绝对路径。
+            - generic [ref=e137]:
+              - strong [ref=e138]:
+                - img [ref=e139]
+                - text: 陪练关注
+              - text: 解释绝对路径、当前工作目录和 home 目录的关系。
+          - generic [ref=e143]:
+            - generic [ref=e144]:
+              - generic [ref=e145]: 实验进度
+              - generic [ref=e146]: 0%
+            - progressbar [ref=e147]: x
+      - generic [ref=e148]:
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - img [ref=e151]
+            - generic [ref=e154]: AI 陪练输出
+          - generic [ref=e155]: 等待启动
+        - article [ref=e157]:
+          - img [ref=e159]
+          - strong [ref=e161]: 等待第一条终端日志
+          - generic [ref=e162]: 在右侧终端执行命令后，AI 会实时分析操作、输出和下一步建议。
+    - generic [ref=e163]:
+      - generic [ref=e165]:
+        - button "停止" [disabled] [ref=e166]:
+          - img [ref=e167]
+          - text: 停止
+        - button "重置实验" [disabled] [ref=e169]:
+          - img [ref=e170]
+        - button "生成报告" [disabled] [ref=e175]:
+          - img [ref=e176]
+      - generic [ref=e180]:
+        - img [ref=e182]
+        - heading "Linux 实验终端" [level=1] [ref=e184]
+        - button "开始实验" [ref=e185] [cursor=pointer]:
+          - img [ref=e186]
+          - text: 开始实验

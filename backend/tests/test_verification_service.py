@@ -81,17 +81,15 @@ def test_path_exists_uses_docker_exec(monkeypatch):
     )
 
     assert result["passed"] is True
-    assert calls == [
-        (
-            "exec",
-            "-u",
-            "student",
-            "linux-ai-test",
-            "bash",
-            "-lc",
-            "cd /home/student && test -d linux_lab",
-        )
-    ]
+    assert (
+        "exec",
+        "-u",
+        "student",
+        "linux-ai-test",
+        "bash",
+        "-lc",
+        "cd /home/student && test -d linux_lab",
+    ) in calls
 
 
 def test_path_absent_failure_marks_step_unfinished(monkeypatch):

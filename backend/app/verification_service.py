@@ -15,6 +15,10 @@ class VerificationService:
         self.docker_manager = docker_manager
         self.legacy_verifier = StepVerifier()
 
+    _DOCKER_CHECK_TYPES = frozenset(
+        {"path_exists", "path_absent", "file_contains", "exec_exit_code", "exec_output_contains"}
+    )
+
     async def verify_step(
         self,
         *,
@@ -26,8 +30,22 @@ class VerificationService:
     ) -> dict[str, Any]:
         verification = step.get("verification")
         if verification:
+            checks_config = verification.get("checks", [])
+            if checks_config and self._needs_docker(checks_config) and not await self._docker_available():
+                passed = self.legacy_verifier.verify(step, command_event, terminal_logs, command_events)
+                return {
+                    "passed": passed,
+                    "mode": "legacy-fallback",
+                    "checks": [
+                        {
+                            "type": "legacy-fallback",
+                            "passed": passed,
+                            "detail": "docker unavailable; fallback to legacy verify/keywords rule",
+                        }
+                    ],
+                }
             checks = []
-            for check in verification.get("checks", []):
+            for check in checks_config:
                 checks.append(await self._run_check(session, check, command_event, command_events))
             mode = verification.get("mode", "all")
             passed = any(item["passed"] for item in checks) if mode == "any" else all(item["passed"] for item in checks)
@@ -45,6 +63,17 @@ class VerificationService:
                 }
             ],
         }
+
+    @classmethod
+    def _needs_docker(cls, checks: list[dict[str, Any]]) -> bool:
+        return any(check.get("type", "") in cls._DOCKER_CHECK_TYPES for check in checks)
+
+    async def _docker_available(self) -> bool:
+        try:
+            returncode, _, _ = await self.docker_manager._run_docker("version", "--format", "{{.Server.Version}}")
+            return returncode == 0
+        except Exception:
+            return False
 
     async def _run_check(
         self,
@@ -144,15 +173,18 @@ class VerificationService:
             return 127, "", "session has no container reference"
         cwd = command_event.cwd or "/home/student"
         command = f"cd {shlex.quote(cwd)} && {script}"
-        return await self.docker_manager._run_docker(
-            "exec",
-            "-u",
-            "student",
-            container_ref,
-            "bash",
-            "-lc",
-            command,
-        )
+        try:
+            return await self.docker_manager._run_docker(
+                "exec",
+                "-u",
+                "student",
+                container_ref,
+                "bash",
+                "-lc",
+                command,
+            )
+        except (RuntimeError, OSError) as exc:
+            return 127, "", str(exc)
 
 
 def _as_list(value: Any) -> list[str]:
