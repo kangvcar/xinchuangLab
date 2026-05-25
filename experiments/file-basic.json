@@ -4,6 +4,7 @@
   "system": "openEuler",
   "image_name": "linux-ai-exp:openeuler-file-v1",
   "status": "active",
+  "schema_version": 2,
   "objective": "掌握 Linux 常用文件与目录管理命令，理解路径、文件、目录和链接的基本概念。",
   "steps": [
     {
@@ -13,12 +14,20 @@
       "keywords": ["pwd"],
       "goal": "确认你当前站在文件系统的哪个位置，为后续创建目录和文件打基础。",
       "try_commands": ["pwd"],
+      "instructions": "在终端输入 pwd，确认当前工作目录。",
+      "success_criteria": "命令成功执行，输出当前目录的绝对路径。",
       "success_hint": "终端输出类似 /home/student 的绝对路径。",
       "coach_focus": "解释绝对路径、当前工作目录和 home 目录的关系。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {"type": "command_match", "commands": ["pwd"]},
+          {"type": "exec_exit_code", "command": "test \"$PWD\" = \"/home/student\" || pwd >/dev/null", "exit_code": 0}
+        ]
+      },
       "verify": {
         "commands": ["pwd"],
-        "output_patterns": ["^/"],
-        "order_strict": true
+        "output_patterns": ["^/"]
       }
     },
     {
@@ -28,11 +37,18 @@
       "keywords": ["ls", "ls -l"],
       "goal": "观察当前目录里有哪些文件，并理解普通列表和详细列表的区别。",
       "try_commands": ["ls", "ls -l"],
+      "instructions": "使用 ls 或 ls -l 查看当前目录内容。",
+      "success_criteria": "命令成功执行，能够观察当前目录内容；目录为空也算完成。",
       "success_hint": "能看到当前目录内容；如果没有输出，说明目录暂时为空。",
       "coach_focus": "解释 ls -l 中权限、属主、大小和时间字段。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {"type": "command_match", "commands": ["ls", "ls -l", "ll", "la", "ls -la"]}
+        ]
+      },
       "verify": {
-        "commands": ["ls", "ls -l", "ll", "la", "ls -la"],
-        "order_strict": true
+        "commands": ["ls", "ls -l", "ll", "la", "ls -la"]
       }
     },
     {
@@ -42,11 +58,19 @@
       "keywords": ["mkdir", "linux_lab"],
       "goal": "创建一个用于本次实训的专用目录。",
       "try_commands": ["mkdir linux_lab", "ls -l"],
+      "instructions": "创建 linux_lab 目录，并可用 ls -l 观察它是否出现。",
+      "success_criteria": "容器中当前目录下存在 linux_lab 目录。",
       "success_hint": "再次执行 ls 或 ls -l 时能看到 linux_lab 目录。",
       "coach_focus": "说明目录创建成功时通常没有输出，需要用 ls 验证。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {"type": "command_match", "commands": ["mkdir linux_lab", "mkdir -p linux_lab"], "require_success": false},
+          {"type": "path_exists", "path": "linux_lab", "path_type": "dir"}
+        ]
+      },
       "verify": {
-        "commands": ["mkdir linux_lab", "mkdir -p linux_lab"],
-        "order_strict": true
+        "commands": ["mkdir linux_lab", "mkdir -p linux_lab"]
       }
     },
     {
@@ -56,11 +80,19 @@
       "keywords": ["touch", "hello.txt"],
       "goal": "在实验目录或当前目录中创建一个空文本文件。",
       "try_commands": ["touch hello.txt", "ls -l hello.txt"],
+      "instructions": "使用 touch 创建 hello.txt，再用 ls -l hello.txt 检查。",
+      "success_criteria": "容器中当前目录下存在 hello.txt 文件。",
       "success_hint": "ls -l hello.txt 能看到文件记录，大小通常为 0。",
       "coach_focus": "解释 touch 的创建文件和更新时间戳两个作用。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {"type": "command_match", "commands": ["touch hello.txt"]},
+          {"type": "path_exists", "path": "hello.txt", "path_type": "file"}
+        ]
+      },
       "verify": {
-        "commands": ["touch hello.txt"],
-        "order_strict": true
+        "commands": ["touch hello.txt"]
       }
     },
     {
@@ -70,11 +102,20 @@
       "keywords": ["cp", "mv"],
       "goal": "练习文件复制、移动和重命名的基础操作。",
       "try_commands": ["cp hello.txt hello-copy.txt", "mv hello-copy.txt renamed.txt"],
+      "instructions": "先复制 hello.txt 为 hello-copy.txt，再把 hello-copy.txt 重命名为 renamed.txt。",
+      "success_criteria": "命令按顺序执行后，renamed.txt 存在，hello-copy.txt 不再存在。",
       "success_hint": "ls -l 能看到复制或重命名后的文件名。",
       "coach_focus": "区分复制会保留原文件，移动/重命名会改变原路径。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {"type": "command_sequence", "sequence": ["cp hello.txt hello-copy.txt", "mv hello-copy.txt renamed.txt"]},
+          {"type": "path_exists", "path": "renamed.txt", "path_type": "file"},
+          {"type": "path_absent", "path": "hello-copy.txt"}
+        ]
+      },
       "verify": {
-        "commands": ["cp", "mv"],
-        "order_strict": true
+        "sequence": ["cp hello.txt hello-copy.txt", "mv hello-copy.txt renamed.txt"]
       }
     },
     {
@@ -84,11 +125,19 @@
       "keywords": ["rm"],
       "goal": "删除指定测试文件，理解 rm 的不可逆风险。",
       "try_commands": ["rm renamed.txt", "ls -l"],
+      "instructions": "删除 renamed.txt，并用 ls -l 确认文件不再出现。",
+      "success_criteria": "renamed.txt 不再存在。",
       "success_hint": "目标文件不再出现在 ls 输出中。",
       "coach_focus": "提醒 rm 不进回收站，谨慎使用 -r 和 -f。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {"type": "command_match", "commands": ["rm renamed.txt", "rm -f renamed.txt"], "require_success": false},
+          {"type": "path_absent", "path": "renamed.txt"}
+        ]
+      },
       "verify": {
-        "commands": ["rm"],
-        "order_strict": true
+        "commands": ["rm"]
       }
     }
   ]

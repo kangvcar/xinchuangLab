@@ -1,0 +1,120 @@
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - img [ref=e7]
+      - generic [ref=e9]:
+        - strong [ref=e10]: Linux AI Lab
+        - generic [ref=e11]: STUDIO
+    - button "返回" [ref=e12] [cursor=pointer]:
+      - img [ref=e13]
+      - generic [ref=e15]: 返回
+    - navigation "课程导航" [ref=e16]:
+      - button "学习" [ref=e17] [cursor=pointer]:
+        - text: 学习
+        - img [ref=e18]
+      - button "练习" [ref=e20] [cursor=pointer]:
+        - text: 练习
+        - img [ref=e21]
+      - button "挑战" [ref=e23] [cursor=pointer]:
+        - text: 挑战
+        - img [ref=e24]
+      - button "定价" [ref=e26] [cursor=pointer]
+      - button "资源" [ref=e27] [cursor=pointer]:
+        - text: 资源
+        - img [ref=e28]
+    - button "开始实验" [ref=e30] [cursor=pointer]:
+      - img [ref=e31]
+      - text: 开始实验
+  - generic [ref=e34]:
+    - complementary [ref=e35]:
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - button "任务" [ref=e38] [cursor=pointer]:
+            - img [ref=e39]
+            - text: 任务
+          - button "提示" [ref=e42] [cursor=pointer]
+          - button "思路" [ref=e43] [cursor=pointer]
+          - button "AI 助手" [ref=e44] [cursor=pointer]:
+            - img [ref=e45]
+            - text: AI 助手
+          - generic [ref=e48]:
+            - img [ref=e49]
+            - text: 60:00
+        - generic [ref=e52]:
+          - paragraph [ref=e53]: 步骤 1 / 6
+          - generic [ref=e61]:
+            - generic [ref=e62]: 未启动 · Linux 文件管理基础实验
+            - heading "查看当前目录" [level=2] [ref=e63]
+            - paragraph [ref=e64]: 确认你当前站在文件系统的哪个位置，为后续创建目录和文件打基础。
+            - generic [ref=e65]:
+              - strong [ref=e66]: 🌱 建议先试试
+              - code [ref=e68]: pwd
+            - generic [ref=e69]:
+              - strong [ref=e70]: ✅ 完成判断
+              - generic [ref=e71]: 终端输出类似 /home/student 的绝对路径。
+            - generic [ref=e72]:
+              - strong [ref=e73]: 🎯 陪练关注
+              - generic [ref=e74]: 解释绝对路径、当前工作目录和 home 目录的关系。
+          - generic [ref=e75]:
+            - strong [ref=e76]: 全部步骤
+            - list [ref=e77]:
+              - listitem [ref=e78]:
+                - generic [ref=e79]: 查看当前目录
+                - generic [ref=e80]: 使用 pwd 命令查看当前所在路径。
+              - listitem [ref=e81]:
+                - generic [ref=e82]: 查看目录内容
+                - generic [ref=e83]: 使用 ls 或 ls -l 查看当前目录内容。
+              - listitem [ref=e84]:
+                - generic [ref=e85]: 创建实验目录
+                - generic [ref=e86]: 使用 mkdir 创建 linux_lab 目录。
+              - listitem [ref=e87]:
+                - generic [ref=e88]: 创建实验文件
+                - generic [ref=e89]: 使用 touch 创建 hello.txt 文件。
+              - listitem [ref=e90]:
+                - generic [ref=e91]: 复制与移动文件
+                - generic [ref=e92]: 使用 cp 和 mv 完成文件复制与重命名。
+              - listitem [ref=e93]:
+                - generic [ref=e94]: 删除测试文件
+                - generic [ref=e95]: 使用 rm 删除指定测试文件，避免使用危险递归删除命令。
+          - generic [ref=e96]:
+            - generic [ref=e97]:
+              - generic [ref=e98]: 学生编号
+              - textbox "学生编号" [ref=e99]:
+                - /placeholder: 请输入学号
+                - text: stu001
+            - button "启动实验" [ref=e100] [cursor=pointer]:
+              - img [ref=e101]
+              - text: 启动实验
+      - generic [ref=e103]:
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - img [ref=e106]
+            - strong [ref=e109]: AI 陪练输出
+          - generic [ref=e110]: 创建实训会话失败
+        - article [ref=e112]:
+          - img [ref=e113]
+          - strong [ref=e116]: 等待第一条终端日志
+          - generic [ref=e117]: 在右侧终端执行命令后，AI 会实时分析操作、输出和下一步建议。
+    - generic [ref=e118]:
+      - generic [ref=e119]:
+        - generic [ref=e120]:
+          - button "Terminal Preview" [ref=e121] [cursor=pointer]
+          - button "新建终端" [ref=e122] [cursor=pointer]:
+            - img [ref=e123]
+        - generic [ref=e124]:
+          - button "停止实验" [disabled] [ref=e125]:
+            - img [ref=e126]
+            - text: 停止实验
+          - button "重置实验" [disabled] [ref=e128]:
+            - img [ref=e129]
+          - button "生成报告" [disabled] [ref=e134]:
+            - img [ref=e135]
+          - button "全屏" [ref=e138] [cursor=pointer]:
+            - img [ref=e139]
+      - generic [ref=e145]:
+        - img [ref=e146]
+        - heading "准备好开始你的 Linux 实验了吗？" [level=1] [ref=e148]
+        - paragraph [ref=e149]: 启动后右侧将进入真实 Docker 容器终端，每次执行命令都会被旁路捕获并发送给 AI 陪练。
+        - button "开始实验" [ref=e150] [cursor=pointer]:
+          - img [ref=e151]
+          - text: 开始实验

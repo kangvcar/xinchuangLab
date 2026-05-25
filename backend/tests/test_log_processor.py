@@ -13,10 +13,31 @@ def test_clean_removes_osc_title_sequences():
     assert processor.clean(text) == "[student@lab ~]$ ls"
 
 
+def test_clean_removes_screen_title_sequences():
+    processor = LogProcessor()
+    text = "pwd\n/home/student\n\x1bkstudent@lab:~\x1b\\[student@lab ~]$"
+    assert processor.clean(text) == "pwd\n/home/student\n[student@lab ~]$"
+
+
 def test_extract_latest_command_from_prompt():
     processor = LogProcessor()
     text = "student@lab:~$ pwd\n/home/student\nstudent@lab:~$ ls -l"
     assert processor.extract_latest_command(text) == "ls -l"
+
+
+def test_prompt_command_without_completion_prompt_does_not_trigger():
+    processor = LogProcessor()
+    text = "[student@lab ~]$ ls"
+    assert processor.parse_command_event(text) is None
+    assert not processor.should_trigger(text)
+
+
+def test_empty_output_command_completes_when_prompt_returns():
+    processor = LogProcessor()
+    event = processor.parse_command_event("[student@lab ~]$ ls\n[student@lab ~]$")
+    assert event is not None
+    assert event.command == "ls"
+    assert event.output == ""
 
 
 def test_error_triggers_ai():
@@ -66,6 +87,27 @@ def test_split_terminal_stream_reconstructs_command_before_analysis():
     assert event is not None
     assert event.command == "pwd"
     assert event.output == "/home/student"
+
+
+def test_split_ls_l_stream_reconstructs_only_full_command():
+    processor = LogProcessor()
+    raw_stream = "".join(
+        [
+            "\x1b]0;student@lab:~\x07[student@lab ~]$ ",
+            "ls -",
+            "l",
+            "\ntotal 0\n\x1b]0;student@lab:~\x07[student@lab ~]$ ",
+        ]
+    )
+    events = processor.parse_command_events(processor.clean(raw_stream))
+    assert len(events) == 1
+    assert events[0].command == "ls -l"
+    assert events[0].output == "total 0"
+
+
+def test_split_suffix_without_prompt_is_not_treated_as_command():
+    processor = LogProcessor()
+    assert processor.parse_command_event("l\ntotal 0\n[student@lab ~]$") is None
 
 
 def test_path_output_with_prompt_is_not_treated_as_command():

@@ -1,0 +1,292 @@
+[     255ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[     354ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[     357ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:5177/favicon.ico:0
+[   33734ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   35503ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   35518ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   35519ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   35690ms] [LOG] [ttyd] websocket connection opened @ http://localhost:49940/:1
+[   35745ms] [LOG] [ttyd] WebGL renderer loaded @ http://localhost:49940/:1
+[   35745ms] [LOG] [ttyd] Leave site alert disabled @ http://localhost:49940/:1
+[   35746ms] [LOG] [ttyd] setting Unicode version: 11 @ http://localhost:49940/:1
+[   35746ms] [LOG] [ttyd] option: fontSize=15 @ http://localhost:49940/:1
+[   35755ms] [LOG] [ttyd] option: lineHeight=1.35 @ http://localhost:49940/:1
+[   35756ms] [LOG] [ttyd] option: fontFamily="Cascadia Mono, JetBrains Mono, Consolas, monospace" @ http://localhost:49940/:1
+[   35767ms] [LOG] [ttyd] option: cursorBlink=true @ http://localhost:49940/:1
+[   35767ms] [LOG] [ttyd] option: cursorStyle="bar" @ http://localhost:49940/:1
+[   35767ms] [LOG] [ttyd] option: scrollback=10000 @ http://localhost:49940/:1
+[   35768ms] [LOG] [ttyd] option: theme={"background":"#1f2430","foreground":"#e5e7eb","cursor":"#f8fafc","selectionBackground":"#3b82f680","black":"#111827","red":"#ef4444","green":"#22c55e","yellow":"#facc15","blue":"#60a5fa","magenta":"#c084fc","cyan":"#2dd4bf","white":"#f8fafc","brightBlack":"#64748b","brightRed":"#f87171","brightGreen":"#4ade80","brightYellow":"#fde047","brightBlue":"#93c5fd","brightMagenta":"#d8b4fe","brightCyan":"#67e8f9","brightWhite":"#ffffff"} @ http://localhost:49940/:1
+[   36359ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   37359ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   38358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   39359ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   40359ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   41358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   42359ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   43358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   44358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   45358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   46358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   47359ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   48359ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   49358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   50358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   51358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   52358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   53358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   54357ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   55358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   56358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   57358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   58358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   59358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   60358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   61358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   62358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   63357ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   64358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   65358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   66358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   67358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   68358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   69358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   70358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   71358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   72358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   73358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   74358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   75358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   76358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   77358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   78358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   79358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   80358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   81358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   82357ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   83358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   84358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   85358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   86358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   87358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   88358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   89358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   90358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   91358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   92358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   93358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   94358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   95358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   96358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   97357ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   98358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[   99358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  100357ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  101358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  102358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  103358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  104358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  105357ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  106357ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  107357ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  108357ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  109357ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  110358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  111358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  112358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  113358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  114358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  115359ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  116359ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  117359ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  118358ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  119359ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224
+[  119804ms] [LOG] [ttyd] websocket connection closed with code: 1006 @ http://localhost:49940/:1
+[  119818ms] [ERROR] Failed to load resource: net::ERR_EMPTY_RESPONSE @ http://localhost:49940/token:0
+[  119818ms] [ERROR] [ttyd] fetch http://localhost:49940/token:  TypeError: Failed to fetch
+    at p.refreshToken (http://localhost:49940/:2:580167)
+    at p.onSocketClose (http://localhost:49940/:2:583243) @ http://localhost:49940/:1
+[  119823ms] [ERROR] WebSocket connection to 'ws://localhost:49940/ws' failed: Connection closed before receiving a handshake response @ http://localhost:49940/:1
+[  119823ms] [LOG] [ttyd] websocket connection closed with code: 1006 @ http://localhost:49940/:1
+[  120150ms] [WARNING] [Vue warn]: Failed to resolve component: Plus
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement. 
+  at <App> @ http://127.0.0.1:5177/node_modules/.vite/deps/chunk-3AJ4FBDS.js?v=5dd5b3f2:2224

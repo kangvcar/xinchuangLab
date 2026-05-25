@@ -21,7 +21,7 @@ platform/
 
 ```bash
 cd platform/backend
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+python -m uvicorn app.main:app --reload --reload-exclude generated/* --host 127.0.0.1 --port 8000
 ```
 
 前端：
@@ -38,7 +38,7 @@ npm run dev
 LAB_RUNTIME=docker
 ```
 
-并先构建实验镜像：
+Docker 模式会严格要求 Docker daemon 和实验镜像可用；启动失败会直接返回错误，不会自动切换到模拟模式。切换前请先构建实验镜像：
 
 ```bash
 cd platform/docker/openeuler-file
@@ -55,4 +55,3 @@ docker build -t linux-ai-exp:openeuler-file-v1 .
 AI_MODE=deepseek
 DEEPSEEK_API_KEY=你的 API Key
 ```
-

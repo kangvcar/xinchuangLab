@@ -56,7 +56,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font-family: inherit;
 }
 
@@ -108,6 +110,32 @@ code {
   gap: 14px;
 }
 
+.experiment-switcher {
+  min-width: 280px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: start;
+}
+
+.experiment-switcher label {
+  color: var(--ai-text-secondary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.experiment-switcher select {
+  min-width: 240px;
+  max-width: 420px;
+  height: 38px;
+  padding: 0 12px;
+  border: 2px solid var(--ai-border);
+  border-radius: 8px;
+  color: var(--ai-text);
+  background: #fffdf5;
+  font-weight: 800;
+}
+
 .session-timer {
   display: inline-flex;
   align-items: center;
@@ -153,6 +181,292 @@ code {
   color: var(--ai-success-active);
   border-color: var(--ai-success);
   cursor: default;
+}
+
+.admin-button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 2px solid var(--ai-border);
+  border-radius: 8px;
+  background: #fffdf5;
+  color: var(--ai-text);
+  font-weight: 800;
+}
+
+.teacher-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: 64px 1fr;
+  background: var(--ai-bg);
+}
+
+.teacher-topbar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 0 28px;
+  background: linear-gradient(180deg, #fdfdf5 0%, #f8f8f0 100%);
+  border-bottom: 2px solid var(--ai-border);
+}
+
+.admin-link {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 2px solid var(--ai-border);
+  border-radius: 8px;
+  background: #fffdf5;
+  color: var(--ai-text);
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 3px 0 0 var(--ai-shadow-btn);
+}
+
+.teacher-admin-panel {
+  position: fixed;
+  z-index: 30;
+  top: 74px;
+  left: 28px;
+  right: 28px;
+  max-height: calc(100vh - 96px);
+  overflow: auto;
+  padding: 18px;
+  border: 2px solid var(--ai-border);
+  border-radius: 8px;
+  background: #fffdf5;
+  box-shadow: 0 14px 36px rgba(88, 63, 39, 0.18);
+}
+
+.teacher-admin-page {
+  position: static;
+  z-index: auto;
+  max-height: none;
+  margin: 20px 28px 28px;
+}
+
+.teacher-admin-panel header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.teacher-admin-panel header strong {
+  color: var(--ai-text);
+  font-size: 18px;
+}
+
+.teacher-admin-panel header span {
+  flex: 1;
+  color: var(--ai-text-secondary);
+  font-size: 13px;
+}
+
+.teacher-admin-panel header button,
+.teacher-admin-panel .primary-button {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+}
+
+.teacher-admin-grid,
+.teacher-admin-columns {
+  display: grid;
+  gap: 12px;
+}
+
+.teacher-admin-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.teacher-admin-columns {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+}
+
+.teacher-admin-panel label,
+.teacher-admin-block {
+  display: grid;
+  gap: 6px;
+  color: var(--ai-text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.teacher-admin-panel input,
+.teacher-admin-panel textarea {
+  width: 100%;
+  border: 2px solid var(--ai-border-light);
+  border-radius: 8px;
+  background: white;
+  color: var(--ai-text-body);
+  padding: 10px;
+  font-size: 13px;
+}
+
+.teacher-admin-panel textarea {
+  resize: vertical;
+  font-family: 'SF Mono', Consolas, monospace;
+  line-height: 1.45;
+}
+
+.teacher-admin-block {
+  margin: 12px 0;
+}
+
+.teacher-import-box {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 14px;
+  border: 2px solid var(--ai-border-light);
+  border-radius: 8px;
+  background: var(--ai-bg);
+}
+
+.teacher-import-box > span {
+  color: var(--ai-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.teacher-file-picker {
+  min-width: 240px;
+}
+
+.teacher-file-picker input {
+  margin-top: 6px;
+  padding: 8px;
+}
+
+.teacher-import-warnings {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.teacher-import-warnings span {
+  padding: 8px 10px;
+  border: 2px solid #f4c2c2;
+  border-radius: 8px;
+  color: var(--ai-error);
+  background: #fff4f4;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.teacher-raw-output {
+  margin: 10px 0 14px;
+  border: 2px solid var(--ai-border-light);
+  border-radius: 8px;
+  background: #fffdf5;
+  color: var(--ai-text-body);
+}
+
+.teacher-raw-output summary {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.teacher-raw-output pre {
+  max-height: 260px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border-top: 2px solid var(--ai-border-light);
+  white-space: pre-wrap;
+  font-family: 'SF Mono', Consolas, monospace;
+  font-size: 12px;
+}
+
+.teacher-source-hint {
+  color: var(--ai-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.teacher-build-panel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  align-content: start;
+}
+
+.teacher-build-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.teacher-build-button {
+  background: var(--ai-primary);
+  color: #fff;
+  border-color: var(--ai-primary);
+  box-shadow: 0 4px 0 0 var(--ai-primary-active);
+}
+
+.teacher-build-status {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 2px solid var(--ai-border-light);
+  border-radius: var(--ai-radius-pill);
+  color: var(--ai-text-secondary);
+  background: var(--ai-bg);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.teacher-build-status.succeeded {
+  color: var(--ai-success-active);
+  border-color: var(--ai-success);
+  background: #f4fbea;
+}
+
+.teacher-build-status.failed {
+  color: var(--ai-error);
+  border-color: var(--ai-error);
+  background: #fff4f4;
+}
+
+.teacher-dockerfile-preview,
+.teacher-build-log {
+  min-width: 0;
+  border: 2px solid var(--ai-border-light);
+  border-radius: 8px;
+  background: #fffdf5;
+  overflow: hidden;
+}
+
+.teacher-dockerfile-preview summary,
+.teacher-build-log strong {
+  display: block;
+  padding: 10px 12px;
+  color: var(--ai-text);
+  font-weight: 800;
+}
+
+.teacher-dockerfile-preview pre,
+.teacher-build-log pre {
+  max-height: 300px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border-top: 2px solid var(--ai-border-light);
+  color: var(--ai-text-body);
+  white-space: pre-wrap;
+  font-family: 'SF Mono', Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .status-dot {
@@ -787,7 +1101,8 @@ code {
   border: 1.5px solid var(--ai-border-light);
 }
 
-.terminal-actions button {
+.terminal-actions button,
+.terminal-open-link {
   min-height: 36px;
   display: inline-flex;
   align-items: center;
@@ -799,9 +1114,11 @@ code {
   font-weight: 600;
   border: 2px solid var(--ai-border);
   box-shadow: 0 3px 0 0 var(--ai-shadow-btn);
+  text-decoration: none;
 }
 
-.terminal-actions button:hover:not(:disabled) {
+.terminal-actions button:hover:not(:disabled),
+.terminal-open-link:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 0 0 var(--ai-shadow-btn);
   color: var(--ai-text-body);
@@ -812,18 +1129,18 @@ code {
   box-shadow: 0 1px 0 0 var(--ai-shadow-btn);
 }
 
-.terminal-actions button:first-child {
+.terminal-actions .stop-button {
   color: var(--ai-error);
   border-color: var(--ai-error);
   box-shadow: 0 3px 0 0 #c94444;
 }
 
-.terminal-actions button:first-child:hover:not(:disabled) {
+.terminal-actions .stop-button:hover:not(:disabled) {
   background: #fde8e8;
   box-shadow: 0 4px 0 0 #c94444;
 }
 
-.terminal-actions button:first-child:active:not(:disabled) {
+.terminal-actions .stop-button:active:not(:disabled) {
   box-shadow: 0 1px 0 0 #c94444;
 }
 
@@ -833,6 +1150,7 @@ code {
   background: linear-gradient(180deg, #2b2118, #1f180f);
 }
 
+.terminal-iframe-wrap,
 .terminal-frame,
 .xterm-container,
 .terminal-launch {
@@ -849,8 +1167,48 @@ code {
     0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
+.terminal-iframe-wrap {
+  position: relative;
+}
+
 .terminal-frame {
   display: block;
+}
+
+.terminal-frame-fallback {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 22px;
+  display: grid;
+  gap: 8px;
+  max-width: 560px;
+  padding: 14px;
+  border: 2px solid var(--ai-border-light);
+  border-radius: 8px;
+  background: #fffdf5;
+  color: var(--ai-text-body);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.terminal-frame-fallback strong {
+  color: var(--ai-text);
+  font-weight: 800;
+}
+
+.terminal-frame-fallback span {
+  overflow-wrap: anywhere;
+  color: var(--ai-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.terminal-frame-fallback a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ai-primary-active);
+  font-weight: 800;
 }
 
 .terminal-launch {

@@ -82,6 +82,19 @@ class Database:
                     confirmed_at TEXT,
                     UNIQUE(session_id, step_id)
                 );
+
+                CREATE TABLE IF NOT EXISTS experiment_build (
+                    id TEXT PRIMARY KEY,
+                    experiment_id TEXT NOT NULL,
+                    image_name TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    logs TEXT NOT NULL DEFAULT '',
+                    error TEXT,
+                    dockerfile TEXT NOT NULL,
+                    draft_config TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    finished_at TEXT
+                );
                 """
             )
 
@@ -181,11 +194,16 @@ class Database:
                 ),
             )
 
-    def list_experiments(self) -> list[dict[str, Any]]:
+    def list_experiments(self, *, active_only: bool = False) -> list[dict[str, Any]]:
         with self.connect() as conn:
-            rows = conn.execute(
-                "SELECT id, name, system_type, image_name, task_config, status FROM experiment ORDER BY id"
-            ).fetchall()
+            if active_only:
+                rows = conn.execute(
+                    "SELECT id, name, system_type, image_name, task_config, status FROM experiment WHERE status = 'active' ORDER BY id"
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT id, name, system_type, image_name, task_config, status FROM experiment ORDER BY id"
+                ).fetchall()
         return [self._experiment_row(row) for row in rows]
 
     def get_experiment(self, experiment_id: str) -> dict[str, Any] | None:
@@ -260,8 +278,38 @@ class Database:
         ended_at = datetime.utcnow().isoformat(timespec="seconds") + "Z" if status != "running" else None
         with self.connect() as conn:
             conn.execute(
-                "UPDATE lab_session SET status = ?, end_time = COALESCE(?, end_time) WHERE id = ?",
+                "UPDATE lab_session SET status = ?, end_time = ? WHERE id = ?",
                 (status, ended_at, session_id),
+            )
+
+    def update_session_runtime(
+        self,
+        session_id: str,
+        *,
+        container_id: str | None,
+        container_name: str | None,
+        terminal_url: str | None,
+        runtime_mode: str,
+    ) -> None:
+        with self.connect() as conn:
+            conn.execute(
+                """
+                UPDATE lab_session
+                SET container_id = ?, container_name = ?, terminal_url = ?, runtime_mode = ?
+                WHERE id = ?
+                """,
+                (container_id, container_name, terminal_url, runtime_mode, session_id),
+            )
+
+    def clear_session_runtime(self, session_id: str) -> None:
+        with self.connect() as conn:
+            conn.execute(
+                """
+                UPDATE lab_session
+                SET container_id = NULL, container_name = NULL, terminal_url = NULL
+                WHERE id = ?
+                """,
+                (session_id,),
             )
 
     def add_terminal_log(self, session_id: str, clean_content: str, raw_ref: str | None = None) -> dict[str, Any]:
@@ -364,6 +412,88 @@ class Database:
             ).fetchone()
         return row["step_id"] if row else None
 
+    def create_experiment_build(
+        self,
+        *,
+        build_id: str,
+        experiment_id: str,
+        image_name: str,
+        dockerfile: str,
+        draft_config: dict[str, Any],
+    ) -> dict[str, Any]:
+        created_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        with self.connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO experiment_build
+                    (id, experiment_id, image_name, status, logs, error, dockerfile, draft_config, created_at, finished_at)
+                VALUES (?, ?, ?, 'queued', '', NULL, ?, ?, ?, NULL)
+                """,
+                (
+                    build_id,
+                    experiment_id,
+                    image_name,
+                    dockerfile,
+                    json.dumps(draft_config, ensure_ascii=False),
+                    created_at,
+                ),
+            )
+        build = self.get_experiment_build(build_id)
+        assert build is not None
+        return build
+
+    def get_experiment_build(self, build_id: str) -> dict[str, Any] | None:
+        with self.connect() as conn:
+            row = conn.execute(
+                """
+                SELECT id, experiment_id, image_name, status, logs, error, dockerfile, draft_config, created_at, finished_at
+                FROM experiment_build
+                WHERE id = ?
+                """,
+                (build_id,),
+            ).fetchone()
+        return self._experiment_build_row(row) if row else None
+
+    def list_unfinished_experiment_builds(self) -> list[dict[str, Any]]:
+        with self.connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, experiment_id, image_name, status, logs, error, dockerfile, draft_config, created_at, finished_at
+                FROM experiment_build
+                WHERE status IN ('queued', 'running')
+                ORDER BY created_at
+                """
+            ).fetchall()
+        return [self._experiment_build_row(row) for row in rows]
+
+    def set_experiment_build_status(
+        self,
+        build_id: str,
+        status: str,
+        *,
+        error: str | None = None,
+        finished: bool = False,
+    ) -> None:
+        finished_at = datetime.utcnow().isoformat(timespec="seconds") + "Z" if finished else None
+        with self.connect() as conn:
+            conn.execute(
+                """
+                UPDATE experiment_build
+                SET status = ?,
+                    error = ?,
+                    finished_at = COALESCE(?, finished_at)
+                WHERE id = ?
+                """,
+                (status, error, finished_at, build_id),
+            )
+
+    def append_experiment_build_log(self, build_id: str, line: str) -> None:
+        with self.connect() as conn:
+            conn.execute(
+                "UPDATE experiment_build SET logs = logs || ? WHERE id = ?",
+                (line, build_id),
+            )
+
     def _experiment_row(self, row: sqlite3.Row) -> dict[str, Any]:
         task_config = json.loads(row["task_config"])
         return {
@@ -394,3 +524,17 @@ class Database:
             "runtime_mode": row["runtime_mode"],
         }
 
+    def _experiment_build_row(self, row: sqlite3.Row) -> dict[str, Any]:
+        return {
+            "id": row["id"],
+            "build_id": row["id"],
+            "experiment_id": row["experiment_id"],
+            "image_name": row["image_name"],
+            "status": row["status"],
+            "logs": row["logs"],
+            "error": row["error"],
+            "dockerfile": row["dockerfile"],
+            "draft_config": json.loads(row["draft_config"]),
+            "created_at": row["created_at"],
+            "finished_at": row["finished_at"],
+        }

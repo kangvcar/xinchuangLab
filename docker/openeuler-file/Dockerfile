@@ -35,7 +35,7 @@ RUN set -eux; \
     dnf clean all; \
     dnf makecache; \
     dnf -y update; \
-    dnf -y install bash python3 python3-pip shadow util-linux vim-minimal findutils tree curl wget iproute net-tools procps-ng sudo; \
+    dnf -y install bash python3 python3-pip shadow util-linux vim-minimal findutils tree curl wget iproute net-tools procps-ng sudo tmux; \
     python3 -m pip install --no-cache-dir -i "$PIP_INDEX_URL" websockets; \
     curl -fsSL --retry 3 --connect-timeout 20 "$TTYD_URL" -o /usr/local/bin/ttyd; \
     chmod +x /usr/local/bin/ttyd && \
@@ -48,9 +48,11 @@ RUN set -eux; \
 
 COPY start-lab.sh /opt/linux-ai/start-lab.sh
 COPY ws_client.py /opt/linux-ai/ws_client.py
+COPY bash-instrumentation.sh /opt/linux-ai/bash-instrumentation.sh
+COPY record_command_event.py /opt/linux-ai/record_command_event.py
 COPY task.json /opt/linux-ai/task.json
 
-RUN chmod +x /opt/linux-ai/start-lab.sh /opt/linux-ai/ws_client.py
+RUN chmod +x /opt/linux-ai/start-lab.sh /opt/linux-ai/ws_client.py /opt/linux-ai/record_command_event.py
 
 EXPOSE 7681
 

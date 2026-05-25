@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -40,6 +41,17 @@ def _as_bool(value: str, default: bool = False) -> bool:
     return value.lower() in {"1", "true", "yes", "y", "on"}
 
 
+def _default_builds_dir() -> Path:
+    override = os.getenv("BUILD_CONTEXT_DIR", "").strip()
+    if override:
+        return Path(override).expanduser()
+    if os.name == "nt":
+        base = os.getenv("LOCALAPPDATA") or tempfile.gettempdir()
+    else:
+        base = os.getenv("XDG_CACHE_HOME") or tempfile.gettempdir()
+    return Path(base) / "linux-ai-lab" / "builds"
+
+
 @dataclass(frozen=True)
 class Settings:
     app_name: str = "信创Linux AI实时陪练实训平台"
@@ -56,6 +68,7 @@ class Settings:
     database_path: Path = BACKEND_ROOT / "data" / "linux_ai_lab.db"
     reports_dir: Path = BACKEND_ROOT / "generated" / "reports"
     raw_logs_dir: Path = BACKEND_ROOT / "generated" / "raw_logs"
+    builds_dir: Path = _default_builds_dir()
     experiments_dir: Path = PROJECT_ROOT / "experiments"
     knowledge_dir: Path = PROJECT_ROOT / "knowledge"
 

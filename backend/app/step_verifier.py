@@ -11,6 +11,7 @@ class StepVerifier:
         step: dict[str, Any],
         command_event: Any | None,
         terminal_logs: list[str],
+        command_events: list[Any] | None = None,
     ) -> bool:
         """
         验证步骤是否完成。
@@ -21,21 +22,29 @@ class StepVerifier:
         """
         verify_config = step.get("verify")
         if verify_config:
-            return self._verify_with_config(verify_config, command_event)
+            return self._verify_with_config(verify_config, command_event, command_events or [])
         return self._verify_with_keywords(step.get("keywords", []), terminal_logs)
 
     def _verify_with_config(
         self,
         verify: dict[str, Any],
         command_event: Any | None,
+        command_events: list[Any],
     ) -> bool:
+        sequence = verify.get("sequence", [])
+        if sequence:
+            return self._verify_sequence(sequence, command_events)
+
+        if command_event and command_event.is_error:
+            return False
+
         # 1. 命令匹配：最新执行的命令必须以预期命令列表中的某一项开头
         expected_commands = verify.get("commands", [])
         if expected_commands:
             if command_event is None:
                 return False
             cmd = command_event.command.strip()
-            if not any(cmd.startswith(ec) for ec in expected_commands):
+            if not any(self._command_matches(cmd, ec) for ec in expected_commands):
                 return False
 
         # 2. 输出匹配：命令输出需要包含特定文本片段（可选）
@@ -54,11 +63,33 @@ class StepVerifier:
             if not any(re.search(pat, output) for pat in output_patterns):
                 return False
 
-        # 4. 错误检查：如果命令执行报错了，不算完成
-        if command_event and command_event.is_error:
+        return True
+
+    def _verify_sequence(self, sequence: list[str], command_events: list[Any]) -> bool:
+        if not sequence:
             return False
 
-        return True
+        sequence_index = 0
+        for event in command_events:
+            if event.is_error:
+                continue
+            cmd = event.command.strip()
+            expected = sequence[sequence_index]
+            if self._command_matches(cmd, expected):
+                sequence_index += 1
+                if sequence_index == len(sequence):
+                    return True
+        return False
+
+    def _command_matches(self, command: str, expected: str) -> bool:
+        normalized_command = command.strip()
+        normalized_expected = str(expected).strip()
+        if not normalized_command or not normalized_expected:
+            return False
+        return (
+            normalized_command == normalized_expected
+            or normalized_command.startswith(f"{normalized_expected} ")
+        )
 
     def _verify_with_keywords(self, keywords: list[str], terminal_logs: list[str]) -> bool:
         text = "\n".join(terminal_logs).lower()
