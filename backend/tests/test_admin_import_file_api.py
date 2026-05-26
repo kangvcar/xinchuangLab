@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from fastapi.testclient import TestClient
 
 from app import main
@@ -36,6 +38,48 @@ def test_import_file_endpoint_accepts_markdown(monkeypatch) -> None:
     payload = response.json()
     assert payload["source"] == "deepseek"
     assert payload["draft"]["experiment_id"] == "demo"
+
+
+def test_import_file_endpoint_rule_fallback_returns_draft_status(monkeypatch) -> None:
+    monkeypatch.setattr(main, "settings", replace(main.settings, deepseek_api_key="", ai_mode="auto"))
+    client = TestClient(main.app)
+
+    response = client.post(
+        "/api/admin/experiments/import-file",
+        headers=ADMIN_HEADERS,
+        files={"file": ("linux-basic.md", b"# Linux Basic\n\n```bash\npwd\n```", "text/markdown")},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["draft"]["status"] == "draft"
+
+
+def test_import_file_draft_can_be_saved_as_experiment(monkeypatch, tmp_path) -> None:
+    db = main.Database(tmp_path / "linux_ai_lab.db")
+    db.initialize()
+    monkeypatch.setattr(main, "db", db)
+    monkeypatch.setattr(main, "settings", replace(main.settings, deepseek_api_key="", ai_mode="auto"))
+    client = TestClient(main.app)
+
+    import_response = client.post(
+        "/api/admin/experiments/import-file",
+        headers=ADMIN_HEADERS,
+        files={"file": ("linux-basic.md", b"# Linux Basic\n\n```bash\npwd\n```", "text/markdown")},
+    )
+    draft = import_response.json()["draft"]
+
+    save_response = client.post(
+        "/api/admin/experiments",
+        headers={**ADMIN_HEADERS, "Content-Type": "application/json"},
+        json=draft,
+    )
+
+    assert save_response.status_code == 200
+    saved = save_response.json()
+    assert saved["id"] == draft["experiment_id"]
+    assert saved["status"] == "draft"
+    assert saved["task_config"]["steps"]
 
 
 def test_import_file_endpoint_rejects_unknown_extension() -> None:

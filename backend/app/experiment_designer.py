@@ -136,7 +136,7 @@ def _normalize_experiment_draft(
         "system": str(draft.get("system") or "openEuler"),
         "image_name": str(draft.get("image_name") or ""),
         "objective": str(draft.get("objective") or ""),
-        "status": str(draft.get("status") or "active"),
+        "status": str(draft.get("status") or "draft"),
         "schema_version": 2,
         "steps": normalized_steps,
     }
@@ -158,7 +158,7 @@ def ensure_experiment_draft_defaults(
         warnings.append(f"AI 返回的 system={raw_system} 已自动修正为 openEuler。")
     normalized["system"] = "openEuler"
     normalized.setdefault("schema_version", 2)
-    normalized.setdefault("status", "active")
+    normalized.setdefault("status", "draft")
     normalized.setdefault("objective", "")
     normalized["image_name"] = normalize_experiment_image_name(
         normalized.get("image_name"),

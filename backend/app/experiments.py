@@ -130,7 +130,7 @@ def build_experiment_draft_from_text(
         "system": "openEuler",
         "image_name": image_name,
         "objective": objective,
-        "status": "active",
+        "status": "draft",
         "schema_version": 2,
         "steps": steps,
     }
