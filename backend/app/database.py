@@ -69,6 +69,7 @@ class Database:
                     markdown_path TEXT NOT NULL,
                     html_path TEXT NOT NULL,
                     pdf_path TEXT,
+                    docx_path TEXT,
                     created_at TEXT NOT NULL,
                     FOREIGN KEY (session_id) REFERENCES lab_session(id)
                 );
@@ -404,15 +405,15 @@ class Database:
             ).fetchall()
         return [dict(row) for row in reversed(rows)]
 
-    def add_report(self, session_id: str, markdown_path: Path, html_path: Path, pdf_path: Path | None = None) -> dict[str, Any]:
+    def add_report(self, session_id: str, markdown_path: Path, html_path: Path, pdf_path: Path | None = None, docx_path: Path | None = None) -> dict[str, Any]:
         created_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
         with self.connect() as conn:
             cursor = conn.execute(
                 """
-                INSERT INTO lab_report (session_id, markdown_path, html_path, pdf_path, created_at)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO lab_report (session_id, markdown_path, html_path, pdf_path, docx_path, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (session_id, str(markdown_path), str(html_path), str(pdf_path) if pdf_path else None, created_at),
+                (session_id, str(markdown_path), str(html_path), str(pdf_path) if pdf_path else None, str(docx_path) if docx_path else None, created_at),
             )
             report_id = cursor.lastrowid
         return {
@@ -421,6 +422,7 @@ class Database:
             "markdown_path": str(markdown_path),
             "html_path": str(html_path),
             "pdf_path": str(pdf_path) if pdf_path else None,
+            "docx_path": str(docx_path) if docx_path else None,
             "created_at": created_at,
         }
 

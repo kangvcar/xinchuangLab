@@ -459,6 +459,9 @@ async def generate_report(session_id: str) -> dict[str, Any]:
     report = report_service.generate(session_id)
     static_path = f"reports-static/{Path(report['html_path']).name}"
     report["url"] = urljoin(settings.backend_public_url.rstrip("/") + "/", static_path)
+    if report.get("docx_path"):
+        docx_static_path = f"reports-static/{Path(report['docx_path']).name}"
+        report["docx_url"] = urljoin(settings.backend_public_url.rstrip("/") + "/", docx_static_path)
     return report
 
 
@@ -469,6 +472,19 @@ async def get_report(report_id: int) -> FileResponse:
     if not row:
         raise HTTPException(status_code=404, detail="report not found")
     return FileResponse(row["html_path"], media_type="text/html")
+
+
+@app.get("/api/reports/{report_id}/docx")
+async def get_report_docx(report_id: int) -> FileResponse:
+    with db.connect() as conn:
+        row = conn.execute("SELECT docx_path FROM lab_report WHERE id = ?", (report_id,)).fetchone()
+    if not row or not row["docx_path"]:
+        raise HTTPException(status_code=404, detail="docx report not found")
+    return FileResponse(
+        row["docx_path"],
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename=f"report-{report_id}.docx",
+    )
 
 
 @app.websocket("/ws/ai-coach/{session_id}")

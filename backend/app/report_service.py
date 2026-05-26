@@ -6,6 +6,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.shared import Pt, RGBColor
+
 from .database import Database
 
 
@@ -35,10 +40,12 @@ class ReportService:
         report_stem = f"{session_id}"
         markdown_path = self.reports_dir / f"{report_stem}.md"
         html_path = self.reports_dir / f"{report_stem}.html"
+        docx_path = self.reports_dir / f"{report_stem}.docx"
         markdown = self._render_markdown(model)
         markdown_path.write_text(markdown, encoding="utf-8")
         html_path.write_text(self._render_html(model), encoding="utf-8")
-        return self.db.add_report(session_id, markdown_path, html_path)
+        self._render_docx(model, docx_path)
+        return self.db.add_report(session_id, markdown_path, html_path, docx_path=docx_path)
 
     def build_report_model(self, session_id: str) -> dict[str, Any]:
         session = self.db.get_session(session_id)
@@ -497,6 +504,183 @@ class ReportService:
 </body>
 </html>
 """
+
+    def _render_docx(self, model: dict[str, Any], docx_path: Path) -> None:
+        meta = model["meta"]
+        overview = model["overview"]
+        doc = Document()
+
+        def _set_run_font(run, font_name: str = "Microsoft YaHei", size_pt: int | None = None, bold: bool = False, color: RGBColor | None = None) -> None:
+            run.font.name = font_name
+            run._element.rPr.rFonts.set(qn("w:eastAsia"), font_name)
+            if size_pt is not None:
+                run.font.size = Pt(size_pt)
+            if bold:
+                run.font.bold = True
+            if color is not None:
+                run.font.color.rgb = color
+
+        # 封面
+        paragraph = doc.add_paragraph()
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = paragraph.add_run(meta["platform_name"])
+        _set_run_font(run, size_pt=14, bold=True, color=RGBColor(0x2F, 0x6F, 0x5E))
+
+        paragraph = doc.add_paragraph()
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = paragraph.add_run(meta["title"])
+        _set_run_font(run, size_pt=28, bold=True)
+
+        doc.add_paragraph()
+
+        cover_items = [
+            ("实验名称", meta["experiment_name"]),
+            ("学生编号", meta["student_id"]),
+            ("系统环境", meta["system_type"]),
+            ("运行模式", meta["runtime_mode"]),
+            ("实验时间", f"{meta['start_time']} 至 {meta['end_time']}"),
+            ("报告生成", meta["generated_at"]),
+        ]
+        for label, value in cover_items:
+            p = doc.add_paragraph()
+            p.paragraph_format.space_after = Pt(6)
+            run = p.add_run(f"{label}：")
+            _set_run_font(run, size_pt=11, bold=True)
+            run = p.add_run(str(value))
+            _set_run_font(run, size_pt=11)
+
+        doc.add_page_break()
+
+        # 学习概览
+        heading = doc.add_heading("学习概览", level=1)
+        _set_run_font(heading.runs[0], size_pt=16, bold=True)
+
+        overview_items = [
+            f"实验目标：{overview['objective'] or '未记录'}",
+            f"步骤完成率：{overview['completed_steps']} / {overview['total_steps']}（{overview['completion_rate']}%）",
+            f"执行命令数量：{overview['command_count']}",
+            f"错误命令数量：{overview['error_count']}",
+            f"AI 陪练次数：{overview['ai_coach_count']}",
+            f"实验用时：{overview['duration_text']}",
+            f"整体结论：{overview['conclusion']}",
+        ]
+        for text in overview_items:
+            p = doc.add_paragraph(text, style="List Bullet")
+            _set_run_font(p.runs[0], size_pt=11)
+
+        # 步骤完成记录
+        doc.add_heading("步骤完成记录", level=1)
+        table = doc.add_table(rows=1, cols=6)
+        table.style = "Table Grid"
+        hdr_cells = table.rows[0].cells
+        headers = ["步骤", "标题", "学习目标", "状态", "完成时间", "推荐命令"]
+        for i, h in enumerate(headers):
+            hdr_cells[i].text = h
+            for paragraph in hdr_cells[i].paragraphs:
+                for run in paragraph.runs:
+                    _set_run_font(run, size_pt=11, bold=True)
+
+        for step in model["steps"]:
+            row_cells = table.add_row().cells
+            row_cells[0].text = str(step["id"])
+            row_cells[1].text = step["title"]
+            row_cells[2].text = step["goal"]
+            row_cells[3].text = step["status_label"]
+            row_cells[4].text = step["completed_at"] or "未记录"
+            row_cells[5].text = ", ".join(step["try_commands"]) or "未记录"
+            for cell in row_cells:
+                for paragraph in cell.paragraphs:
+                    for run in paragraph.runs:
+                        _set_run_font(run, size_pt=10)
+
+        # 关键操作证据
+        doc.add_heading("关键操作证据", level=1)
+        if model["evidence_items"]:
+            for item in model["evidence_items"]:
+                p = doc.add_paragraph()
+                run = p.add_run(item["command"])
+                _set_run_font(run, size_pt=12, bold=True)
+                p = doc.add_paragraph(f"时间：{item['time'] or '未记录'}")
+                _set_run_font(p.runs[0], size_pt=10)
+                p = doc.add_paragraph(f"关联步骤：{item['step_title']}")
+                _set_run_font(p.runs[0], size_pt=10)
+                p = doc.add_paragraph(f"是否错误：{'是' if item['is_error'] else '否'}")
+                _set_run_font(p.runs[0], size_pt=10)
+                p = doc.add_paragraph(f"输出摘要：{item['output_summary']}")
+                _set_run_font(p.runs[0], size_pt=10)
+                p = doc.add_paragraph(f"教学意义：{item['teaching_value']}")
+                _set_run_font(p.runs[0], size_pt=10)
+                doc.add_paragraph()
+        else:
+            p = doc.add_paragraph("暂无关键操作证据。")
+            _set_run_font(p.runs[0], size_pt=10)
+
+        # AI 陪练摘要
+        doc.add_heading("AI 陪练摘要", level=1)
+        if model["ai_summaries"]:
+            for item in model["ai_summaries"]:
+                p = doc.add_paragraph()
+                run = p.add_run(f"{item['time'] or '未记录'} · {item['feedback_type']} · ")
+                _set_run_font(run, size_pt=10)
+                run = p.add_run(item["command"])
+                _set_run_font(run, size_pt=10, bold=True)
+                p = doc.add_paragraph(item["summary"])
+                _set_run_font(p.runs[0], size_pt=10)
+                doc.add_paragraph()
+        else:
+            p = doc.add_paragraph("暂无 AI 陪练记录。")
+            _set_run_font(p.runs[0], size_pt=10)
+
+        # 学习表现分析
+        doc.add_heading("学习表现分析", level=1)
+
+        doc.add_heading("掌握较好的内容", level=2)
+        for item in model["learning_analysis"]["strengths"]:
+            p = doc.add_paragraph(item, style="List Bullet")
+            _set_run_font(p.runs[0], size_pt=10)
+
+        doc.add_heading("需要巩固的内容", level=2)
+        for item in model["learning_analysis"]["needs_practice"]:
+            p = doc.add_paragraph(item, style="List Bullet")
+            _set_run_font(p.runs[0], size_pt=10)
+
+        doc.add_heading("典型错误", level=2)
+        if model["learning_analysis"]["typical_errors"]:
+            for item in model["learning_analysis"]["typical_errors"]:
+                p = doc.add_paragraph(f"{item['type']}：{item['command']}。建议：{item['suggestion']}", style="List Bullet")
+                _set_run_font(p.runs[0], size_pt=10)
+        else:
+            p = doc.add_paragraph("暂未识别典型错误。", style="List Bullet")
+            _set_run_font(p.runs[0], size_pt=10)
+
+        doc.add_heading("后续学习建议", level=2)
+        for item in model["learning_analysis"]["recommendations"]:
+            p = doc.add_paragraph(item, style="List Bullet")
+            _set_run_font(p.runs[0], size_pt=10)
+
+        # 教师评价区
+        doc.add_heading("教师评价区", level=1)
+        teacher = model["teacher_evaluation"]
+        teacher_items = [
+            f"完成度建议：{teacher['completion_suggestion']}",
+            f"操作规范性建议：{teacher['operation_suggestion']}",
+            f"排错能力建议：{teacher['debugging_suggestion']}",
+            f"评分参考：{teacher['score_hint']}",
+        ]
+        for text in teacher_items:
+            p = doc.add_paragraph(text)
+            _set_run_font(p.runs[0], size_pt=10)
+
+        doc.add_paragraph()
+        p = doc.add_paragraph("教师评语：")
+        _set_run_font(p.runs[0], size_pt=11, bold=True)
+        p = doc.add_paragraph("_" * 60)
+        _set_run_font(p.runs[0], size_pt=10)
+
+        p = doc.add_paragraph("综合评分：____________    等级：____________    教师签名：____________    日期：____________")
+        _set_run_font(p.runs[0], size_pt=10)
+
+        doc.save(str(docx_path))
 
 
 def _parse_command_context(context: str) -> dict[str, Any]:

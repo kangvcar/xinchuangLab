@@ -119,7 +119,7 @@ export function useApi() {
     return response.json();
   }, []);
 
-  const generateReport = useCallback(async (sessionId: string): Promise<{ url: string }> => {
+  const generateReport = useCallback(async (sessionId: string): Promise<{ url: string; docx_url?: string }> => {
     const response = await fetch(`${API_BASE}/api/sessions/${sessionId}/report`, { method: 'POST' });
     if (!response.ok) throw new Error('生成报告失败');
     return response.json();

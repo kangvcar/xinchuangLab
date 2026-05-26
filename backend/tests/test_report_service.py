@@ -171,3 +171,44 @@ def test_generate_unknown_session_raises_value_error(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="session not found"):
         ReportService(db, tmp_path / "reports").generate("missing-session")
+
+
+def test_generate_creates_docx_file(tmp_path: Path) -> None:
+    db = prepare_db(tmp_path)
+    session_id = "stu001-file-basic-demo"
+    db.update_step_status(session_id, 1, "completed", "2026-05-26T01:02:00Z")
+    db.confirm_step(session_id, 1, 2)
+    db.add_terminal_log(session_id, "student@lab:~$ pwd\n/home/student\nstudent@lab:~$")
+    add_ai_record(db, session_id, "pwd", "/home/student", is_error=False, step_id=1)
+
+    report = ReportService(db, tmp_path / "reports").generate(session_id)
+
+    assert report["docx_path"]
+    docx_file = Path(report["docx_path"])
+    assert docx_file.exists()
+    assert docx_file.stat().st_size > 0
+
+
+def test_render_docx_contains_key_sections(tmp_path: Path) -> None:
+    from docx import Document
+
+    db = prepare_db(tmp_path)
+    session_id = "stu001-file-basic-demo"
+    db.update_step_status(session_id, 1, "completed", "2026-05-26T01:02:00Z")
+    db.confirm_step(session_id, 1, 2)
+    db.add_terminal_log(session_id, "student@lab:~$ pwd\n/home/student\nstudent@lab:~$")
+    add_ai_record(db, session_id, "pwd", "/home/student", is_error=False, step_id=1)
+
+    report = ReportService(db, tmp_path / "reports").generate(session_id)
+    docx_file = Path(report["docx_path"])
+    doc = Document(str(docx_file))
+
+    full_text = "\n".join(p.text for p in doc.paragraphs)
+    assert "Linux AI 陪练实训学习报告" in full_text
+    assert "学习概览" in full_text
+    assert "步骤完成记录" in full_text
+    assert "关键操作证据" in full_text
+    assert "AI 陪练摘要" in full_text
+    assert "学习表现分析" in full_text
+    assert "教师评价区" in full_text
+    assert len(doc.tables) >= 1

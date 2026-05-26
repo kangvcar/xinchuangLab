@@ -27,6 +27,7 @@ RUNTIME_FILES = [
     "ws_client.py",
     "bash-instrumentation.sh",
     "record_command_event.py",
+    "tmux.conf",
 ]
 RUNTIME_PACKAGES = [
     "bash",
@@ -275,6 +276,7 @@ COPY ws_client.py /opt/linux-ai/ws_client.py
 COPY bash-instrumentation.sh /opt/linux-ai/bash-instrumentation.sh
 COPY record_command_event.py /opt/linux-ai/record_command_event.py
 COPY task.json /opt/linux-ai/task.json
+COPY tmux.conf /opt/linux-ai/tmux.conf
 {copy_student_files}{mkdir_student_dirs}
 RUN chmod +x /opt/linux-ai/start-lab.sh /opt/linux-ai/ws_client.py /opt/linux-ai/record_command_event.py
 

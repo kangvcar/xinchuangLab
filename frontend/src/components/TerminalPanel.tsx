@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { ExternalLink, FileText, Play, RefreshCcw, Square, Terminal, Loader2 } from 'lucide-react';
+import { ExternalLink, FileText, Play, RefreshCcw, Square, Terminal, Loader2, Download } from 'lucide-react';
 import { useXterm } from '@/hooks/useXterm';
 import type { LabSession } from '@/types';
 
@@ -12,6 +12,7 @@ interface TerminalPanelProps {
   onStopSession: () => void;
   onResetSession: () => void;
   onGenerateReport: () => void;
+  onExportDocx: () => void;
   onSendMockCommand: (cmd: string) => void;
   busy: boolean;
 }
@@ -25,6 +26,7 @@ export default function TerminalPanel({
   onStopSession,
   onResetSession,
   onGenerateReport,
+  onExportDocx,
   onSendMockCommand,
   busy,
 }: TerminalPanelProps) {
@@ -125,6 +127,14 @@ export default function TerminalPanel({
             title="生成报告"
           >
             <FileText size={13} />
+          </button>
+          <button
+            onClick={onExportDocx}
+            disabled={!activeSession || busy}
+            className="h-8 w-8 inline-flex items-center justify-center text-neutral-600 bg-white rounded-md border border-neutral-200 hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="导出 Word 报告"
+          >
+            <Download size={13} />
           </button>
         </div>
       </div>

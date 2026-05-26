@@ -430,6 +430,21 @@ export default function StudentPage() {
     }
   }, [activeSession, generateReportApi]);
 
+  const exportDocx = useCallback(async () => {
+    if (!activeSession) return;
+    setBusy(true);
+    try {
+      const payload = await generateReportApi(activeSession.id);
+      if (payload.docx_url) {
+        window.location.href = payload.docx_url;
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setBusy(false);
+    }
+  }, [activeSession, generateReportApi]);
+
   const selectStep = useCallback(
     (stepId: number) => {
       const status = stepProgressMap.get(stepId);
@@ -486,6 +501,7 @@ export default function StudentPage() {
           onStopSession={stopSession}
           onResetSession={resetSession}
           onGenerateReport={generateReport}
+          onExportDocx={exportDocx}
           onSendMockCommand={sendMockCommand}
           busy={busy}
         />
