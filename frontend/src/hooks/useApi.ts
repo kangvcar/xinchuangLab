@@ -47,6 +47,16 @@ export function useApi() {
     return response.json();
   }, []);
 
+  const loadAdminExperiments = useCallback(async (): Promise<Experiment[]> => {
+    const response = await fetch(`${API_BASE}/api/admin/experiments`, {
+      headers: adminHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error(await errorMessage(response, '读取实验列表失败'));
+    }
+    return response.json();
+  }, []);
+
   const createSession = useCallback(async (studentId: string, experimentId: string): Promise<LabSession> => {
     const response = await fetch(`${API_BASE}/api/sessions`, {
       method: 'POST',
@@ -138,6 +148,17 @@ export function useApi() {
     return response.json();
   }, []);
 
+  const deleteExperiment = useCallback(async (experimentId: string): Promise<{ status: string; experiment_id: string }> => {
+    const response = await fetch(`${API_BASE}/api/admin/experiments/${encodeURIComponent(experimentId)}`, {
+      method: 'DELETE',
+      headers: adminHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error(await errorMessage(response, '停用实验失败'));
+    }
+    return response.json();
+  }, []);
+
   const buildExperiment = useCallback(async (data: Record<string, unknown>): Promise<BuildState> => {
     const response = await fetch(`${API_BASE}/api/admin/experiments/build`, {
       method: 'POST',
@@ -210,6 +231,7 @@ export function useApi() {
 
   return {
     loadExperiments,
+    loadAdminExperiments,
     createSession,
     getSession,
     getCurrentSession,
@@ -220,6 +242,7 @@ export function useApi() {
     sendMockCommand,
     generateReport,
     saveExperiment,
+    deleteExperiment,
     buildExperiment,
     importText,
     importFile,

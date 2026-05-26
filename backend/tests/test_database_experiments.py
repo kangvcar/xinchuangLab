@@ -3,32 +3,36 @@ from pathlib import Path
 from app.database import Database
 
 
-def test_list_experiments_can_filter_active(tmp_path: Path) -> None:
+def test_list_experiments_filters_student_visible_statuses(tmp_path: Path) -> None:
     db = Database(tmp_path / "lab.db")
     db.initialize()
-    db.upsert_experiment(
-        {
-            "experiment_id": "active-lab",
-            "name": "Active",
-            "system": "openEuler",
-            "image_name": "linux-ai-exp:active",
-            "status": "active",
-            "steps": [{"id": 1, "title": "step"}],
-        }
-    )
-    db.upsert_experiment(
-        {
-            "experiment_id": "draft-lab",
-            "name": "Draft",
-            "system": "openEuler",
-            "image_name": "linux-ai-exp:draft",
-            "status": "draft",
-            "steps": [{"id": 1, "title": "step"}],
-        }
-    )
+    for experiment_id, status in [
+        ("active-lab", "active"),
+        ("published-lab", "published"),
+        ("draft-lab", "draft"),
+        ("inactive-lab", "inactive"),
+    ]:
+        db.upsert_experiment(
+            {
+                "experiment_id": experiment_id,
+                "name": experiment_id,
+                "system": "openEuler",
+                "image_name": f"linux-ai-exp:{experiment_id}",
+                "status": status,
+                "steps": [{"id": 1, "title": "step"}],
+            }
+        )
 
-    assert [item["id"] for item in db.list_experiments(active_only=True)] == ["active-lab"]
-    assert [item["id"] for item in db.list_experiments()] == ["active-lab", "draft-lab"]
+    assert [item["id"] for item in db.list_experiments(active_only=True)] == [
+        "active-lab",
+        "published-lab",
+    ]
+    assert [item["id"] for item in db.list_experiments()] == [
+        "active-lab",
+        "draft-lab",
+        "inactive-lab",
+        "published-lab",
+    ]
 
 
 def test_initialize_preserves_unfinished_builds_for_recovery(tmp_path: Path) -> None:

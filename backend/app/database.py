@@ -199,7 +199,12 @@ class Database:
         with self.connect() as conn:
             if active_only:
                 rows = conn.execute(
-                    "SELECT id, name, system_type, image_name, task_config, status FROM experiment WHERE status = 'active' ORDER BY id"
+                    """
+                    SELECT id, name, system_type, image_name, task_config, status
+                    FROM experiment
+                    WHERE status IN ('active', 'published')
+                    ORDER BY id
+                    """
                 ).fetchall()
             else:
                 rows = conn.execute(

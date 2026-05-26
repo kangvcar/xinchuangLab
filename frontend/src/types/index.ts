@@ -1,9 +1,11 @@
+export type ExperimentStatus = 'draft' | 'published' | 'inactive' | 'active';
+
 export interface Experiment {
   id: string;
   name: string;
   system_type: string;
   image_name: string;
-  status: string;
+  status: ExperimentStatus;
   task_config: TaskConfig;
 }
 

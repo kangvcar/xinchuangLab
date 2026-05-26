@@ -115,7 +115,7 @@ def test_build_success_publishes_experiment(
     assert build["status"] == "succeeded"
     assert "#1 DONE" in build["logs"]
     assert experiment is not None
-    assert experiment["status"] == "active"
+    assert experiment["status"] == "published"
     assert experiment["image_name"] == "linux-ai-exp:demo-lab-v1"
 
 
@@ -220,6 +220,7 @@ def test_recover_interrupted_build_publishes_when_image_exists(
     assert build["status"] == "succeeded"
     assert "后端重启恢复" in build["logs"]
     assert db.get_experiment("demo-lab") is not None
+    assert db.get_experiment("demo-lab")["status"] == "published"
 
 
 def test_recover_interrupted_build_fails_when_image_missing(

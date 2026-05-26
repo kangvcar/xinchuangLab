@@ -131,7 +131,7 @@ async def admin_save_experiment(
     config.setdefault("name", experiment_id)
     config.setdefault("system", "openEuler")
     config.setdefault("image_name", "")
-    config.setdefault("status", "active")
+    config.setdefault("status", "draft")
     config.setdefault("schema_version", 2)
     config.setdefault("steps", [])
     config = ensure_experiment_draft_defaults(config)
@@ -155,7 +155,7 @@ async def admin_update_experiment(
         existing_config.update(config)
         config = existing_config
     config.setdefault("schema_version", 2)
-    config.setdefault("status", "active")
+    config.setdefault("status", "draft")
     config.setdefault("name", experiment_id)
     config.setdefault("system", "openEuler")
     config.setdefault("image_name", "")

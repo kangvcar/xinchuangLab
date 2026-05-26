@@ -147,7 +147,7 @@ class ExperimentBuildService:
 
     def _publish_successful_build(self, build_id: str, draft: dict[str, Any], image_name: str) -> None:
         self.db.append_experiment_build_log(build_id, f"镜像构建成功并自动发布：{image_name}\n")
-        draft["status"] = "active"
+        draft["status"] = "published"
         draft["image_name"] = image_name
         self.db.upsert_experiment(draft)
         self.db.set_experiment_build_status(build_id, "succeeded", finished=True)
