@@ -177,6 +177,10 @@ def test_get_current_session_returns_latest_running_session(
     with db.connect() as conn:
         conn.execute(
             "UPDATE lab_session SET start_time = ? WHERE id = ?",
+            ("2026-05-26T11:00:00Z", "session-old"),
+        )
+        conn.execute(
+            "UPDATE lab_session SET start_time = ? WHERE id = ?",
             ("2026-05-26T12:00:00Z", latest["id"]),
         )
     monkeypatch.setattr(main, "db", db)
