@@ -24,7 +24,7 @@ export default function CoachPanel({ aiRecords, analyzingCommand, statusText, re
       <div className="h-11 flex items-center justify-between gap-3 px-4 border-b border-neutral-200 bg-neutral-50 shrink-0">
         <div className="inline-flex items-center gap-2 text-neutral-900 font-semibold text-sm">
           <Bot size={16} />
-          <span>AI 陪练输出</span>
+          <span>陪练碎碎念</span>
         </div>
         <span className="max-w-[220px] overflow-hidden text-neutral-500 text-xs font-medium text-ellipsis whitespace-nowrap">
           {statusText}
@@ -53,11 +53,11 @@ export default function CoachPanel({ aiRecords, analyzingCommand, statusText, re
             <Bot size={16} className="shrink-0 mt-0.5 text-neutral-500" />
             <div>
               <strong className="text-sm font-medium text-neutral-900">
-                正在分析：{analyzingCommand}
+                哟，{analyzingCommand}？让我验验你这波什么水平
                 <span className="inline-block w-1 h-1 ml-1 rounded-full bg-neutral-400 animate-pulse" />
               </strong>
               <span className="block mt-1 text-neutral-500 text-xs leading-relaxed">
-                我会结合终端输出和当前实验步骤，给你一段有针对性的陪练反馈。
+                正在扒拉你的终端输出和实验步骤，马上告诉你这操作是神是鬼。
               </span>
             </div>
           </article>
@@ -68,9 +68,9 @@ export default function CoachPanel({ aiRecords, analyzingCommand, statusText, re
             <div className="w-12 h-12 grid place-items-center rounded-lg bg-neutral-100 text-neutral-400">
               <Sparkles size={20} />
             </div>
-            <strong className="text-neutral-900 font-semibold text-sm">等待第一条终端日志</strong>
+            <strong className="text-neutral-900 font-semibold text-sm">别光盯着屏幕发呆啊 👀</strong>
             <span className="max-w-[400px] text-xs leading-relaxed">
-              在右侧终端执行命令后，AI 会实时分析操作、输出和下一步建议。
+              键盘在你手里，终端在等你，我板凳都搬好了。你倒是敲啊——敲错了算我的，一直不敲……那我可去刷视频了。
             </span>
           </article>
         )}
