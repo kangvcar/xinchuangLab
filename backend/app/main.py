@@ -83,13 +83,16 @@ async def health() -> dict[str, Any]:
         experiments = db.list_experiments()
     except Exception:
         experiments = []
+    docker_diagnostics = await docker_manager.preflight(experiments)
     return {
         "status": "ok",
         "runtime": settings.lab_runtime,
         "allow_mock_fallback": False,
         "configured_allow_mock_fallback": settings.allow_mock_fallback,
         "fallback_policy": "mock-only",
-        "docker": await docker_manager.preflight(experiments),
+        "terminal_event_ws_url": docker_diagnostics.get("terminal_event_ws_url"),
+        "warnings": docker_diagnostics.get("warnings", []),
+        "docker": docker_diagnostics,
         "ai_mode": settings.ai_mode,
         "ai_provider": coach_provider.name,
         "deepseek_configured": bool(settings.deepseek_api_key),
@@ -265,6 +268,14 @@ async def admin_get_experiment_build(
 @app.get("/api/sessions")
 async def list_sessions() -> list[dict[str, Any]]:
     return db.list_sessions()
+
+
+@app.get("/api/sessions/current")
+async def get_current_session(student_id: str, experiment_id: str | None = None) -> dict[str, Any]:
+    session = db.get_latest_running_session(student_id=student_id, experiment_id=experiment_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="running session not found")
+    return session
 
 
 @app.post("/api/sessions")

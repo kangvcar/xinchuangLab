@@ -52,6 +52,16 @@ class FakeDockerManager:
         return self.start_result
 
 
+class FakeDiagnosticsDockerManager:
+    async def preflight(self, experiments: list[dict]) -> dict:
+        return {
+            "runtime": "docker",
+            "terminal_event_ws_url": "ws://host.docker.internal:8001/ws/terminal-log",
+            "warnings": ["diagnostic warning"],
+            "images": [{"name": item["image_name"], "exists": True} for item in experiments],
+        }
+
+
 def prepare_database(tmp_path: Path) -> Database:
     db = Database(tmp_path / "linux_ai_lab.db")
     db.initialize()
@@ -155,3 +165,54 @@ def test_reset_session_start_failure_stops_session_and_clears_runtime(
     assert session["container_id"] is None
     assert session["container_name"] is None
     assert session["terminal_url"] is None
+
+
+def test_get_current_session_returns_latest_running_session(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db = prepare_database(tmp_path)
+    create_running_session(db, "session-old")
+    latest = create_running_session(db, "session-latest")
+    with db.connect() as conn:
+        conn.execute(
+            "UPDATE lab_session SET start_time = ? WHERE id = ?",
+            ("2026-05-26T12:00:00Z", latest["id"]),
+        )
+    monkeypatch.setattr(main, "db", db)
+
+    result = asyncio.run(main.get_current_session(student_id="stu001", experiment_id="file-basic"))
+
+    assert result["id"] == latest["id"]
+    assert result["status"] == "running"
+    assert result["terminal_url"] == "http://localhost:11111"
+
+
+def test_get_current_session_ignores_stopped_session(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db = prepare_database(tmp_path)
+    create_running_session(db)
+    db.update_session_status("session-1", "stopped")
+    monkeypatch.setattr(main, "db", db)
+
+    with pytest.raises(HTTPException) as exc_info:
+        asyncio.run(main.get_current_session(student_id="stu001", experiment_id="file-basic"))
+
+    assert exc_info.value.status_code == 404
+
+
+def test_health_exposes_terminal_event_ws_diagnostics(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db = prepare_database(tmp_path)
+    monkeypatch.setattr(main, "db", db)
+    monkeypatch.setattr(main, "docker_manager", FakeDiagnosticsDockerManager())
+
+    result = asyncio.run(main.health())
+
+    assert result["terminal_event_ws_url"] == "ws://host.docker.internal:8001/ws/terminal-log"
+    assert result["warnings"] == ["diagnostic warning"]
+    assert result["docker"]["terminal_event_ws_url"] == "ws://host.docker.internal:8001/ws/terminal-log"

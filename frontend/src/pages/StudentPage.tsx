@@ -9,9 +9,76 @@ import { useApi } from '@/hooks/useApi';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import type { Experiment, LabSession, StepProgress, AICoachRecord } from '@/types';
 
+const sessionStorageKey = (studentId: string) => `linux-ai-active-session:${studentId}`;
+const experimentStorageKey = (studentId: string) => `linux-ai-active-experiment:${studentId}`;
+
+function getLocalStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function readStoredSessionId(studentId: string): string {
+  return getLocalStorage()?.getItem(sessionStorageKey(studentId)) ?? '';
+}
+
+function readStoredExperimentId(studentId: string): string {
+  return getLocalStorage()?.getItem(experimentStorageKey(studentId)) ?? '';
+}
+
+function persistStoredSession(session: LabSession): void {
+  const storage = getLocalStorage();
+  if (!storage) return;
+  storage.setItem(sessionStorageKey(session.student_id), session.id);
+  storage.setItem(experimentStorageKey(session.student_id), session.experiment_id);
+}
+
+function clearStoredSession(studentId: string): void {
+  const storage = getLocalStorage();
+  if (!storage) return;
+  storage.removeItem(sessionStorageKey(studentId));
+  storage.removeItem(experimentStorageKey(studentId));
+}
+
+function remainingSecondsForSession(session: LabSession): number {
+  const startedAt = Date.parse(session.start_time ?? '');
+  if (!Number.isFinite(startedAt)) return 60 * 60;
+  const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
+  return Math.max(0, 60 * 60 - elapsedSeconds);
+}
+
+function aiRecordKey(record: AICoachRecord): string {
+  return String(record.id || `${record.created_at}-${record.command}`);
+}
+
+function mergeAiRecordsById(existing: AICoachRecord[], incoming: AICoachRecord[]): AICoachRecord[] {
+  const seen = new Set<string>();
+  return [...existing, ...incoming].filter((record) => {
+    const key = aiRecordKey(record);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export default function StudentPage() {
-  const api = useApi();
-  const ws = useWebSocket();
+  const {
+    loadExperiments,
+    createSession,
+    getSession,
+    getCurrentSession,
+    stopSession: stopSessionApi,
+    resetSession: resetSessionApi,
+    loadStepProgress,
+    confirmStep: confirmStepApi,
+    sendMockCommand: sendMockCommandApi,
+    generateReport: generateReportApi,
+    getLogs,
+  } = useApi();
+  const { connect: connectCoach, disconnect: disconnectCoach } = useWebSocket();
 
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [selectedExperimentId, setSelectedExperimentId] = useState<string>('file-basic');
@@ -52,6 +119,11 @@ export default function StudentPage() {
     return confirmed;
   }, [stepProgress]);
 
+  const progressedStepCount = useMemo(
+    () => stepProgress.filter((p) => p.status === 'completed' || p.status === 'confirmed').length,
+    [stepProgress]
+  );
+
   const currentQuestion = useMemo(() => {
     const nextStep = currentSteps.find((step) => {
       const status = stepProgressMap.get(step.id);
@@ -74,23 +146,13 @@ export default function StudentPage() {
 
   const progressPercent = useMemo(() => {
     if (!currentSteps.length) return 0;
-    return Math.round((confirmedStepIds.size / currentSteps.length) * 100);
-  }, [currentSteps.length, confirmedStepIds]);
+    return Math.round((progressedStepCount / currentSteps.length) * 100);
+  }, [currentSteps.length, progressedStepCount]);
 
   const runtimeLabel = useMemo(() => {
     if (!activeSession) return '未启动';
     return activeSession.runtime_mode === 'docker' ? 'Docker 容器' : '模拟模式';
   }, [activeSession]);
-
-  // Load experiments on mount
-  useEffect(() => {
-    api.loadExperiments().then((data) => {
-      setExperiments(data);
-      if (data.length && !data.find((item) => item.id === selectedExperimentId)) {
-        setSelectedExperimentId(data[0].id);
-      }
-    });
-  }, []);
 
   // Timer
   useEffect(() => {
@@ -105,21 +167,24 @@ export default function StudentPage() {
     };
   }, [activeSession]);
 
-  const clearSessionState = useCallback(() => {
+  const clearSessionState = useCallback((options?: { clearStored?: boolean }) => {
     setActiveSession(null);
     setAiRecords([]);
     setStepProgress([]);
     setActiveStepId(null);
     setAnalyzingCommand('');
     setReportUrl('');
-    ws.disconnect();
-  }, [ws]);
+    if (options?.clearStored !== false) {
+      clearStoredSession(studentId);
+    }
+    disconnectCoach();
+  }, [disconnectCoach, studentId]);
 
   const stopActiveSession = useCallback(async () => {
     if (!activeSession) return;
-    await api.stopSession(activeSession.id);
+    await stopSessionApi(activeSession.id);
     clearSessionState();
-  }, [activeSession, api, clearSessionState]);
+  }, [activeSession, clearSessionState, stopSessionApi]);
 
   const switchExperiment = useCallback(
     async (nextExperimentId: string) => {
@@ -145,36 +210,129 @@ export default function StudentPage() {
     [selectedExperimentId, busy, activeSession, stopActiveSession, clearSessionState]
   );
 
-  const loadProgress = useCallback(async () => {
-    if (!activeSession) return;
+  const loadProgressForSession = useCallback(async (sessionId: string) => {
     try {
-      const payload = await api.loadStepProgress(activeSession.id);
+      const payload = await loadStepProgress(sessionId);
       setStepProgress(payload.progress ?? []);
     } catch {
       // silent fail
     }
-  }, [activeSession, api]);
+  }, [loadStepProgress]);
+
+  const loadLogsForSession = useCallback(async (sessionId: string) => {
+    try {
+      const payload = await getLogs(sessionId);
+      setAiRecords((prev) => mergeAiRecordsById(prev, payload.ai_records ?? []));
+    } catch {
+      // silent fail
+    }
+  }, [getLogs]);
 
   const connectCoachSocket = useCallback(
     (sessionId: string) => {
-      ws.connect(sessionId, {
+      connectCoach(sessionId, {
         onAIPending: (command) => setAnalyzingCommand(command),
         onAICoach: (record) => {
           setAnalyzingCommand('');
-          setAiRecords((prev) => [...prev, record]);
+          setAiRecords((prev) => mergeAiRecordsById(prev, [record]));
         },
-        onStepCompleted: () => loadProgress(),
+        onStepCompleted: () => loadProgressForSession(sessionId),
       });
     },
-    [ws, loadProgress]
+    [connectCoach, loadProgressForSession]
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const restore = async () => {
+      try {
+        const data = await loadExperiments();
+        if (cancelled) return;
+        setExperiments(data);
+
+        const storedExperimentId = readStoredExperimentId(studentId);
+        const defaultExperimentId = data.some((item) => item.id === 'file-basic')
+          ? 'file-basic'
+          : data[0]?.id ?? 'file-basic';
+        if (storedExperimentId && data.some((item) => item.id === storedExperimentId)) {
+          setSelectedExperimentId(storedExperimentId);
+        } else if (data.length) {
+          setSelectedExperimentId(defaultExperimentId);
+        }
+
+        let session: LabSession | null = null;
+        const storedSessionId = readStoredSessionId(studentId);
+        if (storedSessionId) {
+          try {
+            session = await getSession(storedSessionId);
+          } catch {
+            clearStoredSession(studentId);
+          }
+        }
+        if (!session) {
+          session = await getCurrentSession(studentId, storedExperimentId || undefined).catch(() => null);
+        }
+        if (cancelled || !session) return;
+
+        const isKnownExperiment = data.some((item) => item.id === session!.experiment_id);
+        if (session.status !== 'running' || !isKnownExperiment) {
+          clearStoredSession(studentId);
+          return;
+        }
+
+        persistStoredSession(session);
+        setSelectedExperimentId(session.experiment_id);
+        setActiveSession(session);
+        setActiveStepId(null);
+        setAnalyzingCommand('');
+        setReportUrl('');
+        setRemainingSeconds(remainingSecondsForSession(session));
+        connectCoachSocket(session.id);
+        await Promise.all([loadProgressForSession(session.id), loadLogsForSession(session.id)]);
+        if (!cancelled) {
+          setStatusText(session.runtime_mode === 'docker' ? '实验环境已恢复' : '模拟模式已恢复');
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setStatusText(error instanceof Error ? error.message : '实验列表加载失败');
+        }
+      }
+    };
+
+    void restore();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    connectCoachSocket,
+    getCurrentSession,
+    getSession,
+    loadExperiments,
+    loadLogsForSession,
+    loadProgressForSession,
+    studentId,
+  ]);
+
+  useEffect(() => {
+    if (!activeSession) return;
+    const syncSessionState = () => {
+      void loadProgressForSession(activeSession.id);
+      void loadLogsForSession(activeSession.id);
+    };
+    syncSessionState();
+    const timer = window.setInterval(syncSessionState, 3000);
+    return () => window.clearInterval(timer);
+  }, [activeSession, loadLogsForSession, loadProgressForSession]);
 
   const startSession = useCallback(async () => {
     setBusy(true);
     setStatusText('正在启动实验环境');
     setReportUrl('');
     try {
-      const session = await api.createSession(studentId, selectedExperimentId);
+      const session = await createSession(studentId, selectedExperimentId);
+      persistStoredSession(session);
+      setSelectedExperimentId(session.experiment_id);
       setActiveSession(session);
       setAiRecords([]);
       setStepProgress([]);
@@ -182,15 +340,14 @@ export default function StudentPage() {
       setAnalyzingCommand('');
       setRemainingSeconds(60 * 60);
       connectCoachSocket(session.id);
-      const payload = await api.loadStepProgress(session.id);
-      setStepProgress(payload.progress ?? []);
+      await loadProgressForSession(session.id);
       setStatusText(session.runtime_mode === 'docker' ? '实验环境已就绪' : '模拟模式');
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : '实验启动失败');
     } finally {
       setBusy(false);
     }
-  }, [api, studentId, selectedExperimentId, connectCoachSocket]);
+  }, [connectCoachSocket, createSession, loadProgressForSession, selectedExperimentId, studentId]);
 
   const stopSession = useCallback(async () => {
     if (!activeSession) return;
@@ -211,15 +368,17 @@ export default function StudentPage() {
     setBusy(true);
     setStatusText('正在重置实验环境');
     try {
-      const session = await api.resetSession(activeSession.id);
+      const session = await resetSessionApi(activeSession.id);
+      persistStoredSession(session);
+      setSelectedExperimentId(session.experiment_id);
       setActiveSession(session);
       setAiRecords([]);
       setStepProgress([]);
       setActiveStepId(null);
       setAnalyzingCommand('');
       connectCoachSocket(session.id);
-      const payload = await api.loadStepProgress(session.id);
-      setStepProgress(payload.progress ?? []);
+      setRemainingSeconds(remainingSecondsForSession(session));
+      await loadProgressForSession(session.id);
       setStatusText(session.runtime_mode === 'docker' ? '实验环境已重置' : '模拟模式');
     } catch (error) {
       setStatusText(error instanceof Error ? error.message : '重置失败');
@@ -227,49 +386,49 @@ export default function StudentPage() {
     } finally {
       setBusy(false);
     }
-  }, [activeSession, api, connectCoachSocket, clearSessionState]);
+  }, [activeSession, clearSessionState, connectCoachSocket, loadProgressForSession, resetSessionApi]);
 
   const sendMockCommand = useCallback(
     async (cmd: string) => {
       if (!activeSession || !cmd.trim()) return;
       setBusy(true);
       try {
-        const payload = await api.sendMockCommand(activeSession.id, cmd.trim());
+        const payload = await sendMockCommandApi(activeSession.id, cmd.trim());
         if (payload.log?.clean_content) {
           // Output is handled by xterm in TerminalPanel
         }
-        await loadProgress();
+        await loadProgressForSession(activeSession.id);
       } finally {
         setBusy(false);
       }
     },
-    [activeSession, api, loadProgress]
+    [activeSession, loadProgressForSession, sendMockCommandApi]
   );
 
   const confirmStep = useCallback(
     async (stepId: number) => {
       if (!activeSession) return;
       try {
-        const payload = await api.confirmStep(activeSession.id, stepId);
+        const payload = await confirmStepApi(activeSession.id, stepId);
         setStepProgress(payload.progress ?? stepProgress);
         setActiveStepId(null);
       } catch {
         // silent fail
       }
     },
-    [activeSession, api, stepProgress]
+    [activeSession, confirmStepApi, stepProgress]
   );
 
   const generateReport = useCallback(async () => {
     if (!activeSession) return;
     try {
-      const payload = await api.generateReport(activeSession.id);
+      const payload = await generateReportApi(activeSession.id);
       setReportUrl(payload.url);
       window.open(payload.url, '_blank');
     } catch {
       // silent fail
     }
-  }, [activeSession, api]);
+  }, [activeSession, generateReportApi]);
 
   const selectStep = useCallback(
     (stepId: number) => {

@@ -8,11 +8,18 @@ from app import docker_manager as docker_module
 from app.docker_manager import DockerManager
 
 
-def settings(runtime: str = "docker") -> SimpleNamespace:
+def settings(
+    runtime: str = "docker",
+    *,
+    backend_public_url: str = "http://localhost:8000",
+    docker_ws_url: str = "",
+) -> SimpleNamespace:
     return SimpleNamespace(
         lab_runtime=runtime,
         public_host="localhost",
+        backend_public_url=backend_public_url,
         docker_ws_host="host.docker.internal",
+        docker_ws_url=docker_ws_url,
         allow_mock_fallback=True,
     )
 
@@ -86,6 +93,49 @@ def test_start_success_requires_container_id(monkeypatch: pytest.MonkeyPatch) ->
                 experiment={"id": "file-basic", "image_name": "linux-ai-exp:test"},
             )
         )
+
+
+def test_terminal_event_ws_url_uses_backend_public_url_port() -> None:
+    manager = DockerManager(settings("docker", backend_public_url="http://localhost:8001"))
+
+    assert manager.terminal_event_ws_url() == "ws://host.docker.internal:8001/ws/terminal-log"
+
+
+def test_terminal_event_ws_url_prefers_explicit_override() -> None:
+    manager = DockerManager(
+        settings(
+            "docker",
+            backend_public_url="http://localhost:8001",
+            docker_ws_url="ws://docker-host:19000/ws/terminal-log",
+        )
+    )
+
+    assert manager.terminal_event_ws_url() == "ws://docker-host:19000/ws/terminal-log"
+
+
+def test_start_passes_terminal_event_ws_url_from_backend_public_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manager = DockerManager(settings("docker", backend_public_url="http://localhost:8001"))
+    calls: list[tuple[str, ...]] = []
+
+    async def run_docker(*args: str):
+        calls.append(args)
+        return 0, "container-id\n", ""
+
+    monkeypatch.setattr(manager, "_run_docker", run_docker)
+
+    asyncio.run(
+        manager.start(
+            session_id="session-1",
+            student_id="stu001",
+            experiment={"id": "file-basic", "image_name": "linux-ai-exp:test"},
+        )
+    )
+
+    run_args = calls[0]
+    assert "WS_SERVER=ws://host.docker.internal:8001/ws/terminal-log" in run_args
+    assert "WS_SERVER=ws://host.docker.internal:8000/ws/terminal-log" not in run_args
 
 
 def test_run_docker_reports_empty_exception_type(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -240,6 +290,8 @@ def test_preflight_reports_missing_docker_cli(monkeypatch: pytest.MonkeyPatch) -
 
     diagnostics = asyncio.run(manager.preflight([{"image_name": "linux-ai-exp:test"}]))
 
+    assert diagnostics["terminal_event_ws_url"] == "ws://host.docker.internal:8000/ws/terminal-log"
+    assert diagnostics["warnings"] == []
     assert diagnostics["cli_available"] is False
     assert diagnostics["server_available"] is False
     assert diagnostics["error"] == "docker CLI not found on PATH"

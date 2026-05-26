@@ -59,11 +59,14 @@ export interface LabSession {
   id: string;
   student_id: string;
   experiment_id: string;
+  experiment_name?: string;
   container_id?: string;
+  container_name?: string;
   terminal_url?: string;
+  start_time?: string;
+  end_time?: string;
   status: string;
   runtime_mode: 'docker' | 'mock';
-  created_at: string;
 }
 
 export interface StepProgress {

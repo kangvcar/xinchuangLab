@@ -4,19 +4,25 @@ import type { Experiment, LabSession, StepProgressResponse, AICoachRecord, Termi
 const API_BASE = import.meta.env.VITE_API_BASE ?? '';
 const TEACHER_PASSWORD_STORAGE_KEY = 'linux-ai-teacher-password';
 
+function getSessionStorage(): Storage | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function getTeacherPassword(): string {
-  if (typeof window === 'undefined') return '';
-  return window.sessionStorage.getItem(TEACHER_PASSWORD_STORAGE_KEY) ?? '';
+  return getSessionStorage()?.getItem(TEACHER_PASSWORD_STORAGE_KEY) ?? '';
 }
 
 function setTeacherPassword(password: string): void {
-  if (typeof window === 'undefined') return;
-  window.sessionStorage.setItem(TEACHER_PASSWORD_STORAGE_KEY, password);
+  getSessionStorage()?.setItem(TEACHER_PASSWORD_STORAGE_KEY, password);
 }
 
 function clearTeacherPassword(): void {
-  if (typeof window === 'undefined') return;
-  window.sessionStorage.removeItem(TEACHER_PASSWORD_STORAGE_KEY);
+  getSessionStorage()?.removeItem(TEACHER_PASSWORD_STORAGE_KEY);
 }
 
 function adminHeaders(headers: HeadersInit = {}): HeadersInit {
@@ -50,6 +56,27 @@ export function useApi() {
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
       throw new Error(payload.detail || '创建实训会话失败');
+    }
+    return response.json();
+  }, []);
+
+  const getSession = useCallback(async (sessionId: string): Promise<LabSession> => {
+    const response = await fetch(`${API_BASE}/api/sessions/${sessionId}`);
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload.detail || '读取实验会话失败');
+    }
+    return response.json();
+  }, []);
+
+  const getCurrentSession = useCallback(async (studentId: string, experimentId?: string): Promise<LabSession | null> => {
+    const params = new URLSearchParams({ student_id: studentId });
+    if (experimentId) params.set('experiment_id', experimentId);
+    const response = await fetch(`${API_BASE}/api/sessions/current?${params.toString()}`);
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload.detail || '读取当前实验会话失败');
     }
     return response.json();
   }, []);
@@ -184,6 +211,8 @@ export function useApi() {
   return {
     loadExperiments,
     createSession,
+    getSession,
+    getCurrentSession,
     stopSession,
     resetSession,
     loadStepProgress,

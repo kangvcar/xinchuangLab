@@ -1,6 +1,8 @@
 import { useRef, useCallback } from 'react';
 import type { TerminalLog, AICoachRecord } from '@/types';
 
+const API_BASE = import.meta.env.VITE_API_BASE ?? '';
+
 export interface CoachMessage {
   type: 'terminal_log' | 'ai_pending' | 'ai_coach' | 'step_completed';
   payload: TerminalLog | { command: string } | AICoachRecord | unknown;
@@ -19,8 +21,9 @@ export function useWebSocket() {
       socketRef.current.close();
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socket = new WebSocket(`${protocol}//${window.location.host}/ws/ai-coach/${sessionId}`);
+    const baseUrl = API_BASE ? new URL(API_BASE, window.location.href) : window.location;
+    const protocol = baseUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socket = new WebSocket(`${protocol}//${baseUrl.host}/ws/ai-coach/${sessionId}`);
     socketRef.current = socket;
 
     socket.onmessage = (event) => {

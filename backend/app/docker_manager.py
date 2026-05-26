@@ -7,6 +7,7 @@ import subprocess
 import uuid
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlsplit
 
 from .config import Settings
 
@@ -49,6 +50,8 @@ class DockerManager:
         """Return Docker availability diagnostics for health checks."""
         result: dict[str, Any] = {
             "runtime": self.settings.lab_runtime,
+            "terminal_event_ws_url": self.terminal_event_ws_url(),
+            "warnings": self.runtime_warnings(),
             "cli_path": shutil.which("docker"),
             "cli_available": False,
             "server_available": False,
@@ -112,6 +115,32 @@ class DockerManager:
 
         return result
 
+    def terminal_event_ws_url(self) -> str:
+        override = str(getattr(self.settings, "docker_ws_url", "") or "").strip()
+        if override:
+            return override
+
+        backend_public_url = str(getattr(self.settings, "backend_public_url", "") or "http://localhost:8000")
+        parsed = urlsplit(backend_public_url)
+        scheme = "wss" if parsed.scheme == "https" else "ws"
+        host = str(getattr(self.settings, "docker_ws_host", "") or "").strip() or parsed.hostname or "host.docker.internal"
+        port = parsed.port
+        if port is None:
+            port = 443 if scheme == "wss" else 80
+        return f"{scheme}://{host}:{port}/ws/terminal-log"
+
+    def runtime_warnings(self) -> list[str]:
+        warnings: list[str] = []
+        override = str(getattr(self.settings, "docker_ws_url", "") or "").strip()
+        if override:
+            return warnings
+
+        backend_public_url = str(getattr(self.settings, "backend_public_url", "") or "")
+        parsed = urlsplit(backend_public_url)
+        if not parsed.hostname:
+            warnings.append("BACKEND_PUBLIC_URL is empty or invalid; container terminal events may not reach the backend")
+        return warnings
+
     async def _start_docker(self, *, session_id: str, student_id: str, experiment: dict) -> RuntimeInfo:
         image_name = experiment["image_name"]
         if not image_name:
@@ -119,7 +148,7 @@ class DockerManager:
         port = _find_free_port()
         safe_suffix = uuid.uuid4().hex[:8]
         container_name = f"linux-ai-{student_id}-{experiment['id']}-{safe_suffix}".replace("_", "-").lower()
-        ws_url = f"ws://{self.settings.docker_ws_host}:8000/ws/terminal-log"
+        ws_url = self.terminal_event_ws_url()
         returncode, stdout, stderr = await self._run_docker(
             "run",
             "-d",

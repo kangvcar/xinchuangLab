@@ -274,6 +274,32 @@ class Database:
             ).fetchall()
         return [self._session_row(row) for row in rows]
 
+    def get_latest_running_session(
+        self,
+        *,
+        student_id: str,
+        experiment_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        filters = ["s.student_id = ?", "s.status = 'running'"]
+        params: list[Any] = [student_id]
+        if experiment_id:
+            filters.append("s.experiment_id = ?")
+            params.append(experiment_id)
+        where_clause = " AND ".join(filters)
+        with self.connect() as conn:
+            row = conn.execute(
+                f"""
+                SELECT s.*, e.name AS experiment_name, e.system_type, e.image_name, e.task_config
+                FROM lab_session s
+                JOIN experiment e ON e.id = s.experiment_id
+                WHERE {where_clause}
+                ORDER BY s.start_time DESC
+                LIMIT 1
+                """,
+                params,
+            ).fetchone()
+        return self._session_row(row) if row else None
+
     def update_session_status(self, session_id: str, status: str) -> None:
         ended_at = datetime.utcnow().isoformat(timespec="seconds") + "Z" if status != "running" else None
         with self.connect() as conn:

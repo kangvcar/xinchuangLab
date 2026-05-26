@@ -61,6 +61,7 @@ class Settings:
     public_host: str = os.getenv("PUBLIC_HOST", "localhost")
     backend_public_url: str = os.getenv("BACKEND_PUBLIC_URL", "http://localhost:8000")
     docker_ws_host: str = os.getenv("DOCKER_WS_HOST", "host.docker.internal")
+    docker_ws_url: str = os.getenv("DOCKER_WS_URL", "")
     ai_mode: str = os.getenv("AI_MODE", "auto").lower()
     deepseek_api_key: str = os.getenv("DEEPSEEK_API_KEY", "")
     deepseek_base_url: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com").rstrip("/")
