@@ -1,4 +1,4 @@
-import { Archive, Copy, FilePlus2, Search } from 'lucide-react';
+import { Copy, FilePlus2, Search, Trash2 } from 'lucide-react';
 import type { Experiment } from '@/types';
 import type { StatusFilter } from '@/pages/teacherExperimentDraft';
 import {
@@ -30,7 +30,7 @@ const FILTERS: Array<{ value: StatusFilter; label: string }> = [
   { value: 'all', label: '全部' },
   { value: 'draft', label: '草稿' },
   { value: 'published', label: '已发布' },
-  { value: 'inactive', label: '已停用' },
+  { value: 'inactive', label: '已删除' },
 ];
 
 export default function ExperimentSidebar({
@@ -107,10 +107,11 @@ export default function ExperimentSidebar({
             type="button"
             onClick={onDeactivateSelected}
             disabled={disabled || !canDeactivateSelected}
+            title="删除实验入口，历史记录会保留"
             className="h-8 inline-flex items-center justify-center gap-1.5 rounded-md border border-red-200 bg-white text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Archive size={13} />
-            停用
+            <Trash2 size={13} />
+            删除
           </button>
         </div>
       </div>

@@ -48,7 +48,7 @@ export function normalizeExperimentStatus(status: string | undefined): Experimen
 export function statusLabel(status: string | undefined): string {
   const normalized = normalizeExperimentStatus(status);
   if (normalized === 'published') return '已发布';
-  if (normalized === 'inactive') return '已停用';
+  if (normalized === 'inactive') return '已删除';
   return '草稿';
 }
 
@@ -121,6 +121,30 @@ export function buildSavePayload(snapshot: EditorSnapshot): Record<string, unkno
     steps: JSON.parse(snapshot.stepsText || '[]'),
     container_spec: JSON.parse(snapshot.containerSpecText || '{}'),
   };
+}
+
+export function parseStepsText(stepsText: string): Step[] {
+  const parsed = JSON.parse(stepsText || '[]');
+  return Array.isArray(parsed) ? (parsed as Step[]) : [];
+}
+
+export function serializeSteps(steps: Step[]): string {
+  return JSON.stringify(renumberSteps(steps), null, 2);
+}
+
+export function renumberSteps(steps: Step[]): Step[] {
+  return steps.map((step, index) => ({ ...step, id: index + 1 }));
+}
+
+export function commandLinesToList(value: string): string[] {
+  return value
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+export function commandListToLines(value: unknown): string {
+  return Array.isArray(value) ? value.map((item) => String(item)).join('\n') : '';
 }
 
 export function validateSnapshot(snapshot: EditorSnapshot, mode: 'save' | 'publish'): ValidationResult {

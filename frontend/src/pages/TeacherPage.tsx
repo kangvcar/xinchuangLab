@@ -14,6 +14,7 @@ import { Tabs } from '@base-ui/react/tabs';
 import { Separator } from '@base-ui/react/separator';
 import { Field } from '@base-ui/react/field';
 import ExperimentSidebar from '@/components/teacher/ExperimentSidebar';
+import StepFlowEditor from '@/components/teacher/StepFlowEditor';
 import ValidationSummary from '@/components/teacher/ValidationSummary';
 import { useApi } from '@/hooks/useApi';
 import type { BuildState, ContainerSpec, Experiment, ExperimentStatus, ImportPayload, Step } from '@/types';
@@ -250,9 +251,9 @@ export default function TeacherPage() {
 
   const deactivateSelectedExperiment = useCallback(async () => {
     if (!selectedExperiment || isBuildRunning) return;
-    const confirmed = window.confirm(`停用实验“${selectedExperiment.name}”？历史会话和报告会保留，学生端将不再显示该实验。`);
+    const confirmed = window.confirm(`删除实验“${selectedExperiment.name}”？历史会话和报告会保留，学生端将不再显示该实验。`);
     if (!confirmed) return;
-    setAdminStatus('正在停用实验');
+    setAdminStatus('正在删除实验');
     try {
       await api.deleteExperiment(selectedExperiment.id);
       const data = await refreshAdminExperiments(selectedExperiment.id);
@@ -260,9 +261,9 @@ export default function TeacherPage() {
       if (refreshed) {
         applySnapshot(createSnapshotFromExperiment(refreshed));
       }
-      setAdminStatus('实验已停用');
+      setAdminStatus('实验已删除');
     } catch (error) {
-      setAdminStatus(error instanceof Error ? error.message : '停用实验失败');
+      setAdminStatus(error instanceof Error ? error.message : '删除实验失败');
     }
   }, [api, applySnapshot, isBuildRunning, refreshAdminExperiments, selectedExperiment]);
 
@@ -350,6 +351,16 @@ export default function TeacherPage() {
 
   const updateDraft = useCallback((field: keyof AdminDraft, value: AdminDraft[keyof AdminDraft]) => {
     setAdminDraft((prev) => (prev ? ({ ...prev, [field]: value } as AdminDraft) : prev));
+  }, []);
+
+  const handleStepEditorValidation = useCallback((message: string) => {
+    setValidationErrors((prev) => {
+      const withoutStepParseErrors = prev.filter((item) => !item.startsWith('步骤 JSON 格式错误：'));
+      if (!message) {
+        return withoutStepParseErrors.length === prev.length ? prev : withoutStepParseErrors;
+      }
+      return [message, ...withoutStepParseErrors];
+    });
   }, []);
 
   return (
@@ -452,7 +463,7 @@ export default function TeacherPage() {
                   >
                     <option value="draft">草稿</option>
                     <option value="published">已发布</option>
-                    <option value="inactive">已停用</option>
+                    <option value="inactive">已删除</option>
                   </select>
                 </Field.Root>
               </div>
@@ -523,10 +534,10 @@ export default function TeacherPage() {
               <Tabs.Root defaultValue="text" className="mt-4">
                 <Tabs.List className="flex gap-1 mb-4 border-b border-neutral-200">
                   {[
-                    { value: 'text', label: '文本导入' },
-                    { value: 'container', label: '容器配置' },
-                    { value: 'steps', label: '步骤配置' },
-                    { value: 'build', label: '构建发布' },
+                    { value: 'text', label: '导入文档' },
+                    { value: 'steps', label: '步骤流程' },
+                    { value: 'advanced', label: '高级配置' },
+                    { value: 'build', label: '保存发布' },
                   ].map((tab) => (
                     <Tabs.Tab
                       key={tab.value}
@@ -561,7 +572,24 @@ export default function TeacherPage() {
                   </button>
                 </Tabs.Panel>
 
-                <Tabs.Panel value="container" className="space-y-3">
+                <Tabs.Panel value="steps" className="space-y-3">
+                  <StepFlowEditor
+                    stepsText={adminStepsText}
+                    disabled={isBuildRunning}
+                    onStepsTextChange={setAdminStepsText}
+                    onValidationError={handleStepEditorValidation}
+                  />
+                  <button
+                    onClick={saveAdminExperiment}
+                    disabled={isBuildRunning}
+                    className="h-8 inline-flex items-center gap-1.5 px-3 rounded-md font-medium text-xs text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Save size={13} />
+                    保存实验配置
+                  </button>
+                </Tabs.Panel>
+
+                <Tabs.Panel value="advanced" className="space-y-4">
                   <Field.Root>
                     <Field.Label className="text-neutral-900 text-xs font-semibold mb-1.5 block">
                       容器需求 JSON
@@ -569,17 +597,14 @@ export default function TeacherPage() {
                     <textarea
                       value={adminContainerSpecText}
                       onChange={(e) => setAdminContainerSpecText(e.target.value)}
-                      rows={12}
+                      rows={10}
                       disabled={isBuildRunning}
                       className="w-full px-3 py-2 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 resize-y hover:border-neutral-300 transition-colors"
                     />
                   </Field.Root>
-                  <span className="text-neutral-500 text-xs font-medium">
+                  <span className="block text-neutral-500 text-xs font-medium">
                     默认使用华为云 openEuler、清华 pip、npmmirror npm 源。
                   </span>
-                </Tabs.Panel>
-
-                <Tabs.Panel value="steps" className="space-y-3">
                   <Field.Root>
                     <Field.Label className="text-neutral-900 text-xs font-semibold mb-1.5 block">
                       步骤 JSON

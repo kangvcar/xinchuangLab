@@ -154,7 +154,7 @@ export function useApi() {
       headers: adminHeaders(),
     });
     if (!response.ok) {
-      throw new Error(await errorMessage(response, '停用实验失败'));
+      throw new Error(await errorMessage(response, '删除实验失败'));
     }
     return response.json();
   }, []);
