@@ -379,26 +379,8 @@ class ReportService:
                 "教师签名：",
                 "",
                 "日期：",
-                "",
-                "## 附录",
-                "",
-                "### 完整终端记录",
-                "",
             ]
         )
-        logs = model["appendix"]["terminal_logs"]
-        if logs:
-            for item in logs:
-                lines.extend([f"#### {item.get('timestamp', '未记录')}", "", "```text", item.get("clean_content", ""), "```", ""])
-        else:
-            lines.extend(["暂无终端记录。", ""])
-        lines.extend(["### 完整 AI 陪练记录", ""])
-        records = model["appendix"]["ai_records"]
-        if records:
-            for item in records:
-                lines.extend([f"#### {item.get('created_at', '未记录')}", "", item.get("ai_response", ""), ""])
-        else:
-            lines.extend(["暂无 AI 陪练记录。", ""])
         return "\n".join(lines).strip() + "\n"
 
     def _render_html(self, model: dict[str, Any]) -> str:
@@ -438,14 +420,6 @@ class ReportService:
             f"<li><strong>{_e(item['type'])}</strong>：<code>{_e(item['command'])}</code>。{_e(item['suggestion'])}</li>"
             for item in analysis["typical_errors"]
         ) or "<li>暂未识别典型错误。</li>"
-        appendix_logs = "".join(
-            f"<section class='appendix-item'><time>{_e(item.get('timestamp', '未记录'))}</time><pre>{_e(item.get('clean_content', ''))}</pre></section>"
-            for item in model["appendix"]["terminal_logs"]
-        ) or "<p class='empty'>暂无终端记录。</p>"
-        appendix_ai = "".join(
-            f"<section class='appendix-item'><time>{_e(item.get('created_at', '未记录'))}</time>{_paragraphs(item.get('ai_response', ''))}</section>"
-            for item in model["appendix"]["ai_records"]
-        ) or "<p class='empty'>暂无 AI 陪练记录。</p>"
         teacher = model["teacher_evaluation"]
         return f"""<!doctype html>
 <html lang="zh-CN">
@@ -518,14 +492,6 @@ class ReportService:
       </div>
       <div class="sign-box">教师评语：</div>
       <div class="sign-row"><span>综合评分：</span><span>等级：</span><span>教师签名：</span><span>日期：</span></div>
-    </section>
-
-    <section class="section appendix">
-      <h2>附录</h2>
-      <h3>完整终端记录</h3>
-      {appendix_logs}
-      <h3>完整 AI 陪练记录</h3>
-      {appendix_ai}
     </section>
   </main>
 </body>
@@ -679,10 +645,6 @@ def _list_html(items: list[str]) -> str:
     return "<ul>" + "".join(f"<li>{_e(item)}</li>" for item in items) + "</ul>"
 
 
-def _paragraphs(text: str) -> str:
-    return "".join(f"<p>{_e(part)}</p>" for part in text.split("\n\n") if part.strip())
-
-
 def _report_css() -> str:
     return """
     * { box-sizing: border-box; }
@@ -722,7 +684,6 @@ def _report_css() -> str:
     .teacher-grid p { margin: 0; }
     .sign-box { min-height: 120px; border: 1px dashed #94a3b8; padding: 12px; margin: 16px 0; }
     .sign-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-    .appendix-item { margin-bottom: 14px; }
     .empty { color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; padding: 12px; }
     @media print {
       body { background: #fff; }

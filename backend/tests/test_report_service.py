@@ -125,9 +125,14 @@ def test_generate_writes_rich_markdown_and_html(tmp_path: Path) -> None:
     assert "## 步骤完成记录" in markdown
     assert "## 关键操作证据" in markdown
     assert "## 教师评价区" in markdown
+    assert "## 附录" not in markdown
+    assert "完整终端记录" not in markdown
+    assert "完整 AI 陪练记录" not in markdown
     assert "learning-overview" in html
     assert "teacher-signature" in html
-    assert "完整终端记录" in html
+    assert "appendix" not in html
+    assert "完整终端记录" not in html
+    assert "完整 AI 陪练记录" not in html
 
 
 def test_report_handles_missing_logs_and_ai_records(tmp_path: Path) -> None:
@@ -139,8 +144,9 @@ def test_report_handles_missing_logs_and_ai_records(tmp_path: Path) -> None:
 
     assert "暂无关键操作证据" in markdown
     assert "暂无 AI 陪练记录" in markdown
-    assert "暂无终端记录" in html
     assert "暂无 AI 陪练记录" in html
+    assert "暂无终端记录" not in html
+    assert "附录" not in html
 
 
 def test_report_html_escapes_user_content(tmp_path: Path) -> None:
