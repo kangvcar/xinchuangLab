@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urljoin
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -456,7 +457,8 @@ async def generate_report(session_id: str) -> dict[str, Any]:
     if not db.get_session(session_id):
         raise HTTPException(status_code=404, detail="session not found")
     report = report_service.generate(session_id)
-    report["url"] = f"/reports-static/{Path(report['html_path']).name}"
+    static_path = f"reports-static/{Path(report['html_path']).name}"
+    report["url"] = urljoin(settings.backend_public_url.rstrip("/") + "/", static_path)
     return report
 
 

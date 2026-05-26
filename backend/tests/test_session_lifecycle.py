@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
@@ -59,6 +60,21 @@ class FakeDiagnosticsDockerManager:
             "terminal_event_ws_url": "ws://host.docker.internal:8001/ws/terminal-log",
             "warnings": ["diagnostic warning"],
             "images": [{"name": item["image_name"], "exists": True} for item in experiments],
+        }
+
+
+class FakeReportService:
+    def __init__(self, html_path: Path) -> None:
+        self.html_path = html_path
+
+    def generate(self, session_id: str) -> dict:
+        return {
+            "id": 1,
+            "session_id": session_id,
+            "markdown_path": str(self.html_path.with_suffix(".md")),
+            "html_path": str(self.html_path),
+            "pdf_path": None,
+            "created_at": "2026-05-26T12:00:00Z",
         }
 
 
@@ -220,3 +236,19 @@ def test_health_exposes_terminal_event_ws_diagnostics(
     assert result["terminal_event_ws_url"] == "ws://host.docker.internal:8001/ws/terminal-log"
     assert result["warnings"] == ["diagnostic warning"]
     assert result["docker"]["terminal_event_ws_url"] == "ws://host.docker.internal:8001/ws/terminal-log"
+
+
+def test_generate_report_returns_backend_absolute_static_url(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db = prepare_database(tmp_path)
+    create_running_session(db, "session-1")
+    html_path = tmp_path / "reports" / "session-1.html"
+    monkeypatch.setattr(main, "db", db)
+    monkeypatch.setattr(main, "report_service", FakeReportService(html_path))
+    monkeypatch.setattr(main, "settings", SimpleNamespace(backend_public_url="http://backend.test:8000/"))
+
+    result = asyncio.run(main.generate_report("session-1"))
+
+    assert result["url"] == "http://backend.test:8000/reports-static/session-1.html"
