@@ -79,6 +79,13 @@ export interface LabSession {
   runtime_mode: 'docker' | 'mock';
 }
 
+export interface StudentRecord {
+  student_id: string;
+  name?: string;
+  status: 'active' | string;
+  created_at?: string;
+}
+
 export interface StepProgress {
   step_id: number;
   status: 'locked' | 'pending' | 'completed' | 'confirmed';

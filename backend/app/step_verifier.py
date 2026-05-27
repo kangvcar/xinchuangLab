@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 from typing import Any
 
 
@@ -82,15 +83,39 @@ class StepVerifier:
         return False
 
     def _command_matches(self, command: str, expected: str) -> bool:
-        normalized_command = command.strip()
-        normalized_expected = str(expected).strip()
-        if not normalized_command or not normalized_expected:
+        command_tokens = _normalize_command_tokens(command)
+        expected_tokens = _normalize_command_tokens(str(expected))
+        if not command_tokens or not expected_tokens:
             return False
-        return (
-            normalized_command == normalized_expected
-            or normalized_command.startswith(f"{normalized_expected} ")
-        )
+        if len(command_tokens) < len(expected_tokens):
+            return False
+        return command_tokens[: len(expected_tokens)] == expected_tokens
 
     def _verify_with_keywords(self, keywords: list[str], terminal_logs: list[str]) -> bool:
         text = "\n".join(terminal_logs).lower()
         return bool(keywords) and any(str(kw).lower() in text for kw in keywords)
+
+
+_IGNORABLE_ALIAS_OPTIONS = {
+    "ls": {"--color=auto", "--colour=auto", "--color", "--colour"},
+    "grep": {"--color=auto", "--colour=auto", "--color", "--colour"},
+    "egrep": {"--color=auto", "--colour=auto", "--color", "--colour"},
+    "fgrep": {"--color=auto", "--colour=auto", "--color", "--colour"},
+}
+
+
+def _normalize_command_tokens(command: str) -> list[str]:
+    text = str(command or "").strip()
+    if not text:
+        return []
+    try:
+        tokens = shlex.split(text, posix=True)
+    except ValueError:
+        tokens = text.split()
+    if not tokens:
+        return []
+    command_name = tokens[0]
+    ignored = _IGNORABLE_ALIAS_OPTIONS.get(command_name, set())
+    if not ignored:
+        return tokens
+    return [command_name, *(token for token in tokens[1:] if token not in ignored)]

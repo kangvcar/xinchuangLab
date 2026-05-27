@@ -99,6 +99,16 @@ def require_admin_password(x_admin_password: str | None = Header(default=None)) 
         raise HTTPException(status_code=401, detail="教师端密码错误")
 
 
+def _require_active_student(student_id: str) -> dict[str, Any]:
+    clean_student_id = str(student_id or "").strip()
+    if not clean_student_id:
+        raise HTTPException(status_code=400, detail="student_id is required")
+    student = db.get_student(clean_student_id)
+    if not student or student.get("status") != "active":
+        raise HTTPException(status_code=403, detail="学号未登记，请联系教师录入后再进入实验")
+    return student
+
+
 @app.on_event("startup")
 async def startup() -> None:
     db.initialize()
@@ -178,6 +188,38 @@ async def admin_auth(payload: dict[str, Any]) -> dict[str, bool]:
     if not settings.admin_password or secrets.compare_digest(password, settings.admin_password):
         return {"ok": True}
     raise HTTPException(status_code=401, detail="教师端密码错误")
+
+
+@app.get("/api/admin/students")
+async def admin_list_students(_admin: None = Depends(require_admin_password)) -> list[dict[str, Any]]:
+    return db.list_students()
+
+
+@app.post("/api/admin/students")
+async def admin_save_student(
+    payload: dict[str, Any],
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, Any]:
+    student_id = str(payload.get("student_id") or "").strip()
+    if not student_id:
+        raise HTTPException(status_code=400, detail="student_id is required")
+    name = str(payload.get("name") or "").strip()
+    return db.upsert_student(student_id, name=name, status="active")
+
+
+@app.delete("/api/admin/students/{student_id}")
+async def admin_delete_student(
+    student_id: str,
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, str]:
+    if not db.delete_student(student_id):
+        raise HTTPException(status_code=404, detail="student not found")
+    return {"status": "deleted", "student_id": student_id}
+
+
+@app.post("/api/students/login")
+async def student_login(payload: dict[str, Any]) -> dict[str, Any]:
+    return _require_active_student(str(payload.get("student_id") or ""))
 
 
 @app.post("/api/admin/experiments")
@@ -335,7 +377,8 @@ async def list_sessions() -> list[dict[str, Any]]:
 
 @app.get("/api/sessions/current")
 async def get_current_session(student_id: str, experiment_id: str | None = None) -> dict[str, Any]:
-    session = db.get_latest_running_session(student_id=student_id, experiment_id=experiment_id)
+    student = _require_active_student(student_id)
+    session = db.get_latest_running_session(student_id=student["student_id"], experiment_id=experiment_id)
     if not session:
         raise HTTPException(status_code=404, detail="running session not found")
     return session
@@ -343,6 +386,8 @@ async def get_current_session(student_id: str, experiment_id: str | None = None)
 
 @app.post("/api/sessions")
 async def create_session(payload: CreateSessionRequest) -> dict[str, Any]:
+    student = _require_active_student(payload.student_id)
+    student_id = student["student_id"]
     experiment = db.get_experiment(payload.experiment_id)
     if not experiment:
         raise HTTPException(status_code=404, detail="experiment not found")
@@ -350,7 +395,7 @@ async def create_session(payload: CreateSessionRequest) -> dict[str, Any]:
     # 清理同学生的旧 running session 及其容器
     old_sessions = db.list_sessions()
     for old in old_sessions:
-        if old["student_id"] == payload.student_id and old["status"] == "running":
+        if old["student_id"] == student_id and old["status"] == "running":
             try:
                 await docker_manager.stop(old)
             except Exception as exc:
@@ -359,18 +404,18 @@ async def create_session(payload: CreateSessionRequest) -> dict[str, Any]:
             db.update_session_status(old["id"], "stopped")
             _clear_session_runtime_state(old["id"])
     
-    session_id = f"{payload.student_id}-{payload.experiment_id}-{uuid.uuid4().hex[:8]}"
+    session_id = f"{student_id}-{payload.experiment_id}-{uuid.uuid4().hex[:8]}"
     try:
         runtime = await docker_manager.start(
             session_id=session_id,
-            student_id=payload.student_id,
+            student_id=student_id,
             experiment=experiment,
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"启动实验环境失败：{exc}") from exc
     session = db.create_session(
         session_id=session_id,
-        student_id=payload.student_id,
+        student_id=student_id,
         experiment_id=payload.experiment_id,
         container_id=runtime.container_id,
         container_name=runtime.container_name,

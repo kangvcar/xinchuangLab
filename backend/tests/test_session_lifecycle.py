@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from app import main
 from app.database import Database
 from app.docker_manager import RuntimeInfo
+from app.schemas import CreateSessionRequest
 
 
 STEPS = [
@@ -105,6 +106,7 @@ def prepare_database(tmp_path: Path) -> Database:
             "steps": STEPS,
         }
     )
+    db.upsert_student("stu001")
     return db
 
 
@@ -235,6 +237,51 @@ def test_get_current_session_ignores_stopped_session(
         asyncio.run(main.get_current_session(student_id="stu001", experiment_id="file-basic"))
 
     assert exc_info.value.status_code == 404
+
+
+def test_create_session_rejects_unregistered_student(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db = prepare_database(tmp_path)
+    fake_docker = FakeDockerManager()
+    monkeypatch.setattr(main, "db", db)
+    monkeypatch.setattr(main, "docker_manager", fake_docker)
+
+    with pytest.raises(HTTPException) as exc_info:
+        asyncio.run(
+            main.create_session(
+                CreateSessionRequest(student_id="unknown-student", experiment_id="file-basic")
+            )
+        )
+
+    assert exc_info.value.status_code == 403
+    assert fake_docker.started == []
+
+
+def test_create_session_stops_existing_running_session_for_same_student(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db = prepare_database(tmp_path)
+    old_session = create_running_session(db, "session-old")
+    fake_docker = FakeDockerManager()
+    monkeypatch.setattr(main, "db", db)
+    monkeypatch.setattr(main, "docker_manager", fake_docker)
+
+    new_session = asyncio.run(
+        main.create_session(
+            CreateSessionRequest(student_id="stu001", experiment_id="file-basic")
+        )
+    )
+
+    refreshed_old = db.get_session(old_session["id"])
+    assert refreshed_old is not None
+    assert refreshed_old["status"] == "stopped"
+    assert refreshed_old["container_name"] is None
+    assert fake_docker.stopped[0]["id"] == "session-old"
+    assert new_session["status"] == "running"
+    assert new_session["student_id"] == "stu001"
 
 
 def test_health_exposes_terminal_event_ws_diagnostics(

@@ -146,6 +146,39 @@ def test_report_handles_missing_logs_and_ai_records(tmp_path: Path) -> None:
     assert "附录" not in html
 
 
+def test_report_fallback_evidence_tolerates_alias_expanded_commands(tmp_path: Path) -> None:
+    db = prepare_db(tmp_path)
+    session_id = "stu001-file-basic-demo"
+    steps = [
+        *STEPS[:2],
+        {
+            **STEPS[2],
+            "try_commands": ["ls -l hello.txt"],
+            "verification": {"mode": "all", "checks": [{"type": "command_match", "commands": ["ls -l hello.txt"]}]},
+        },
+    ]
+    db.upsert_experiment(
+        {
+            "experiment_id": "file-basic",
+            "name": "Linux 文件管理基础实验",
+            "system": "openEuler",
+            "image_name": "linux-ai-exp:openeuler-file-v1",
+            "status": "active",
+            "objective": "掌握 Linux 常用文件与目录管理命令。",
+            "steps": steps,
+        }
+    )
+    db.add_terminal_log(
+        session_id,
+        "student@lab:~$ ls --color=auto -l hello.txt\n-rw-r--r-- hello.txt\nstudent@lab:~$",
+    )
+
+    model = ReportService(db, tmp_path / "reports").build_report_model(session_id)
+
+    assert model["evidence_items"][0]["step_id"] == 3
+    assert model["evidence_items"][0]["step_title"] == "创建实验文件"
+
+
 def test_report_html_escapes_user_content(tmp_path: Path) -> None:
     db = prepare_db(tmp_path)
     session_id = "stu001-file-basic-demo"

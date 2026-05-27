@@ -31,6 +31,13 @@ class Database:
                     status TEXT NOT NULL DEFAULT 'active'
                 );
 
+                CREATE TABLE IF NOT EXISTS student (
+                    student_id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL DEFAULT '',
+                    status TEXT NOT NULL DEFAULT 'active',
+                    created_at TEXT NOT NULL
+                );
+
                 CREATE TABLE IF NOT EXISTS lab_session (
                     id TEXT PRIMARY KEY,
                     student_id TEXT NOT NULL,
@@ -98,6 +105,65 @@ class Database:
                 );
                 """
             )
+
+    def upsert_student(self, student_id: str, name: str = "", status: str = "active") -> dict[str, Any]:
+        clean_student_id = student_id.strip()
+        clean_name = name.strip()
+        if not clean_student_id:
+            raise ValueError("student_id is required")
+        created_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        with self.connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO student (student_id, name, status, created_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(student_id) DO UPDATE SET
+                    name = excluded.name,
+                    status = excluded.status
+                """,
+                (clean_student_id, clean_name, status, created_at),
+            )
+        student = self.get_student(clean_student_id)
+        assert student is not None
+        return student
+
+    def get_student(self, student_id: str) -> dict[str, Any] | None:
+        with self.connect() as conn:
+            row = conn.execute(
+                """
+                SELECT student_id, name, status, created_at
+                FROM student
+                WHERE student_id = ?
+                """,
+                (student_id.strip(),),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def list_students(self, *, active_only: bool = False) -> list[dict[str, Any]]:
+        with self.connect() as conn:
+            if active_only:
+                rows = conn.execute(
+                    """
+                    SELECT student_id, name, status, created_at
+                    FROM student
+                    WHERE status = 'active'
+                    ORDER BY student_id
+                    """
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """
+                    SELECT student_id, name, status, created_at
+                    FROM student
+                    ORDER BY student_id
+                    """
+                ).fetchall()
+        return [dict(row) for row in rows]
+
+    def delete_student(self, student_id: str) -> bool:
+        with self.connect() as conn:
+            cursor = conn.execute("DELETE FROM student WHERE student_id = ?", (student_id.strip(),))
+        return cursor.rowcount > 0
 
     def init_step_progress(self, session_id: str, steps: list[dict[str, Any]]) -> None:
         """初始化会话的步骤进度；按 step.id 排序，第一个为 pending，其余为 locked。"""

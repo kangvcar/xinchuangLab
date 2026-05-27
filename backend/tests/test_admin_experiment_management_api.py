@@ -149,3 +149,27 @@ def test_admin_reorder_experiments_controls_teacher_and_student_order(
         "linux-system",
         "linux-files",
     ]
+
+
+def test_admin_student_roster_controls_student_login(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db = prepare_database(tmp_path)
+    monkeypatch.setattr(main, "db", db)
+
+    saved = asyncio.run(main.admin_save_student({"student_id": "2026001", "name": "学生A"}, _admin=None))
+    login = asyncio.run(main.student_login({"student_id": "2026001"}))
+    students = asyncio.run(main.admin_list_students(_admin=None))
+
+    assert saved["student_id"] == "2026001"
+    assert login["student_id"] == "2026001"
+    assert [item["student_id"] for item in students] == ["2026001"]
+
+    result = asyncio.run(main.admin_delete_student("2026001", _admin=None))
+    assert result == {"status": "deleted", "student_id": "2026001"}
+
+    with pytest.raises(HTTPException) as exc_info:
+        asyncio.run(main.student_login({"student_id": "2026001"}))
+
+    assert exc_info.value.status_code == 403

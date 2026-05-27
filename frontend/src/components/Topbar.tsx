@@ -1,4 +1,4 @@
-import { Clock3, FlaskConical, Play, Loader2 } from 'lucide-react';
+import { Clock3, FlaskConical, LogOut, Play, Loader2, UserRound } from 'lucide-react';
 import { Select } from '@base-ui/react/select';
 import { Link } from 'react-router-dom';
 import type { Experiment, LabSession } from '@/types';
@@ -10,6 +10,8 @@ interface TopbarProps {
   activeSession: LabSession | null;
   remainingSeconds: number;
   onStartSession: () => void;
+  studentId: string;
+  onLogout: () => void;
   busy: boolean;
 }
 
@@ -20,6 +22,8 @@ export default function Topbar({
   activeSession,
   remainingSeconds,
   onStartSession,
+  studentId,
+  onLogout,
   busy,
 }: TopbarProps) {
   const timerText = `${String(Math.floor(remainingSeconds / 60)).padStart(2, '0')}:${String(remainingSeconds % 60).padStart(2, '0')}`;
@@ -83,6 +87,11 @@ export default function Topbar({
 
       {/* Right side */}
       <div className="flex items-center gap-3 ml-auto">
+        <span className="inline-flex items-center gap-1.5 text-neutral-600 font-medium text-xs bg-neutral-50 px-3 py-1.5 rounded-md border border-neutral-200">
+          <UserRound size={13} />
+          {studentId}
+        </span>
+
         {activeSession && (
           <span className="inline-flex items-center gap-1.5 text-neutral-500 font-medium text-xs bg-neutral-50 px-3 py-1.5 rounded-md border border-neutral-200">
             <Clock3 size={13} />
@@ -114,6 +123,15 @@ export default function Topbar({
         >
           教师端
         </Link>
+        <button
+          type="button"
+          onClick={onLogout}
+          disabled={busy}
+          title="退出登录"
+          className="h-9 w-9 grid place-items-center rounded-md font-medium text-xs border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 active:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <LogOut size={14} />
+        </button>
       </div>
     </header>
   );

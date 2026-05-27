@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowDown, ArrowUp, Info, ListChecks, Plus, Trash2 } from 'lucide-react';
 import type { Step } from '@/types';
 import {
@@ -28,13 +28,14 @@ const BLANK_STEP: Omit<Step, 'id'> = {
   verification: { checks: [] },
 };
 
-const FIELD_HELP: Record<'title' | 'goal' | 'try_commands' | 'instructions' | 'success_criteria' | 'coach_focus', string> = {
+const FIELD_HELP: Record<'title' | 'goal' | 'try_commands' | 'instructions' | 'success_criteria' | 'coach_focus' | 'verification', string> = {
   title: '学生看到的步骤名称，建议用一个动作描述清楚当前任务。',
   goal: '说明这一步要达成的学习目标或操作结果，帮助学生理解为什么做。',
   try_commands: '给学生的参考命令，每行一条。系统也会用它辅助识别步骤归属。',
   instructions: '面向学生的详细操作说明，写清楚操作顺序、注意事项和观察点。',
   success_criteria: '完成判断标准，描述什么现象代表这一步已经完成。',
   coach_focus: 'AI 辅导时重点关注的概念、易错点或提示方向。',
+  verification: '机器自动判定这一步是否完成的规则。mode 为 all/any，checks 支持 command_match、command_sequence、path_exists、file_contains 等。',
 };
 
 function FieldCaption({ label, help }: { label: string; help: string }) {
@@ -59,6 +60,9 @@ export default function StepFlowEditor({
   onStepsTextChange,
   onValidationError,
 }: StepFlowEditorProps) {
+  const [verificationDrafts, setVerificationDrafts] = useState<Record<string, string>>({});
+  const [verificationError, setVerificationError] = useState('');
+
   const parsed = useMemo(() => {
     try {
       return { steps: parseStepsText(stepsText), error: '' };
@@ -71,8 +75,13 @@ export default function StepFlowEditor({
   }, [stepsText]);
 
   useEffect(() => {
-    onValidationError(parsed.error);
-  }, [onValidationError, parsed.error]);
+    onValidationError(parsed.error || verificationError);
+  }, [onValidationError, parsed.error, verificationError]);
+
+  useEffect(() => {
+    setVerificationDrafts({});
+    setVerificationError('');
+  }, [stepsText]);
 
   const commitSteps = (nextSteps: Step[]) => {
     onStepsTextChange(serializeSteps(nextSteps));
@@ -92,6 +101,27 @@ export default function StepFlowEditor({
         stepIndex === index ? { ...step, try_commands: commandLinesToList(value) } : step
       ))
     );
+  };
+
+  const updateVerification = (index: number, value: string) => {
+    const key = `${parsed.steps[index]?.id ?? index}-${index}`;
+    setVerificationDrafts((prev) => ({ ...prev, [key]: value }));
+    try {
+      const nextVerification = JSON.parse(value || '{}');
+      if (!nextVerification || typeof nextVerification !== 'object' || Array.isArray(nextVerification)) {
+        throw new Error('verification 必须是对象');
+      }
+      setVerificationError('');
+      commitSteps(
+        parsed.steps.map((step, stepIndex) => (
+          stepIndex === index ? { ...step, verification: nextVerification } : step
+        ))
+      );
+    } catch (error) {
+      setVerificationError(
+        `第 ${index + 1} 步 verification JSON 格式错误：${error instanceof Error ? error.message : '无法解析'}`
+      );
+    }
   };
 
   const addStep = () => {
@@ -137,6 +167,13 @@ export default function StepFlowEditor({
         </div>
       )}
 
+      {!parsed.error && verificationError && (
+        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+          <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+          <span>{verificationError}</span>
+        </div>
+      )}
+
       {!parsed.error && parsed.steps.length === 0 && (
         <div className="rounded-md border border-dashed border-neutral-300 bg-neutral-50 px-4 py-8 text-center">
           <strong className="block text-sm font-semibold text-neutral-900">还没有步骤</strong>
@@ -144,8 +181,11 @@ export default function StepFlowEditor({
         </div>
       )}
 
-      {!parsed.error && parsed.steps.map((step, index) => (
-        <section key={`${step.id}-${index}`} className="rounded-md border border-neutral-200 bg-white p-4">
+      {!parsed.error && parsed.steps.map((step, index) => {
+        const verificationKey = `${step.id}-${index}`;
+        const verificationText = verificationDrafts[verificationKey] ?? JSON.stringify(step.verification ?? { mode: 'all', checks: [] }, null, 2);
+        return (
+        <section key={verificationKey} className="rounded-md border border-neutral-200 bg-white p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 items-start gap-3">
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-neutral-900 text-xs font-semibold text-white">
@@ -246,9 +286,21 @@ export default function StepFlowEditor({
                 className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm leading-relaxed text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 disabled:opacity-50"
               />
             </label>
+            <label className="block lg:col-span-2">
+              <FieldCaption label="verification 验证规则" help={FIELD_HELP.verification} />
+              <textarea
+                value={verificationText}
+                onChange={(event) => updateVerification(index, event.target.value)}
+                rows={5}
+                disabled={disabled}
+                spellCheck={false}
+                className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 font-mono text-xs leading-relaxed text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 disabled:opacity-50"
+              />
+            </label>
           </div>
         </section>
-      ))}
+        );
+      })}
     </div>
   );
 }

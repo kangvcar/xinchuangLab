@@ -12,6 +12,7 @@ from docx.oxml.ns import qn
 from docx.shared import Pt, RGBColor
 
 from .database import Database
+from .step_verifier import StepVerifier
 
 
 ERROR_PATTERNS = [
@@ -27,6 +28,7 @@ STATUS_LABELS = {
     "pending": "进行中",
     "locked": "未开始",
 }
+REPORT_STEP_VERIFIER = StepVerifier()
 
 
 class ReportService:
@@ -729,7 +731,7 @@ def _infer_step_id(command: str, steps_config: list[dict[str, Any]]) -> int | No
                 candidates.extend(commands)
             if check.get("command"):
                 candidates.append(check["command"])
-        if any(str(candidate) and normalized.startswith(str(candidate)) for candidate in candidates):
+        if any(str(candidate) and REPORT_STEP_VERIFIER._command_matches(normalized, str(candidate)) for candidate in candidates):
             return int(step.get("id", 0))
     return None
 

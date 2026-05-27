@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from app.step_verifier import StepVerifier
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EXPERIMENTS_DIR = PROJECT_ROOT / "experiments"
@@ -63,9 +65,31 @@ def test_foundation_experiment_steps_use_current_schema() -> None:
             assert "checks" in step["verification"]
 
 
+def test_foundation_command_checks_tolerate_shell_alias_expansion() -> None:
+    verifier = StepVerifier()
+
+    for path in EXPERIMENTS_DIR.glob("*.json"):
+        config = json.loads(path.read_text(encoding="utf-8"))
+        for step in config["steps"]:
+            for command in step["try_commands"]:
+                assert verifier._command_matches(_with_common_alias_expansion(command), command)
+
+
 def test_foundation_experiment_markdown_docs_exist() -> None:
     docs = sorted(path.name for path in DOCS_DIR.glob("*.md"))
 
     assert len(docs) == 18
     assert docs[0] == "01-linux-system-awareness.md"
     assert docs[-1] == "18-docker-container-management.md"
+
+
+def _with_common_alias_expansion(command: str) -> str:
+    if command == "ls":
+        return "ls --color=auto"
+    if command.startswith("ls "):
+        return command.replace("ls ", "ls --color=auto ", 1)
+    if command == "grep":
+        return "grep --color=auto"
+    if command.startswith("grep "):
+        return command.replace("grep ", "grep --color=auto ", 1)
+    return command

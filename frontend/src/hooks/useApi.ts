@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { Experiment, LabSession, StepProgressResponse, AICoachRecord, TerminalLog, BuildState, ImportPayload } from '@/types';
+import type { Experiment, LabSession, StepProgressResponse, AICoachRecord, TerminalLog, BuildState, ImportPayload, StudentRecord } from '@/types';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '';
 const TEACHER_PASSWORD_STORAGE_KEY = 'linux-ai-teacher-password';
@@ -53,6 +53,51 @@ export function useApi() {
     });
     if (!response.ok) {
       throw new Error(await errorMessage(response, '读取实验列表失败'));
+    }
+    return response.json();
+  }, []);
+
+  const loginStudent = useCallback(async (studentId: string): Promise<StudentRecord> => {
+    const response = await fetch(`${API_BASE}/api/students/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_id: studentId.trim() }),
+    });
+    if (!response.ok) {
+      throw new Error(await errorMessage(response, '学号未登记'));
+    }
+    return response.json();
+  }, []);
+
+  const loadStudents = useCallback(async (): Promise<StudentRecord[]> => {
+    const response = await fetch(`${API_BASE}/api/admin/students`, {
+      headers: adminHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error(await errorMessage(response, '读取学生名单失败'));
+    }
+    return response.json();
+  }, []);
+
+  const saveStudent = useCallback(async (studentId: string, name = ''): Promise<StudentRecord> => {
+    const response = await fetch(`${API_BASE}/api/admin/students`, {
+      method: 'POST',
+      headers: adminHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ student_id: studentId.trim(), name: name.trim() }),
+    });
+    if (!response.ok) {
+      throw new Error(await errorMessage(response, '保存学生失败'));
+    }
+    return response.json();
+  }, []);
+
+  const deleteStudent = useCallback(async (studentId: string): Promise<{ status: string; student_id: string }> => {
+    const response = await fetch(`${API_BASE}/api/admin/students/${encodeURIComponent(studentId)}`, {
+      method: 'DELETE',
+      headers: adminHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error(await errorMessage(response, '删除学生失败'));
     }
     return response.json();
   }, []);
@@ -244,6 +289,10 @@ export function useApi() {
   return {
     loadExperiments,
     loadAdminExperiments,
+    loginStudent,
+    loadStudents,
+    saveStudent,
+    deleteStudent,
     createSession,
     getSession,
     getCurrentSession,

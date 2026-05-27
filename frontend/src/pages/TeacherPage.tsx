@@ -7,7 +7,10 @@ import {
   Loader2,
   Save,
   Send,
+  Trash2,
   Upload,
+  UserPlus,
+  Users,
   XCircle,
 } from 'lucide-react';
 import { Tabs } from '@base-ui/react/tabs';
@@ -17,7 +20,7 @@ import ExperimentSidebar from '@/components/teacher/ExperimentSidebar';
 import StepFlowEditor from '@/components/teacher/StepFlowEditor';
 import ValidationSummary from '@/components/teacher/ValidationSummary';
 import { useApi } from '@/hooks/useApi';
-import type { BuildState, ContainerSpec, Experiment, ExperimentStatus, ImportPayload, Step } from '@/types';
+import type { BuildState, ContainerSpec, Experiment, ExperimentStatus, ImportPayload, Step, StudentRecord } from '@/types';
 import {
   buildSavePayload,
   createBlankSnapshot,
@@ -59,6 +62,10 @@ export default function TeacherPage() {
   const [buildLogs, setBuildLogs] = useState('');
   const [buildError, setBuildError] = useState('');
   const [buildDockerfile, setBuildDockerfile] = useState('');
+  const [students, setStudents] = useState<StudentRecord[]>([]);
+  const [studentInput, setStudentInput] = useState('');
+  const [studentNameInput, setStudentNameInput] = useState('');
+  const [studentRosterStatus, setStudentRosterStatus] = useState('');
   const buildPollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isBuildRunning = buildStatus === 'queued' || buildStatus === 'running';
@@ -104,6 +111,12 @@ export default function TeacherPage() {
     }
     return data;
   }, [api, selectedExperimentId]);
+
+  const refreshStudents = useCallback(async () => {
+    const data = await api.loadStudents();
+    setStudents(data);
+    return data;
+  }, [api]);
 
   const confirmDiscardDirty = useCallback(() => {
     if (!isDirty) return true;
@@ -174,6 +187,7 @@ export default function TeacherPage() {
         }
       })
       .catch((error) => setAdminStatus(error instanceof Error ? error.message : '读取实验列表失败'));
+    refreshStudents().catch((error) => setStudentRosterStatus(error instanceof Error ? error.message : '读取学生名单失败'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -375,13 +389,46 @@ export default function TeacherPage() {
     }
   }, [importFile, api, applyImportedDraft]);
 
+  const addStudent = useCallback(async () => {
+    const studentId = studentInput.trim();
+    if (!studentId) {
+      setStudentRosterStatus('请先填写学号');
+      return;
+    }
+    setStudentRosterStatus('正在保存学生');
+    try {
+      await api.saveStudent(studentId, studentNameInput);
+      setStudentInput('');
+      setStudentNameInput('');
+      await refreshStudents();
+      setStudentRosterStatus('学生学号已录入');
+    } catch (error) {
+      setStudentRosterStatus(error instanceof Error ? error.message : '保存学生失败');
+    }
+  }, [api, refreshStudents, studentInput, studentNameInput]);
+
+  const removeStudent = useCallback(async (studentId: string) => {
+    const confirmed = window.confirm(`删除学生学号“${studentId}”？该学生之后将无法登录实验平台。`);
+    if (!confirmed) return;
+    setStudentRosterStatus('正在删除学生');
+    try {
+      await api.deleteStudent(studentId);
+      await refreshStudents();
+      setStudentRosterStatus('学生已移除');
+    } catch (error) {
+      setStudentRosterStatus(error instanceof Error ? error.message : '删除学生失败');
+    }
+  }, [api, refreshStudents]);
+
   const updateDraft = useCallback((field: keyof AdminDraft, value: AdminDraft[keyof AdminDraft]) => {
     setAdminDraft((prev) => (prev ? ({ ...prev, [field]: value } as AdminDraft) : prev));
   }, []);
 
   const handleStepEditorValidation = useCallback((message: string) => {
     setValidationErrors((prev) => {
-      const withoutStepParseErrors = prev.filter((item) => !item.startsWith('步骤 JSON 格式错误：'));
+      const withoutStepParseErrors = prev.filter((item) => !(
+        item.startsWith('步骤 JSON 格式错误：') || item.includes('verification JSON 格式错误')
+      ));
       if (!message) {
         return withoutStepParseErrors.length === prev.length ? prev : withoutStepParseErrors;
       }
@@ -436,6 +483,66 @@ export default function TeacherPage() {
         />
 
         <section className="flex-1 min-w-0 overflow-auto p-6">
+          <div className="max-w-6xl mx-auto mb-4 rounded-lg border border-neutral-200 bg-white p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex min-w-0 items-center gap-2">
+                <Users size={16} className="text-neutral-700" />
+                <strong className="text-sm font-semibold text-neutral-900">学生准入</strong>
+                <span className="text-xs font-medium text-neutral-500">{students.length} 个学号</span>
+                {studentRosterStatus && (
+                  <span className="truncate text-xs font-medium text-neutral-500">{studentRosterStatus}</span>
+                )}
+              </div>
+              <form
+                className="flex flex-col gap-2 sm:flex-row sm:items-center"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void addStudent();
+                }}
+              >
+                <input
+                  value={studentInput}
+                  onChange={(event) => setStudentInput(event.target.value)}
+                  placeholder="学号"
+                  className="h-8 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 sm:w-36"
+                />
+                <input
+                  value={studentNameInput}
+                  onChange={(event) => setStudentNameInput(event.target.value)}
+                  placeholder="姓名，可选"
+                  className="h-8 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 sm:w-36"
+                />
+                <button
+                  type="submit"
+                  className="h-8 inline-flex items-center justify-center gap-1.5 rounded-md border border-neutral-900 bg-neutral-900 px-3 text-xs font-medium text-white transition-colors hover:bg-neutral-800 active:bg-neutral-950"
+                >
+                  <UserPlus size={13} />
+                  录入
+                </button>
+              </form>
+            </div>
+            {students.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {students.map((student) => (
+                  <span
+                    key={student.student_id}
+                    className="inline-flex h-8 items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-2.5 text-xs font-medium text-neutral-700"
+                  >
+                    <span className="font-mono text-neutral-900">{student.student_id}</span>
+                    {student.name && <span>{student.name}</span>}
+                    <button
+                      type="button"
+                      onClick={() => void removeStudent(student.student_id)}
+                      title="删除学生"
+                      className="grid h-5 w-5 place-items-center rounded text-neutral-500 hover:bg-white hover:text-red-700"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
           {adminDraft ? (
             <div className="max-w-6xl mx-auto bg-white border border-neutral-200 rounded-lg p-6">
               <div className="flex items-center gap-3 mb-5">

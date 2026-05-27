@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, type FormEvent } from 'react';
 import { marked } from 'marked';
+import { FlaskConical, Loader2, LogIn } from 'lucide-react';
 import Topbar from '@/components/Topbar';
 import StepNav from '@/components/StepNav';
 import TaskPanel from '@/components/TaskPanel';
@@ -11,6 +12,7 @@ import type { Experiment, LabSession, StepProgress, AICoachRecord } from '@/type
 
 const sessionStorageKey = (studentId: string) => `linux-ai-active-session:${studentId}`;
 const experimentStorageKey = (studentId: string) => `linux-ai-active-experiment:${studentId}`;
+const STUDENT_LOGIN_STORAGE_KEY = 'linux-ai-student-id';
 
 function getLocalStorage(): Storage | null {
   if (typeof window === 'undefined') return null;
@@ -27,6 +29,18 @@ function readStoredSessionId(studentId: string): string {
 
 function readStoredExperimentId(studentId: string): string {
   return getLocalStorage()?.getItem(experimentStorageKey(studentId)) ?? '';
+}
+
+function readStoredStudentId(): string {
+  return getLocalStorage()?.getItem(STUDENT_LOGIN_STORAGE_KEY) ?? '';
+}
+
+function persistStoredStudentId(studentId: string): void {
+  getLocalStorage()?.setItem(STUDENT_LOGIN_STORAGE_KEY, studentId);
+}
+
+function clearStoredStudentId(): void {
+  getLocalStorage()?.removeItem(STUDENT_LOGIN_STORAGE_KEY);
 }
 
 function persistStoredSession(session: LabSession): void {
@@ -67,6 +81,7 @@ function mergeAiRecordsById(existing: AICoachRecord[], incoming: AICoachRecord[]
 export default function StudentPage() {
   const {
     loadExperiments,
+    loginStudent,
     createSession,
     getSession,
     getCurrentSession,
@@ -82,7 +97,9 @@ export default function StudentPage() {
 
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [selectedExperimentId, setSelectedExperimentId] = useState<string>('file-basic');
-  const [studentId] = useState<string>('stu001');
+  const [studentId, setStudentId] = useState<string>(() => readStoredStudentId());
+  const [studentLoginInput, setStudentLoginInput] = useState<string>(() => readStoredStudentId());
+  const [loginError, setLoginError] = useState('');
   const [activeSession, setActiveSession] = useState<LabSession | null>(null);
   const [aiRecords, setAiRecords] = useState<AICoachRecord[]>([]);
   const [stepProgress, setStepProgress] = useState<StepProgress[]>([]);
@@ -242,11 +259,62 @@ export default function StudentPage() {
     [connectCoach, loadProgressForSession]
   );
 
+  const submitStudentLogin = useCallback(async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    const nextStudentId = studentLoginInput.trim();
+    if (!nextStudentId) {
+      setLoginError('请输入学号');
+      return;
+    }
+    setBusy(true);
+    setLoginError('');
+    setStatusText('正在校验学号');
+    try {
+      const student = await loginStudent(nextStudentId);
+      persistStoredStudentId(student.student_id);
+      setStudentId(student.student_id);
+      setStudentLoginInput(student.student_id);
+      setStatusText('学号校验通过');
+    } catch (error) {
+      clearStoredStudentId();
+      setLoginError(error instanceof Error ? error.message : '学号未登记');
+      setStatusText('学号校验失败');
+    } finally {
+      setBusy(false);
+    }
+  }, [loginStudent, studentLoginInput]);
+
+  const logoutStudent = useCallback(async () => {
+    setBusy(true);
+    try {
+      if (activeSession) {
+        await stopSessionApi(activeSession.id);
+      }
+    } catch {
+      // keep logout usable even if the container was already gone
+    } finally {
+      clearSessionState();
+      clearStoredStudentId();
+      setStudentId('');
+      setStudentLoginInput('');
+      setExperiments([]);
+      setStatusText('已退出登录');
+      setBusy(false);
+    }
+  }, [activeSession, clearSessionState, stopSessionApi]);
+
   useEffect(() => {
     let cancelled = false;
 
     const restore = async () => {
+      if (!studentId) {
+        setExperiments([]);
+        setStatusText('请先填写学号');
+        return;
+      }
       try {
+        await loginStudent(studentId);
+        if (cancelled) return;
         const data = await loadExperiments();
         if (cancelled) return;
         setExperiments(data);
@@ -270,13 +338,19 @@ export default function StudentPage() {
             clearStoredSession(studentId);
           }
         }
-        if (!session) {
-          session = await getCurrentSession(studentId, storedExperimentId || undefined).catch(() => null);
+        if (session) {
+          const isKnownExperiment = data.some((item) => item.id === session!.experiment_id);
+          if (session.status !== 'running' || !isKnownExperiment) {
+            session = null;
+          }
         }
-        if (cancelled || !session) return;
-
-        const isKnownExperiment = data.some((item) => item.id === session!.experiment_id);
-        if (session.status !== 'running' || !isKnownExperiment) {
+        if (!session && storedExperimentId) {
+          session = await getCurrentSession(studentId, storedExperimentId).catch(() => null);
+        }
+        if (!session) {
+          session = await getCurrentSession(studentId).catch(() => null);
+        }
+        if (cancelled || !session) {
           clearStoredSession(studentId);
           return;
         }
@@ -295,6 +369,11 @@ export default function StudentPage() {
         }
       } catch (error) {
         if (!cancelled) {
+          if (error instanceof Error && error.message.includes('学号')) {
+            clearStoredStudentId();
+            setStudentId('');
+            setLoginError(error.message);
+          }
           setStatusText(error instanceof Error ? error.message : '实验列表加载失败');
         }
       }
@@ -308,6 +387,7 @@ export default function StudentPage() {
     connectCoachSocket,
     getCurrentSession,
     getSession,
+    loginStudent,
     loadExperiments,
     loadLogsForSession,
     loadProgressForSession,
@@ -459,6 +539,58 @@ export default function StudentPage() {
     return marked.parse(text, { breaks: true, gfm: true });
   }, []);
 
+  if (!studentId) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <header className="h-14 flex items-center justify-between gap-4 px-6 bg-white border-b border-neutral-200">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 grid place-items-center rounded-md text-white bg-neutral-900">
+              <FlaskConical size={18} />
+            </div>
+            <strong className="text-neutral-900 text-sm font-semibold whitespace-nowrap">
+              信创Linux AI 陪练实训平台
+            </strong>
+          </div>
+        </header>
+        <main className="flex-1 grid place-items-center px-4 py-8">
+          <form
+            onSubmit={submitStudentLogin}
+            className="w-full max-w-sm rounded-lg border border-neutral-200 bg-white p-6 shadow-sm"
+          >
+            <strong className="block text-base font-semibold text-neutral-900">学生登录</strong>
+            <p className="mt-2 text-sm leading-6 text-neutral-500">
+              请输入教师端已录入的学号，通过校验后即可进入实验平台。
+            </p>
+            <label className="mt-5 block">
+              <span className="mb-1.5 block text-xs font-semibold text-neutral-900">学号</span>
+              <input
+                value={studentLoginInput}
+                onChange={(event) => setStudentLoginInput(event.target.value)}
+                disabled={busy}
+                autoFocus
+                className="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 disabled:opacity-50"
+                placeholder="例如：2026001"
+              />
+            </label>
+            {loginError && (
+              <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                {loginError}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={busy}
+              className="mt-4 h-10 w-full inline-flex items-center justify-center gap-1.5 rounded-md border border-neutral-900 bg-neutral-900 px-4 text-xs font-medium text-white transition-colors hover:bg-neutral-800 active:bg-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {busy ? <Loader2 size={14} className="animate-spin" /> : <LogIn size={14} />}
+              {busy ? '正在校验' : '进入实验平台'}
+            </button>
+          </form>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col bg-white overflow-hidden">
       <Topbar
@@ -468,6 +600,8 @@ export default function StudentPage() {
         activeSession={activeSession}
         remainingSeconds={remainingSeconds}
         onStartSession={startSession}
+        studentId={studentId}
+        onLogout={logoutStudent}
         busy={busy}
       />
 

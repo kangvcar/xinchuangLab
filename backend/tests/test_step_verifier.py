@@ -51,3 +51,10 @@ def test_sequence_does_not_complete_when_missing_or_reversed():
         event("cp hello.txt hello-copy.txt"),
     ]
     assert not verifier.verify(step, reversed_history[-1], [], reversed_history)
+
+
+def test_command_match_tolerates_common_alias_options():
+    verifier = StepVerifier()
+
+    assert verifier._command_matches("ls --color=auto -l files/source", "ls -l files/source")
+    assert verifier._command_matches("grep --color=auto alice regex/accounts.txt", "grep alice regex/accounts.txt")
