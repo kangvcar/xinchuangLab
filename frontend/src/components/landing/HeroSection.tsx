@@ -57,7 +57,7 @@ export default function HeroSection() {
             <ArrowRight size={16} />
           </Link>
           <a
-            href="https://wisdomh5.zhihuishu.com/"
+            href="https://wisdomh5.zhihuishu.com/course/index/2000879101413748736?courseId=1100001801&mapVersion=0"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#f5f5f5] text-[#666] text-base font-medium hover:bg-[#eee] transition-colors"

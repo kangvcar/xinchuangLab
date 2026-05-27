@@ -52,7 +52,7 @@ export default function FooterSection() {
             <h4 className="text-sm font-medium text-[#181925] mb-4">资源</h4>
             <ul className="space-y-3">
               <li>
-                <a href="https://wisdomh5.zhihuishu.com/" target="_blank" rel="noreferrer" className="text-sm text-[#999] hover:text-[#181925] transition-colors">
+                <a href="https://wisdomh5.zhihuishu.com/course/index/2000879101413748736?courseId=1100001801&mapVersion=0" target="_blank" rel="noreferrer" className="text-sm text-[#999] hover:text-[#181925] transition-colors">
                   在线课程
                 </a>
               </li>

@@ -3,98 +3,17 @@ import { motion, AnimatePresence } from "motion/react";
 
 const tabs = ["终端实操", "AI 陪练", "任务面板", "实验报告", "实时监控"];
 
-function MockDashboard() {
-  return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-[#181925]" />
-          <span className="text-sm font-medium text-[#181925]">student@openeuler</span>
-        </div>
-        <div className="w-8 h-8 rounded-full bg-[#f5f5f5]" />
-      </div>
-
-      {/* Task picker */}
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#f5f5f5] text-sm text-[#666] mb-6">
-        Linux 文件管理
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-6 gap-4 mb-6">
-        {[
-          { label: "总步骤", value: "8", change: "已完成 3", color: "text-[#33c758]" },
-          { label: "已用时", value: "12m", change: "-30%", color: "text-[#33c758]" },
-          { label: "命令数", value: "24", change: "+5", color: "text-[#666]" },
-          { label: "正确率", value: "95%", change: "0%", color: "text-[#666]" },
-          { label: "AI 提示", value: "6", change: "+2", color: "text-[#9580ff]" },
-          { label: "得分", value: "87", change: "+12%", color: "text-[#33c758]" },
-        ].map((stat) => (
-          <div key={stat.label}>
-            <p className="text-xs text-[#999] mb-1">{stat.label}</p>
-            <p className="text-sm font-medium text-[#181925]">{stat.value}</p>
-            <p className={`text-xs ${stat.color}`}>{stat.change}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Chart area */}
-      <div className="relative h-48 mb-6">
-        <svg viewBox="0 0 600 120" className="w-full h-full">
-          <path
-            d="M0,80 Q50,20 100,60 T200,50 T300,70 T400,40 T500,55 T600,45"
-            fill="none"
-            stroke="#e0e0e0"
-            strokeWidth="1.5"
-          />
-          <path
-            d="M0,90 Q50,85 100,88 T200,86 T300,89 T400,84 T500,87 T600,85"
-            fill="none"
-            stroke="#9580ff"
-            strokeWidth="1.5"
-            opacity="0.6"
-          />
-          <circle cx="150" cy="65" r="4" fill="#33c758" />
-          <circle cx="350" cy="55" r="4" fill="#33c758" />
-          <rect x="450" y="30" width="8" height="40" rx="4" fill="#33c758" />
-        </svg>
-      </div>
-
-      {/* Bottom cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-xl bg-[#fafafa] p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-[#181925]">当前步骤：创建目录</span>
-            <span className="text-xs text-[#999]">步骤 4/8 {'>'}</span>
-          </div>
-          <div className="flex items-end gap-1 h-12">
-            {[40, 20, 60, 30, 50, 25, 70, 35, 45, 55, 30, 65].map((h, i) => (
-              <div key={i} className="flex-1 bg-[#9580ff] rounded-sm" style={{ height: `${h}%`, opacity: i % 3 === 0 ? 1 : 0.4 }} />
-            ))}
-          </div>
-        </div>
-        <div className="rounded-xl bg-[#fafafa] p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-[#181925]">能力评估</span>
-            <span className="text-xs text-[#999]">详情 {'>'}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full border-4 border-[#33c758] flex items-center justify-center">
-              <span className="text-sm font-medium">87</span>
-            </div>
-            <div>
-              <p className="text-sm font-medium">良好</p>
-              <p className="text-xs text-[#999]">文件管理能力持续提升中。</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+const tabImages: Record<string, string> = {
+  "终端实操": "/image-terminal.png",
+  "AI 陪练": "/image-ai.png",
+  "任务面板": "/image-step.png",
+  "实验报告": "/image-report.png",
+  "实时监控": "/image-teacher.png",
+};
 
 export default function ProductPreview() {
   const [activeTab, setActiveTab] = useState("终端实操");
+  const activeImage = tabImages[activeTab] ?? tabImages["终端实操"];
 
   return (
     <section className="relative">
@@ -156,7 +75,11 @@ export default function ProductPreview() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <MockDashboard />
+                <img
+                  src={activeImage}
+                  alt={`${activeTab}示意图`}
+                  className="w-full h-auto object-cover"
+                />
               </motion.div>
             </AnimatePresence>
           </motion.div>
