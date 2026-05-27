@@ -108,6 +108,12 @@ def test_terminal_event_ws_url_uses_backend_public_url_port() -> None:
     assert manager.terminal_event_ws_url() == "ws://host.docker.internal:8001/ws/terminal-log"
 
 
+def test_terminal_event_ws_url_uses_default_http_port_for_public_backend_url() -> None:
+    manager = DockerManager(settings("docker", backend_public_url="http://8.163.46.41"))
+
+    assert manager.terminal_event_ws_url() == "ws://host.docker.internal:80/ws/terminal-log"
+
+
 def test_terminal_event_ws_url_prefers_explicit_override() -> None:
     manager = DockerManager(
         settings(
