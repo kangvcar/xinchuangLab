@@ -241,7 +241,7 @@ sudo -E PUBLIC_HOST=你的服务器公网IP \
 | 类别 | 默认源 |
 |------|--------|
 | Ubuntu / Docker CE apt | `http://mirrors.cloud.aliyuncs.com` |
-| pip | `http://mirrors.cloud.aliyuncs.com/pypi/simple` |
+| pip | `https://mirrors.aliyun.com/pypi/simple` |
 | npm | `https://registry.npmmirror.com` |
 | Node.js 二进制包 | `https://npmmirror.com/mirrors/node` |
 | openEuler 软件源 | `https://repo.huaweicloud.com/openeuler` |
@@ -260,6 +260,14 @@ sudo -E PUBLIC_HOST=你的服务器公网IP \
 ```bash
 sudo -E PUBLIC_HOST=你的服务器公网IP FORCE_REBUILD_IMAGES=1 \
   bash scripts/deploy-aliyun-ubuntu24.sh --force-images
+```
+
+如果服务器无法访问 GitHub 下载 `ttyd`，可以先把 `ttyd.x86_64` 上传到服务器，再指定本地文件：
+
+```bash
+sudo -E PUBLIC_HOST=你的服务器公网IP \
+  TTYD_LOCAL_FILE=/root/ttyd.x86_64 \
+  bash scripts/deploy-aliyun-ubuntu24.sh --skip-system --skip-app-build
 ```
 
 常用运维命令：

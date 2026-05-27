@@ -185,7 +185,7 @@ def prepare_build_draft(payload: dict[str, Any]) -> dict[str, Any]:
     return draft
 
 
-def render_dockerfile(draft: dict[str, Any]) -> str:
+def render_dockerfile(draft: dict[str, Any], *, ttyd_source: str = "download") -> str:
     spec = draft.get("container_spec", {})
     packages = _unique([*RUNTIME_PACKAGES, *spec.get("packages", [])])
     if spec.get("npm_packages"):
@@ -215,6 +215,17 @@ def render_dockerfile(draft: dict[str, Any]) -> str:
         if spec.get("student_files")
         else ""
     )
+    if ttyd_source == "local":
+        ttyd_arg = ""
+        copy_ttyd = "COPY ttyd /usr/local/bin/ttyd\n"
+        install_ttyd = "    chmod +x /usr/local/bin/ttyd; \\"
+    else:
+        ttyd_arg = "ARG TTYD_URL=https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64\n"
+        copy_ttyd = ""
+        install_ttyd = (
+            '    curl -fsSL --retry 3 --connect-timeout 20 "$TTYD_URL" -o /usr/local/bin/ttyd; \\\n'
+            '    chmod +x /usr/local/bin/ttyd; \\'
+        )
     return f"""ARG BASE_IMAGE={DEFAULT_BASE_IMAGE}
 FROM ${{BASE_IMAGE}}
 
@@ -222,7 +233,8 @@ ARG OPENEULER_RELEASE=openEuler-22.03-LTS-SP3
 ARG OPENEULER_MIRROR={DEFAULT_OPENEULER_MIRROR}
 ARG PIP_INDEX_URL={DEFAULT_PIP_INDEX_URL}
 ARG NPM_REGISTRY={DEFAULT_NPM_REGISTRY}
-ARG TTYD_URL=https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64
+{ttyd_arg}
+{copy_ttyd}
 
 ENV PIP_INDEX_URL=${{PIP_INDEX_URL}} \\
     npm_config_registry=${{NPM_REGISTRY}}
@@ -262,8 +274,7 @@ RUN set -eux; \\
     dnf -y install {package_line}; \\
 {maybe_pip_install}
 {maybe_npm_install}
-    curl -fsSL --retry 3 --connect-timeout 20 "$TTYD_URL" -o /usr/local/bin/ttyd; \\
-    chmod +x /usr/local/bin/ttyd; \\
+{install_ttyd}
     useradd -m -s /bin/bash student; \\
     echo 'student ALL=(ALL) NOPASSWD: /usr/bin/ls, /usr/bin/cat, /usr/bin/find, /usr/bin/touch, /usr/bin/mkdir, /usr/bin/cp, /usr/bin/mv, /usr/bin/rm' > /etc/sudoers.d/student-lab; \\
     chmod 440 /etc/sudoers.d/student-lab; \\

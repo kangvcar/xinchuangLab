@@ -54,6 +54,14 @@ def test_render_dockerfile_uses_domestic_sources() -> None:
     assert "COPY --chown=student:student student_files/ /home/student/" in dockerfile
 
 
+def test_render_dockerfile_can_use_local_ttyd_binary() -> None:
+    dockerfile = render_dockerfile(prepare_build_draft(draft()), ttyd_source="local")
+
+    assert "COPY ttyd /usr/local/bin/ttyd" in dockerfile
+    assert "curl -fsSL --retry 3 --connect-timeout 20 \"$TTYD_URL\"" not in dockerfile
+    assert "ARG TTYD_URL=" not in dockerfile
+
+
 def test_default_build_context_dir_is_outside_backend_generated() -> None:
     generated_dir = BACKEND_ROOT / "generated"
 

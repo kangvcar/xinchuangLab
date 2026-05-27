@@ -15,7 +15,7 @@ TERMINAL_PORT_START="${TERMINAL_PORT_START:-20000}"
 TERMINAL_PORT_END="${TERMINAL_PORT_END:-20999}"
 
 ALIYUN_MIRROR_BASE="${ALIYUN_MIRROR_BASE:-http://mirrors.cloud.aliyuncs.com}"
-PIP_INDEX_URL="${PIP_INDEX_URL:-${ALIYUN_MIRROR_BASE}/pypi/simple}"
+PIP_INDEX_URL="${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple}"
 NPM_REGISTRY="${NPM_REGISTRY:-https://registry.npmmirror.com}"
 OPENEULER_MIRROR="${OPENEULER_MIRROR:-https://repo.huaweicloud.com/openeuler}"
 NODE_VERSION="${NODE_VERSION:-20.19.5}"
@@ -23,6 +23,8 @@ NODE_MIRROR="${NODE_MIRROR:-https://npmmirror.com/mirrors/node}"
 BASE_IMAGE="${BASE_IMAGE:-openeuler/openeuler:22.03-lts-sp3}"
 BASE_IMAGE_MIRROR="${BASE_IMAGE_MIRROR:-hub.oepkgs.net/openeuler/openeuler:22.03-lts-sp3}"
 TTYD_URL="${TTYD_URL:-https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64}"
+TTYD_CACHE_FILE="${TTYD_CACHE_FILE:-/var/cache/${APP_NAME}/ttyd.x86_64}"
+TTYD_LOCAL_FILE="${TTYD_LOCAL_FILE:-}"
 
 APP_ENV="${APP_ENV:-production}"
 LAB_RUNTIME="${LAB_RUNTIME:-docker}"
@@ -235,8 +237,9 @@ ensure_service_user() {
   fi
   usermod -aG docker "${SERVICE_USER}"
   install -d -m 0755 -o "${SERVICE_USER}" -g "${SERVICE_USER}" "${BUILD_CONTEXT_DIR}" "${IMAGE_CONTEXT_DIR}"
+  install -d -m 0755 -o "${SERVICE_USER}" -g "${SERVICE_USER}" "$(dirname "${TTYD_CACHE_FILE}")"
   install -d -m 0755 -o "${SERVICE_USER}" -g "${SERVICE_USER}" "${DEPLOY_DIR}/backend/data" "${DEPLOY_DIR}/backend/generated"
-  chown -R "${SERVICE_USER}:${SERVICE_USER}" "${DEPLOY_DIR}/backend/data" "${DEPLOY_DIR}/backend/generated" "${BUILD_CONTEXT_DIR}" "${IMAGE_CONTEXT_DIR}"
+  chown -R "${SERVICE_USER}:${SERVICE_USER}" "${DEPLOY_DIR}/backend/data" "${DEPLOY_DIR}/backend/generated" "${BUILD_CONTEXT_DIR}" "${IMAGE_CONTEXT_DIR}" "$(dirname "${TTYD_CACHE_FILE}")"
 }
 
 create_env_file() {
@@ -364,7 +367,8 @@ EOF
 
 prepare_experiment_image_contexts() {
   log "Preparing experiment image contexts"
-  DEPLOY_DIR="${DEPLOY_DIR}" IMAGE_CONTEXT_DIR="${IMAGE_CONTEXT_DIR}" PYTHONPATH="${DEPLOY_DIR}/backend" "${DEPLOY_DIR}/backend/venv/bin/python" - <<'PY'
+  ensure_ttyd_binary
+  DEPLOY_DIR="${DEPLOY_DIR}" IMAGE_CONTEXT_DIR="${IMAGE_CONTEXT_DIR}" TTYD_CACHE_FILE="${TTYD_CACHE_FILE}" PYTHONPATH="${DEPLOY_DIR}/backend" "${DEPLOY_DIR}/backend/venv/bin/python" - <<'PY'
 import json
 import os
 import shutil
@@ -374,6 +378,7 @@ from app.experiment_builder import RUNTIME_DOCKER_DIR, RUNTIME_FILES, prepare_bu
 
 root = Path(os.environ["DEPLOY_DIR"])
 contexts_root = Path(os.environ["IMAGE_CONTEXT_DIR"])
+ttyd_cache_file = Path(os.environ["TTYD_CACHE_FILE"])
 contexts_root.mkdir(parents=True, exist_ok=True)
 manifest = contexts_root / "manifest.tsv"
 rows = []
@@ -387,7 +392,8 @@ for path in sorted((root / "experiments").glob("*.json")):
     if context_dir.exists():
         shutil.rmtree(context_dir)
     context_dir.mkdir(parents=True)
-    (context_dir / "Dockerfile").write_text(render_dockerfile(draft), encoding="utf-8")
+    (context_dir / "Dockerfile").write_text(render_dockerfile(draft, ttyd_source="local"), encoding="utf-8")
+    shutil.copyfile(ttyd_cache_file, context_dir / "ttyd")
     for filename in RUNTIME_FILES:
         shutil.copyfile(RUNTIME_DOCKER_DIR / filename, context_dir / filename)
     (context_dir / "task.json").write_text("{}\n", encoding="utf-8")
@@ -403,6 +409,30 @@ manifest.write_text(
 )
 print(f"Prepared {len(rows)} image contexts at {contexts_root}")
 PY
+}
+
+ensure_ttyd_binary() {
+  if [[ -n "${TTYD_LOCAL_FILE}" ]]; then
+    [[ -f "${TTYD_LOCAL_FILE}" ]] || die "TTYD_LOCAL_FILE does not exist: ${TTYD_LOCAL_FILE}"
+    log "Using local ttyd binary: ${TTYD_LOCAL_FILE}"
+    install -m 0755 "${TTYD_LOCAL_FILE}" "${TTYD_CACHE_FILE}"
+    return
+  fi
+
+  if [[ -x "${TTYD_CACHE_FILE}" ]]; then
+    log "Using cached ttyd binary: ${TTYD_CACHE_FILE}"
+    return
+  fi
+
+  log "Downloading ttyd binary to ${TTYD_CACHE_FILE}"
+  local tmp_file
+  tmp_file="$(mktemp)"
+  if ! curl -fL --retry 3 --connect-timeout 20 "${TTYD_URL}" -o "${tmp_file}"; then
+    rm -f "${tmp_file}"
+    die "Failed to download ttyd from ${TTYD_URL}. Set TTYD_URL to a reachable mirror or set TTYD_LOCAL_FILE=/path/to/ttyd.x86_64."
+  fi
+  install -m 0755 "${tmp_file}" "${TTYD_CACHE_FILE}"
+  rm -f "${tmp_file}"
 }
 
 pull_base_image() {
