@@ -66,7 +66,7 @@ export default function TeacherGate({ children }: TeacherGateProps) {
           <strong className="text-neutral-900 text-sm font-semibold">教师端验证</strong>
         </div>
         <Link
-          to="/"
+          to="/lab"
           className="ml-auto h-8 inline-flex items-center px-3 rounded-md font-medium text-xs border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 active:bg-neutral-100 transition-colors no-underline"
         >
           返回学生端

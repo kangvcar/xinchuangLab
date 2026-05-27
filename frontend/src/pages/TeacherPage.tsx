@@ -3,10 +3,14 @@ import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
   CheckCircle2,
+  FileText,
   FlaskConical,
   Loader2,
+  ListChecks,
+  Rocket,
   Save,
   Send,
+  SlidersHorizontal,
   Trash2,
   Upload,
   UserPlus,
@@ -39,6 +43,13 @@ import {
   type StatusFilter,
 } from './teacherExperimentDraft';
 
+const EDITOR_TABS = [
+  { value: 'text', label: '导入文档', description: '上传或粘贴实验材料', icon: FileText },
+  { value: 'steps', label: '步骤流程', description: '整理任务和验证规则', icon: ListChecks },
+  { value: 'advanced', label: '高级配置', description: '容器与原始 JSON', icon: SlidersHorizontal },
+  { value: 'build', label: '保存发布', description: '保存草稿或构建发布', icon: Rocket },
+] as const;
+
 export default function TeacherPage() {
   const api = useApi();
   const [experiments, setExperiments] = useState<Experiment[]>([]);
@@ -65,10 +76,14 @@ export default function TeacherPage() {
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [studentInput, setStudentInput] = useState('');
   const [studentNameInput, setStudentNameInput] = useState('');
+  const [studentImportFile, setStudentImportFile] = useState<File | null>(null);
+  const [isStudentImporting, setIsStudentImporting] = useState(false);
   const [studentRosterStatus, setStudentRosterStatus] = useState('');
+  const [isImportingDraft, setIsImportingDraft] = useState(false);
   const buildPollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isBuildRunning = buildStatus === 'queued' || buildStatus === 'running';
+  const isEditorBusy = isBuildRunning || isImportingDraft;
   const selectedExperiment = experiments.find((item) => item.id === selectedExperimentId);
   const currentSnapshot: EditorSnapshot | null = adminDraft
     ? { draft: adminDraft, stepsText: adminStepsText, containerSpecText: adminContainerSpecText }
@@ -366,12 +381,15 @@ export default function TeacherPage() {
 
   const importAdminText = useCallback(async () => {
     if (!importText.trim()) return;
-    setAdminStatus('正在识别文档步骤');
+    setAdminStatus('DeepSeek 正在分析文档步骤');
+    setIsImportingDraft(true);
     try {
       const payload = await api.importText(importText);
       applyImportedDraft(payload);
     } catch (error) {
       setAdminStatus(error instanceof Error ? error.message : '导入失败');
+    } finally {
+      setIsImportingDraft(false);
     }
   }, [importText, api, applyImportedDraft]);
 
@@ -380,12 +398,15 @@ export default function TeacherPage() {
       setAdminStatus('请先选择 Markdown 或 TXT 文件');
       return;
     }
-    setAdminStatus('正在上传并识别文档');
+    setAdminStatus('DeepSeek 正在分析上传文档');
+    setIsImportingDraft(true);
     try {
       const payload = await api.importFile(importFile);
       applyImportedDraft(payload);
     } catch (error) {
       setAdminStatus(error instanceof Error ? error.message : '上传导入失败');
+    } finally {
+      setIsImportingDraft(false);
     }
   }, [importFile, api, applyImportedDraft]);
 
@@ -419,6 +440,27 @@ export default function TeacherPage() {
       setStudentRosterStatus(error instanceof Error ? error.message : '删除学生失败');
     }
   }, [api, refreshStudents]);
+
+  const importStudentRoster = useCallback(async () => {
+    if (!studentImportFile) {
+      setStudentRosterStatus('请先选择 TXT 学生名单');
+      return;
+    }
+    setIsStudentImporting(true);
+    setStudentRosterStatus('正在批量导入学生');
+    try {
+      const payload = await api.importStudentsFile(studentImportFile);
+      setStudentImportFile(null);
+      await refreshStudents();
+      const warningText = payload.warnings.length ? `，${payload.warnings.length} 条需检查` : '';
+      const skippedText = payload.skipped ? `，跳过 ${payload.skipped} 行` : '';
+      setStudentRosterStatus(`批量导入完成：新增 ${payload.created} 人，更新 ${payload.updated} 人${skippedText}${warningText}`);
+    } catch (error) {
+      setStudentRosterStatus(error instanceof Error ? error.message : '批量导入学生失败');
+    } finally {
+      setIsStudentImporting(false);
+    }
+  }, [api, refreshStudents, studentImportFile]);
 
   const updateDraft = useCallback((field: keyof AdminDraft, value: AdminDraft[keyof AdminDraft]) => {
     setAdminDraft((prev) => (prev ? ({ ...prev, [field]: value } as AdminDraft) : prev));
@@ -455,7 +497,7 @@ export default function TeacherPage() {
         {isDirty && <span className="text-xs font-medium text-amber-700">有未保存修改</span>}
 
         <Link
-          to="/"
+          to="/lab"
           className="ml-auto h-8 inline-flex items-center px-3 rounded-md font-medium text-xs border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 active:bg-neutral-100 transition-colors no-underline"
         >
           返回学生端
@@ -521,8 +563,32 @@ export default function TeacherPage() {
                 </button>
               </form>
             </div>
+            <div className="mt-3 flex flex-col gap-2 border-t border-neutral-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-xs font-semibold text-neutral-900">批量导入学生 TXT</span>
+                <span className="text-xs text-neutral-500">每行：学号,姓名。重复学号会更新姓名并恢复准入。</span>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  type="file"
+                  accept=".txt,text/plain"
+                  disabled={isStudentImporting}
+                  onChange={(event) => setStudentImportFile(event.target.files?.[0] ?? null)}
+                  className="w-full text-xs file:mr-3 file:rounded-md file:border file:border-neutral-200 file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-neutral-900 hover:file:bg-neutral-50 disabled:opacity-50 sm:w-56"
+                />
+                <button
+                  type="button"
+                  onClick={importStudentRoster}
+                  disabled={!studentImportFile || isStudentImporting}
+                  className="h-8 inline-flex items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-900 transition-colors hover:bg-neutral-50 hover:border-neutral-300 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isStudentImporting ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                  批量导入
+                </button>
+              </div>
+            </div>
             {students.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
                 {students.map((student) => (
                   <span
                     key={student.student_id}
@@ -616,31 +682,73 @@ export default function TeacherPage() {
 
               <Separator className="my-4 bg-neutral-200" />
 
-              <div className="flex flex-wrap items-end gap-3 mb-3 p-3 border border-neutral-200 rounded-lg bg-neutral-50">
-                <div className="min-w-[200px]">
-                  <label className="text-neutral-900 text-xs font-semibold block mb-1.5">上传实验文档</label>
-                  <input
-                    type="file"
-                    accept=".md,.txt,text/markdown,text/plain"
-                    disabled={isBuildRunning}
-                    onChange={(e) => {
-                      setImportFile(e.target.files?.[0] ?? null);
-                      setImportWarnings([]);
-                      setImportRawOutput('');
-                    }}
-                    className="w-full text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-neutral-200 file:bg-white file:text-neutral-900 file:font-medium file:text-xs hover:file:bg-neutral-50 disabled:opacity-50"
-                  />
+              <div className="mb-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-neutral-900 text-white">
+                      <Upload size={18} />
+                    </span>
+                    <div className="min-w-0">
+                      <strong className="block text-sm font-semibold text-neutral-900">上传实验文档</strong>
+                      <span className="mt-1 block text-xs leading-relaxed text-neutral-500">
+                        支持 Markdown/TXT，上传后可由 DeepSeek 识别为可编辑的实验草稿。
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <label
+                      className={`h-9 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-900 transition-colors hover:border-neutral-300 hover:bg-neutral-50 ${isEditorBusy ? 'pointer-events-none opacity-50' : ''}`}
+                    >
+                      <FileText size={13} />
+                      选择文件
+                      <input
+                        type="file"
+                        accept=".md,.txt,text/markdown,text/plain"
+                        disabled={isEditorBusy}
+                        onChange={(e) => {
+                          setImportFile(e.target.files?.[0] ?? null);
+                          setImportWarnings([]);
+                          setImportRawOutput('');
+                        }}
+                        className="sr-only"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={importAdminFile}
+                      disabled={!importFile || isEditorBusy}
+                      className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-900 transition-colors hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isImportingDraft ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                      {isImportingDraft ? 'DeepSeek 分析中' : 'AI 识别文档草稿'}
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={importAdminFile}
-                  disabled={!importFile || isBuildRunning}
-                  className="h-8 inline-flex items-center gap-1.5 px-3 rounded-md font-medium text-xs text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Upload size={14} />
-                  AI 识别文档草稿
-                </button>
-                {importFile && <span className="text-neutral-500 text-xs font-medium">{importFile.name}</span>}
+                <div className="mt-3 flex min-h-8 items-center rounded-md border border-dashed border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-500">
+                  {importFile ? (
+                    <span className="inline-flex min-w-0 items-center gap-2 text-neutral-700">
+                      <FileText size={13} className="shrink-0 text-neutral-700" />
+                      <span className="truncate">{importFile.name}</span>
+                    </span>
+                  ) : (
+                    '尚未选择文件'
+                  )}
+                </div>
               </div>
+
+              {isImportingDraft && (
+                <div className="mb-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
+                    <Loader2 size={15} className="animate-spin" />
+                    DeepSeek 正在分析中
+                  </div>
+                  <div className="mt-1 text-xs text-neutral-500">正在提取实验目标、步骤流程和验证规则，完成后会自动填入草稿。</div>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white">
+                    <div className="h-full w-2/3 animate-pulse rounded-full bg-neutral-900" />
+                  </div>
+                </div>
+              )}
 
               {importWarnings.length > 0 && (
                 <div className="space-y-1.5 mb-3">
@@ -667,21 +775,24 @@ export default function TeacherPage() {
               <ValidationSummary errors={validationErrors} warnings={validationWarnings} />
 
               <Tabs.Root defaultValue="text" className="mt-4">
-                <Tabs.List className="flex gap-1 mb-4 border-b border-neutral-200">
-                  {[
-                    { value: 'text', label: '导入文档' },
-                    { value: 'steps', label: '步骤流程' },
-                    { value: 'advanced', label: '高级配置' },
-                    { value: 'build', label: '保存发布' },
-                  ].map((tab) => (
+                <Tabs.List className="mb-4 grid grid-cols-1 gap-2 md:grid-cols-4">
+                  {EDITOR_TABS.map((tab, index) => {
+                    const Icon = tab.icon;
+                    return (
                     <Tabs.Tab
                       key={tab.value}
                       value={tab.value}
-                      className="h-8 px-3 text-xs font-medium text-neutral-500 border-b-2 border-transparent -mb-px data-[active=true]:text-neutral-900 data-[active=true]:border-neutral-900 hover:text-neutral-700 focus:outline-none transition-colors"
+                      className="min-h-16 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left transition-colors hover:border-neutral-300 hover:bg-neutral-50 data-[active=true]:border-neutral-900 data-[active=true]:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-neutral-900"
                     >
-                      {tab.label}
+                      <span className="flex items-center gap-2 text-xs font-semibold text-neutral-900">
+                        <span className="grid h-5 w-5 place-items-center rounded-md bg-neutral-900 text-[11px] text-white">{index + 1}</span>
+                        <Icon size={14} className="text-neutral-700" />
+                        {tab.label}
+                      </span>
+                      <span className="mt-1 block text-xs leading-relaxed text-neutral-500">{tab.description}</span>
                     </Tabs.Tab>
-                  ))}
+                    );
+                  })}
                 </Tabs.List>
 
                 <Tabs.Panel value="text" className="space-y-3">
@@ -693,30 +804,37 @@ export default function TeacherPage() {
                       value={importText}
                       onChange={(e) => setImportText(e.target.value)}
                       rows={9}
-                      disabled={isBuildRunning}
+                      disabled={isEditorBusy}
                       placeholder="粘贴实验文档、步骤说明或 Markdown 代码块"
                       className="w-full px-3 py-2 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 resize-y hover:border-neutral-300 transition-colors"
                     />
                   </Field.Root>
                   <button
                     onClick={importAdminText}
-                    disabled={isBuildRunning}
+                    disabled={isEditorBusy || !importText.trim()}
                     className="h-8 inline-flex items-center gap-1.5 px-3 rounded-md font-medium text-xs text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    识别文本草稿
+                    {isImportingDraft ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        DeepSeek 分析中
+                      </>
+                    ) : (
+                      '识别文本草稿'
+                    )}
                   </button>
                 </Tabs.Panel>
 
                 <Tabs.Panel value="steps" className="space-y-3">
                   <StepFlowEditor
                     stepsText={adminStepsText}
-                    disabled={isBuildRunning}
+                    disabled={isEditorBusy}
                     onStepsTextChange={setAdminStepsText}
                     onValidationError={handleStepEditorValidation}
                   />
                   <button
                     onClick={saveAdminExperiment}
-                    disabled={isBuildRunning}
+                    disabled={isEditorBusy}
                     className="h-8 inline-flex items-center gap-1.5 px-3 rounded-md font-medium text-xs text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <Save size={13} />
@@ -733,7 +851,7 @@ export default function TeacherPage() {
                       value={adminContainerSpecText}
                       onChange={(e) => setAdminContainerSpecText(e.target.value)}
                       rows={10}
-                      disabled={isBuildRunning}
+                      disabled={isEditorBusy}
                       className="w-full px-3 py-2 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 resize-y hover:border-neutral-300 transition-colors"
                     />
                   </Field.Root>
@@ -748,13 +866,13 @@ export default function TeacherPage() {
                       value={adminStepsText}
                       onChange={(e) => setAdminStepsText(e.target.value)}
                       rows={16}
-                      disabled={isBuildRunning}
+                      disabled={isEditorBusy}
                       className="w-full px-3 py-2 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 resize-y hover:border-neutral-300 transition-colors"
                     />
                   </Field.Root>
                   <button
                     onClick={saveAdminExperiment}
-                    disabled={isBuildRunning}
+                    disabled={isEditorBusy}
                     className="h-8 inline-flex items-center gap-1.5 px-3 rounded-md font-medium text-xs text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <Save size={13} />

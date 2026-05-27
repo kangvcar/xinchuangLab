@@ -145,7 +145,7 @@ export default function ExperimentSidebar({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-auto p-2">
+      <div className="min-h-0 max-h-[46rem] overflow-y-auto p-2">
         {visibleExperiments.length === 0 ? (
           <div className="px-3 py-8 text-center text-xs text-neutral-500">没有匹配的实验</div>
         ) : (

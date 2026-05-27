@@ -219,6 +219,13 @@ def _normalize_check(check: dict[str, Any]) -> dict[str, Any]:
         if "require_success" in check:
             result["require_success"] = bool(check.get("require_success"))
         return result
+    if check_type == "command_set":
+        result = {"type": check_type, "commands": _string_list(check.get("commands") or check.get("command"))}
+        if "mode" in check:
+            result["mode"] = str(check.get("mode") or "all")
+        if "require_success" in check:
+            result["require_success"] = bool(check.get("require_success"))
+        return result
     if check_type == "command_sequence":
         return {"type": check_type, "sequence": _string_list(check.get("sequence"))}
     if check_type == "path_exists":
@@ -248,6 +255,8 @@ def _normalize_check(check: dict[str, Any]) -> dict[str, Any]:
 def _is_useful_check(check: dict[str, Any]) -> bool:
     check_type = check.get("type")
     if check_type == "command_match":
+        return bool(check.get("commands"))
+    if check_type == "command_set":
         return bool(check.get("commands"))
     if check_type == "command_sequence":
         return bool(check.get("sequence"))

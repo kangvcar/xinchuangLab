@@ -53,6 +53,63 @@ def test_command_match_preserves_spaces():
     assert result["passed"] is True
 
 
+def test_command_match_commands_are_alternatives():
+    service = VerificationService(manager())
+    session = {"container_name": "linux-ai-test"}
+    step = {
+        "verification": {
+            "mode": "all",
+            "checks": [{"type": "command_match", "commands": ["whoami", "id"]}],
+        }
+    }
+
+    result = asyncio.run(
+        service.verify_step(
+            session=session,
+            step=step,
+            command_event=event("whoami"),
+            terminal_logs=[],
+            command_events=[event("whoami")],
+        )
+    )
+
+    assert result["passed"] is True
+    assert result["checks"][0]["passed"] is True
+
+
+def test_command_set_requires_all_commands_in_step_history_without_order():
+    service = VerificationService(manager())
+    session = {"container_name": "linux-ai-test"}
+    step = {
+        "verification": {
+            "mode": "all",
+            "checks": [{"type": "command_set", "commands": ["whoami", "id"]}],
+        }
+    }
+
+    missing_result = asyncio.run(
+        service.verify_step(
+            session=session,
+            step=step,
+            command_event=event("whoami"),
+            terminal_logs=[],
+            command_events=[event("whoami")],
+        )
+    )
+    passed_result = asyncio.run(
+        service.verify_step(
+            session=session,
+            step=step,
+            command_event=event("id"),
+            terminal_logs=[],
+            command_events=[event("id"), event("whoami")],
+        )
+    )
+
+    assert missing_result["passed"] is False
+    assert passed_result["passed"] is True
+
+
 def test_path_exists_uses_docker_exec(monkeypatch):
     docker = manager()
     calls = []

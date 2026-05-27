@@ -192,6 +192,12 @@ function normalizeCheck(raw: Record<string, unknown>): Check {
     return check;
   }
   if (type === 'command_sequence') return { type, sequence: stringList(raw.sequence) };
+  if (type === 'command_set') {
+    const check: Check = { type, commands: stringList(raw.commands || raw.command) };
+    if ('mode' in raw) check.mode = stringValue(raw.mode, 'all');
+    if ('require_success' in raw) check.require_success = Boolean(raw.require_success);
+    return check;
+  }
   if (type === 'path_exists') {
     const check: Check = { type, path: stringValue(raw.path) };
     if (raw.path_type) check.path_type = stringValue(raw.path_type);
@@ -213,6 +219,7 @@ function normalizeCheck(raw: Record<string, unknown>): Check {
 function isUsefulCheck(check: Check): boolean {
   if (check.type === 'command_match') return Boolean(check.commands?.length);
   if (check.type === 'command_sequence') return Boolean(check.sequence?.length);
+  if (check.type === 'command_set') return Boolean(check.commands?.length);
   if (check.type === 'path_exists' || check.type === 'path_absent') return Boolean(check.path);
   if (check.type === 'exec_exit_code') return Boolean(check.command);
   if (check.type === 'exec_output_contains') return Boolean(check.command && check.contains?.length);
@@ -299,6 +306,17 @@ export function validateSnapshot(snapshot: EditorSnapshot, mode: 'save' | 'publi
     if (!String(step.goal || step.instructions || step.success_criteria || '').trim()) {
       warnings.push(`${label} 建议补充目标、操作说明或成功标准。`);
     }
+    const checks = step.verification?.checks ?? [];
+    if (!checks.length) {
+      warnings.push(`${label} 未配置自动验证规则，学生可能只能依赖教师人工确认。`);
+    }
+    checks.forEach((check, checkIndex) => {
+      if (check.type === 'command_match' && (check.commands?.length ?? 0) > 1) {
+        warnings.push(
+          `${label} 的第 ${checkIndex + 1} 个 command_match 中多个 commands 表示“任一命令即可”，如需全部执行请使用 command_set 或 command_sequence。`
+        );
+      }
+    });
   });
 
   if (mode === 'publish') {

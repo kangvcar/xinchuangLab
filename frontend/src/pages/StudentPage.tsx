@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type FormEvent } from 'react';
 import { marked } from 'marked';
-import { FlaskConical, Loader2, LogIn } from 'lucide-react';
+import { Loader2, LogIn } from 'lucide-react';
 import Topbar from '@/components/Topbar';
 import StepNav from '@/components/StepNav';
 import TaskPanel from '@/components/TaskPanel';
@@ -544,11 +544,11 @@ export default function StudentPage() {
       <div className="min-h-screen bg-white flex flex-col">
         <header className="h-14 flex items-center justify-between gap-4 px-6 bg-white border-b border-neutral-200">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 grid place-items-center rounded-md text-white bg-neutral-900">
-              <FlaskConical size={18} />
+            <div className="w-8 h-8 grid place-items-center rounded-lg text-white bg-blue-600 font-mono font-bold text-sm select-none">
+              <span style={{ letterSpacing: '-1px' }}>{'>'}_</span>
             </div>
             <strong className="text-neutral-900 text-sm font-semibold whitespace-nowrap">
-              信创Linux AI 陪练实训平台
+              信创Linux AI实时陪练实训平台
             </strong>
           </div>
         </header>

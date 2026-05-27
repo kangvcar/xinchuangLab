@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowDown, ArrowUp, Info, ListChecks, Plus, Trash2 } from 'lucide-react';
-import type { Step } from '@/types';
+import type { Check, Step, Verification } from '@/types';
 import {
   commandLinesToList,
   commandListToLines,
@@ -52,6 +52,105 @@ function FieldCaption({ label, help }: { label: string; help: string }) {
       </span>
     </span>
   );
+}
+
+function VerificationOverview({ verification }: { verification?: Verification }) {
+  const checks = verification?.checks ?? [];
+  const mode = verification?.mode === 'any' ? '任一检查项通过即可' : '全部检查项通过才完成';
+
+  if (!checks.length) {
+    return (
+      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-700">
+        当前步骤没有自动验证规则，学生完成后需要教师人工判断。
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
+      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-neutral-600">
+        <span className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-neutral-900">完成模式：{mode}</span>
+        <span>{checks.length} 个检查项</span>
+      </div>
+      <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2">
+        {checks.map((check, index) => (
+          <VerificationCheckCard key={`${check.type}-${index}`} check={check} index={index} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VerificationCheckCard({ check, index }: { check: Check; index: number }) {
+  const description = describeCheck(check);
+  return (
+    <div className="rounded-md border border-neutral-200 bg-white p-3">
+      <div className="flex items-center justify-between gap-2">
+        <strong className="text-xs font-semibold text-neutral-900">
+          {index + 1}. {description.title}
+        </strong>
+        <span className="shrink-0 rounded-md bg-neutral-100 px-1.5 py-0.5 font-mono text-[11px] text-neutral-600">
+          {check.type}
+        </span>
+      </div>
+      <p className="mt-1 text-xs leading-relaxed text-neutral-600">{description.detail}</p>
+      {description.items.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {description.items.map((item) => (
+            <code key={item} className="rounded bg-neutral-100 px-1.5 py-1 font-mono text-[11px] text-neutral-800">
+              {item}
+            </code>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function describeCheck(check: Check): { title: string; detail: string; items: string[] } {
+  if (check.type === 'command_match') {
+    const commands = check.commands ?? (check.command ? [check.command] : []);
+    return {
+      title: '命令匹配',
+      detail: commands.length > 1
+        ? '最近一次成功命令命中候选之一即通过，不要求全部执行。'
+        : '最近一次成功命令需要匹配该命令。',
+      items: commands,
+    };
+  }
+  if (check.type === 'command_sequence') {
+    return {
+      title: '命令序列',
+      detail: '本步骤历史命令必须按顺序出现。',
+      items: check.sequence ?? [],
+    };
+  }
+  if (check.type === 'command_set') {
+    const commands = check.commands ?? (check.command ? [check.command] : []);
+    return {
+      title: check.mode === 'any' ? '历史命令集合（任一）' : '历史命令集合（全部）',
+      detail: check.mode === 'any'
+        ? '本步骤历史命令命中任一项即可，顺序不限。'
+        : '本步骤历史命令必须覆盖所有命令，顺序不限。',
+      items: commands,
+    };
+  }
+  if (check.type === 'path_exists') {
+    return { title: '路径存在', detail: `检查 ${check.path_type || 'any'} 路径是否存在。`, items: check.path ? [check.path] : [] };
+  }
+  if (check.type === 'path_absent') {
+    return { title: '路径不存在', detail: '检查目标路径已经被删除或不存在。', items: check.path ? [check.path] : [] };
+  }
+  if (check.type === 'file_contains') {
+    return { title: '文件内容', detail: '检查文件是否包含指定文本。', items: [check.path, check.text].filter(Boolean) as string[] };
+  }
+  if (check.type === 'exec_exit_code') {
+    return { title: '执行命令退出码', detail: `容器内命令退出码需要等于 ${check.exit_code ?? 0}。`, items: check.command ? [check.command] : [] };
+  }
+  if (check.type === 'exec_output_contains') {
+    return { title: '执行命令输出', detail: '容器内命令输出需要包含指定文本之一。', items: [check.command, ...(check.contains ?? [])].filter(Boolean) as string[] };
+  }
+  return { title: '未知验证项', detail: '此类型仍会保留在高级 JSON 中。', items: [] };
 }
 
 export default function StepFlowEditor({
@@ -286,17 +385,23 @@ export default function StepFlowEditor({
                 className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm leading-relaxed text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 disabled:opacity-50"
               />
             </label>
-            <label className="block lg:col-span-2">
+            <div className="block lg:col-span-2">
               <FieldCaption label="verification 验证规则" help={FIELD_HELP.verification} />
-              <textarea
-                value={verificationText}
-                onChange={(event) => updateVerification(index, event.target.value)}
-                rows={5}
-                disabled={disabled}
-                spellCheck={false}
-                className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 font-mono text-xs leading-relaxed text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 disabled:opacity-50"
-              />
-            </label>
+              <VerificationOverview verification={step.verification} />
+              <details className="mt-2 rounded-md border border-neutral-200 bg-white">
+                <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-neutral-900 hover:bg-neutral-50">
+                  高级 JSON 编辑
+                </summary>
+                <textarea
+                  value={verificationText}
+                  onChange={(event) => updateVerification(index, event.target.value)}
+                  rows={5}
+                  disabled={disabled}
+                  spellCheck={false}
+                  className="w-full resize-y border-0 border-t border-neutral-200 bg-white px-3 py-2 font-mono text-xs leading-relaxed text-neutral-900 outline-none transition-colors focus:ring-2 focus:ring-neutral-900 disabled:opacity-50"
+                />
+              </details>
+            </div>
           </div>
         </section>
         );

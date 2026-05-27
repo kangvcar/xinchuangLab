@@ -41,6 +41,7 @@ export interface Check {
   command?: string;
   commands?: string[];
   sequence?: string[];
+  mode?: string;
   path?: string;
   path_type?: string;
   text?: string;
@@ -132,4 +133,13 @@ export interface ImportPayload {
   warnings: string[];
   raw_output: string;
   source?: string;
+}
+
+export interface StudentImportPayload {
+  created: number;
+  updated: number;
+  skipped: number;
+  warnings: string[];
+  imported: StudentRecord[];
+  students: StudentRecord[];
 }

@@ -77,7 +77,7 @@ class VerificationService:
         checks = [
             self._run_local_check(check, command_event, command_events)
             for check in checks_config
-            if check.get("type") in {"command_match", "command_sequence"}
+            if check.get("type") in {"command_match", "command_sequence", "command_set"}
         ]
         if checks:
             passed = any(item["passed"] for item in checks) if mode == "any" else all(item["passed"] for item in checks)
@@ -124,6 +124,9 @@ class VerificationService:
             passed = self.legacy_verifier._verify_sequence(sequence, command_events)
             return {"type": check_type, "passed": passed, "detail": f"sequence={sequence}"}
 
+        if check_type == "command_set":
+            return self._run_command_set_check(check, command_events)
+
         return {"type": check_type or "unknown", "passed": False, "detail": "not available in local fallback"}
 
     @classmethod
@@ -162,6 +165,9 @@ class VerificationService:
             sequence = _as_list(check.get("sequence"))
             passed = self.legacy_verifier._verify_sequence(sequence, command_events)
             return {"type": check_type, "passed": passed, "detail": f"sequence={sequence}"}
+
+        if check_type == "command_set":
+            return self._run_command_set_check(check, command_events)
 
         if check_type == "path_exists":
             path = str(check.get("path", "")).strip()
@@ -214,6 +220,28 @@ class VerificationService:
             }
 
         return {"type": check_type or "unknown", "passed": False, "detail": "unknown verification check"}
+
+    def _run_command_set_check(
+        self,
+        check: dict[str, Any],
+        command_events: list[CommandEvent],
+    ) -> dict[str, Any]:
+        commands = _as_list(check.get("commands") or check.get("command"))
+        mode = str(check.get("mode", "all"))
+        require_success = bool(check.get("require_success", True))
+        usable_events = [
+            item
+            for item in command_events
+            if not require_success or (item.exit_code in (None, 0) and not item.is_error)
+        ]
+        matched = {
+            expected: any(self.legacy_verifier._command_matches(item.command, expected) for item in usable_events)
+            for expected in commands
+        }
+        passed = bool(commands) and (any(matched.values()) if mode == "any" else all(matched.values()))
+        missing = [expected for expected, is_matched in matched.items() if not is_matched]
+        detail = f"commands={commands}, matched={[key for key, value in matched.items() if value]}, missing={missing}"
+        return {"type": "command_set", "passed": passed, "detail": detail}
 
     async def _docker_test(
         self,

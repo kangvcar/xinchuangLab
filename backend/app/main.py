@@ -109,6 +109,36 @@ def _require_active_student(student_id: str) -> dict[str, Any]:
     return student
 
 
+def _decode_uploaded_text(content: bytes) -> str:
+    try:
+        return content.decode("utf-8")
+    except UnicodeDecodeError:
+        return content.decode("utf-8", errors="ignore")
+
+
+def _parse_student_roster_text(text: str) -> tuple[list[dict[str, str]], list[str], int]:
+    rows_by_id: dict[str, dict[str, str]] = {}
+    warnings: list[str] = []
+    skipped = 0
+    for line_no, raw_line in enumerate(text.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line:
+            continue
+        if "," not in line:
+            warnings.append(f"第 {line_no} 行格式错误，应为：学号,姓名")
+            skipped += 1
+            continue
+        student_id, name = (part.strip() for part in line.split(",", 1))
+        if not student_id or not name:
+            warnings.append(f"第 {line_no} 行格式错误，应为：学号,姓名")
+            skipped += 1
+            continue
+        if student_id in rows_by_id:
+            warnings.append(f"第 {line_no} 行学号 {student_id} 重复，已使用最后一次")
+        rows_by_id[student_id] = {"student_id": student_id, "name": name}
+    return list(rows_by_id.values()), warnings, skipped
+
+
 @app.on_event("startup")
 async def startup() -> None:
     db.initialize()
@@ -205,6 +235,43 @@ async def admin_save_student(
         raise HTTPException(status_code=400, detail="student_id is required")
     name = str(payload.get("name") or "").strip()
     return db.upsert_student(student_id, name=name, status="active")
+
+
+@app.post("/api/admin/students/import-file")
+async def admin_import_students_file(
+    file: UploadFile = File(...),
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, Any]:
+    filename = file.filename or "students.txt"
+    if Path(filename).suffix.lower() != ".txt":
+        raise HTTPException(status_code=400, detail="仅支持 .txt 学生名单文件")
+    text = _decode_uploaded_text(await file.read())
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="uploaded file is empty")
+
+    rows, warnings, skipped = _parse_student_roster_text(text)
+    if not rows:
+        raise HTTPException(status_code=400, detail="没有可导入的学生记录")
+
+    created = 0
+    updated = 0
+    imported: list[dict[str, Any]] = []
+    for row in rows:
+        existing = db.get_student(row["student_id"])
+        if existing:
+            updated += 1
+        else:
+            created += 1
+        imported.append(db.upsert_student(row["student_id"], name=row["name"], status="active"))
+
+    return {
+        "created": created,
+        "updated": updated,
+        "skipped": skipped,
+        "warnings": warnings,
+        "imported": imported,
+        "students": db.list_students(),
+    }
 
 
 @app.delete("/api/admin/students/{student_id}")
@@ -337,10 +404,7 @@ async def admin_import_experiment_file(
         allowed = ", ".join(sorted(SUPPORTED_IMPORT_EXTENSIONS))
         raise HTTPException(status_code=400, detail=f"仅支持 {allowed} 文件")
     content = await file.read()
-    try:
-        text = content.decode("utf-8")
-    except UnicodeDecodeError:
-        text = content.decode("utf-8", errors="ignore")
+    text = _decode_uploaded_text(content)
     if not text.strip():
         raise HTTPException(status_code=400, detail="uploaded file is empty")
     return await design_experiment_from_document(text=text, filename=filename, settings=settings)

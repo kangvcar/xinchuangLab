@@ -1,5 +1,15 @@
 import { useCallback } from 'react';
-import type { Experiment, LabSession, StepProgressResponse, AICoachRecord, TerminalLog, BuildState, ImportPayload, StudentRecord } from '@/types';
+import type {
+  Experiment,
+  LabSession,
+  StepProgressResponse,
+  AICoachRecord,
+  TerminalLog,
+  BuildState,
+  ImportPayload,
+  StudentRecord,
+  StudentImportPayload,
+} from '@/types';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '';
 const TEACHER_PASSWORD_STORAGE_KEY = 'linux-ai-teacher-password';
@@ -98,6 +108,20 @@ export function useApi() {
     });
     if (!response.ok) {
       throw new Error(await errorMessage(response, '删除学生失败'));
+    }
+    return response.json();
+  }, []);
+
+  const importStudentsFile = useCallback(async (file: File): Promise<StudentImportPayload> => {
+    const form = new FormData();
+    form.append('file', file);
+    const response = await fetch(`${API_BASE}/api/admin/students/import-file`, {
+      method: 'POST',
+      headers: adminHeaders(),
+      body: form,
+    });
+    if (!response.ok) {
+      throw new Error(await errorMessage(response, '批量导入学生失败'));
     }
     return response.json();
   }, []);
@@ -293,6 +317,7 @@ export function useApi() {
     loadStudents,
     saveStudent,
     deleteStudent,
+    importStudentsFile,
     createSession,
     getSession,
     getCurrentSession,
