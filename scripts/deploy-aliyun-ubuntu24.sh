@@ -484,12 +484,28 @@ restart_services() {
   systemctl restart nginx
 }
 
+wait_for_http() {
+  local url="$1"
+  local attempts="${2:-30}"
+  local delay="${3:-1}"
+  local attempt
+  for attempt in $(seq 1 "${attempts}"); do
+    if curl -fsS "${url}" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep "${delay}"
+  done
+  return 1
+}
+
 verify_deployment() {
   log "Verifying deployment"
   systemctl --no-pager --full status "${SERVICE_NAME}.service" >/dev/null
   systemctl --no-pager --full status nginx >/dev/null
-  curl -fsS "http://${BACKEND_BIND_HOST}:${BACKEND_PORT}/api/health" >/dev/null
-  curl -fsS "http://${PUBLIC_HOST}/api/health" >/dev/null || log "Public health check failed; verify Alibaba Cloud security group allows 80/tcp."
+  wait_for_http "http://${BACKEND_BIND_HOST}:${BACKEND_PORT}/api/health" 30 1 || die "Backend health check did not become ready: http://${BACKEND_BIND_HOST}:${BACKEND_PORT}/api/health"
+  if ! wait_for_http "http://${PUBLIC_HOST}/api/health" 5 1; then
+    log "Public health check failed; verify Alibaba Cloud security group allows 80/tcp."
+  fi
   docker version >/dev/null
 }
 
