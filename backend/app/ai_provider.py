@@ -64,39 +64,22 @@ class DeepSeekCoachProvider(CoachProvider):
         if not self.settings.deepseek_api_key:
             raise RuntimeError("DEEPSEEK_API_KEY is not configured")
 
-        # 构建步骤进度描述
-        progress_text = ""
-        if step_progress:
-            status_map = {
-                "locked": "未解锁",
-                "pending": "进行中",
-                "completed": "已检测完成",
-                "confirmed": "已确认完成",
-            }
-            steps = experiment.get("task_config", {}).get("steps", [])
-            step_title_map = {s["id"]: s.get("title", f"步骤{s['id']}") for s in steps}
-            lines = []
-            for p in step_progress:
-                title = step_title_map.get(p["step_id"], f"步骤{p['step_id']}")
-                status = status_map.get(p["status"], p["status"])
-                lines.append(f"- 步骤{p['step_id']}「{title}」：{status}")
-            progress_text = "\n".join(lines)
-        else:
-            progress_text = "暂无进度信息"
+        progress_text = _build_progress_text(experiment, step_progress)
+        current_step_text = _build_current_step_text(experiment, step_progress)
 
         prompt = (
             "你是坐在学生旁边的 Linux 实操损友陪练，说话像关系很好的同学，带点调侃和碎碎念，但关键时刻会兜底。\n"
-            "请根据实验目标、任务配置、知识库、学生当前步骤进度和学生刚执行的命令，用损友口吻讲解和引导。\n"
+            "请根据实验目标、当前相关步骤、学生当前步骤进度和学生刚执行的命令，用损友口吻讲解和引导。\n"
             "输出要求：\n"
             "1. 不要使用固定标题模板，不要写“刚才做了什么/结果怎么看/下一步建议”这种机械分段。\n"
-            "2. 用 2 到 5 个短段落，语气像损友碎碎念：具体、有点调侃、能一针见血指出问题，但不会打击人。\n"
+            "2. 用 2 到 3 个短段落，语气像损友碎碎念：具体、有点调侃、能一针见血指出问题，但不会打击人。\n"
             "3. 如果命令成功，解释它的作用和输出该怎么看，顺手夸一句或吐槽一句，和当前实验步骤联系起来。\n"
             "4. 如果命令失败，先吐槽或安抚一下，再指出可能原因，给一个最小可执行修正方向。\n"
             "5. 不要替学生一次性完成整套实验，不要输出长篇理论，不要编造终端没有出现的信息。\n"
             "6. 不要假设学生已经完成了尚未解锁的步骤，只根据当前已确认的进度来评价。\n\n"
             f"实验名称：{experiment['name']}\n"
             f"实验目标：{experiment['task_config'].get('objective', '')}\n"
-            f"任务配置：{experiment['task_config']}\n\n"
+            f"当前相关步骤：\n{current_step_text}\n\n"
             f"学生当前步骤进度：\n{progress_text}\n\n"
             f"知识库：\n{knowledge_context}\n\n"
             f"最近终端片段：\n{command_context}"
@@ -108,7 +91,7 @@ class DeepSeekCoachProvider(CoachProvider):
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0.2,
-            "max_tokens": 500,
+            "max_tokens": 420,
         }
         headers = {
             "Authorization": f"Bearer {self.settings.deepseek_api_key}",
@@ -119,7 +102,10 @@ class DeepSeekCoachProvider(CoachProvider):
             response = await client.post(url, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
-        return data["choices"][0]["message"]["content"].strip()
+        content = str(data["choices"][0]["message"].get("content") or "").strip()
+        if not content:
+            raise RuntimeError("DeepSeek returned empty response")
+        return content
 
 
 def create_coach_provider(settings: Settings) -> CoachProvider:
@@ -128,3 +114,55 @@ def create_coach_provider(settings: Settings) -> CoachProvider:
     if settings.ai_mode == "auto" and settings.deepseek_api_key:
         return DeepSeekCoachProvider(settings)
     return MockCoachProvider()
+
+
+def _build_progress_text(
+    experiment: dict,
+    step_progress: list[dict[str, Any]] | None,
+) -> str:
+    if not step_progress:
+        return "暂无进度信息"
+    status_map = {
+        "locked": "未解锁",
+        "pending": "进行中",
+        "completed": "已检测完成",
+        "confirmed": "已确认完成",
+    }
+    steps = experiment.get("task_config", {}).get("steps", [])
+    step_title_map = {s["id"]: s.get("title", f"步骤{s['id']}") for s in steps}
+    lines = []
+    for progress in step_progress:
+        title = step_title_map.get(progress["step_id"], f"步骤{progress['step_id']}")
+        status = status_map.get(progress["status"], progress["status"])
+        lines.append(f"- 步骤{progress['step_id']}「{title}」：{status}")
+    return "\n".join(lines)
+
+
+def _build_current_step_text(
+    experiment: dict,
+    step_progress: list[dict[str, Any]] | None,
+) -> str:
+    steps = experiment.get("task_config", {}).get("steps", [])
+    if not steps:
+        return "暂无步骤信息"
+    current_step_id = _current_step_id(step_progress)
+    current_step = next((step for step in steps if step.get("id") == current_step_id), steps[0])
+    fields = [
+        f"- 步骤{current_step.get('id')}：{current_step.get('title', '')}",
+        f"- 目标：{current_step.get('goal', '')}",
+        f"- 指令：{current_step.get('instructions', '')}",
+        f"- 成功标准：{current_step.get('success_criteria', '')}",
+        f"- 陪练关注点：{current_step.get('coach_focus', '')}",
+    ]
+    return "\n".join(line for line in fields if not line.endswith("："))
+
+
+def _current_step_id(step_progress: list[dict[str, Any]] | None) -> int | None:
+    if not step_progress:
+        return None
+    status_rank = {"pending": 0, "completed": 1, "confirmed": 2, "locked": 3}
+    ordered = sorted(
+        step_progress,
+        key=lambda item: (status_rank.get(item.get("status"), 99), int(item.get("step_id", 0))),
+    )
+    return int(ordered[0]["step_id"]) if ordered else None
