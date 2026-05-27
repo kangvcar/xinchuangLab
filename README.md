@@ -198,6 +198,81 @@ npm run dev
 
 ---
 
+## 阿里云 Ubuntu 24.04 部署
+
+适用于无域名、直接使用服务器公网 IP 访问的部署方式。脚本会配置国内源、安装 Docker CE、安装 Node.js 20、配置 pip/npm 镜像、构建前端、创建后端 systemd 服务、配置 Nginx，并构建 `experiments/*.json` 中的全部实验容器镜像。
+
+### 服务器安全组
+
+在阿里云安全组放行：
+
+| 用途 | 端口 |
+|------|------|
+| Web 访问 | `80/tcp` |
+| 实验 Web 终端 | `20000-20999/tcp` |
+
+如需改端口范围，部署时传入 `TERMINAL_PORT_START` 和 `TERMINAL_PORT_END`，并同步调整安全组。
+
+### 一键部署
+
+```bash
+git clone https://github.com/kangvcar/xinchuangLab.git
+cd xinchuangLab
+
+# PUBLIC_HOST 填服务器公网 IP；ADMIN_PASSWORD 建议自行设置。
+sudo -E PUBLIC_HOST=你的服务器公网IP \
+  ADMIN_PASSWORD='请改成强密码' \
+  bash scripts/deploy-aliyun-ubuntu24.sh
+```
+
+部署完成后访问：
+
+| 入口 | 地址 |
+|------|------|
+| 平台首页 | `http://你的服务器公网IP` |
+| 学生实训 | `http://你的服务器公网IP/lab` |
+| 教师后台 | `http://你的服务器公网IP/teacher` |
+| 健康检查 | `http://你的服务器公网IP/api/health` |
+
+### 国内源与镜像加速
+
+脚本默认使用：
+
+| 类别 | 默认源 |
+|------|--------|
+| Ubuntu / Docker CE apt | `http://mirrors.cloud.aliyuncs.com` |
+| pip | `http://mirrors.cloud.aliyuncs.com/pypi/simple` |
+| npm | `https://registry.npmmirror.com` |
+| Node.js 二进制包 | `https://npmmirror.com/mirrors/node` |
+| openEuler 软件源 | `https://repo.huaweicloud.com/openeuler` |
+| openEuler 基础镜像优先拉取 | `hub.oepkgs.net/openeuler/openeuler:22.03-lts-sp3` |
+
+如果有阿里云个人 Docker Hub 加速器，可传入：
+
+```bash
+sudo -E PUBLIC_HOST=你的服务器公网IP \
+  DOCKER_REGISTRY_MIRRORS='["https://你的ID.mirror.aliyuncs.com"]' \
+  bash scripts/deploy-aliyun-ubuntu24.sh
+```
+
+重新构建所有实验镜像：
+
+```bash
+sudo -E PUBLIC_HOST=你的服务器公网IP FORCE_REBUILD_IMAGES=1 \
+  bash scripts/deploy-aliyun-ubuntu24.sh --force-images
+```
+
+常用运维命令：
+
+```bash
+systemctl status xinchuang-lab
+journalctl -u xinchuang-lab -f
+docker images 'linux-ai-exp:*'
+curl http://127.0.0.1:8000/api/health
+```
+
+---
+
 ## 实验模块（20+）
 
 | 模块 | 实验名称 | 核心技能 |
@@ -269,9 +344,8 @@ npm run dev
 ### Docker 模式（生产）
 使用真实容器运行实验环境：
 ```bash
-# 构建实验镜像
-cd docker/openeuler-file
-docker build -t linux-ai-exp:linux-file-management-v1 .
+# 生产环境推荐使用阿里云部署脚本批量构建全部实验镜像
+sudo -E PUBLIC_HOST=你的服务器公网IP bash scripts/deploy-aliyun-ubuntu24.sh
 
 # 切换模式
 LAB_RUNTIME=docker

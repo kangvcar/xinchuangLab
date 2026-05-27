@@ -13,13 +13,20 @@ def settings(
     *,
     backend_public_url: str = "http://localhost:8000",
     docker_ws_url: str = "",
+    public_scheme: str = "http",
+    public_host: str = "localhost",
+    terminal_port_start: int = 20000,
+    terminal_port_end: int = 20999,
 ) -> SimpleNamespace:
     return SimpleNamespace(
         lab_runtime=runtime,
-        public_host="localhost",
+        public_scheme=public_scheme,
+        public_host=public_host,
         backend_public_url=backend_public_url,
         docker_ws_host="host.docker.internal",
         docker_ws_url=docker_ws_url,
+        terminal_port_start=terminal_port_start,
+        terminal_port_end=terminal_port_end,
         allow_mock_fallback=True,
     )
 
@@ -136,6 +143,46 @@ def test_start_passes_terminal_event_ws_url_from_backend_public_url(
     run_args = calls[0]
     assert "WS_SERVER=ws://host.docker.internal:8001/ws/terminal-log" in run_args
     assert "WS_SERVER=ws://host.docker.internal:8000/ws/terminal-log" not in run_args
+
+
+def test_start_uses_configured_public_terminal_scheme_and_port_range(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manager = DockerManager(
+        settings(
+            "docker",
+            public_scheme="https",
+            public_host="lab.example.com",
+            terminal_port_start=21000,
+            terminal_port_end=21010,
+        )
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def find_free_port(start: int, end: int) -> int:
+        assert start == 21000
+        assert end == 21010
+        return 21005
+
+    async def run_docker(*args: str):
+        calls.append(args)
+        return 0, "container-id\n", ""
+
+    monkeypatch.setattr(docker_module, "_find_free_port", find_free_port)
+    monkeypatch.setattr(manager, "_run_docker", run_docker)
+
+    runtime = asyncio.run(
+        manager.start(
+            session_id="session-1",
+            student_id="stu001",
+            experiment={"id": "file-basic", "image_name": "linux-ai-exp:test"},
+        )
+    )
+
+    run_args = calls[0]
+    assert "-p" in run_args
+    assert "21005:7681" in run_args
+    assert runtime.terminal_url == "https://lab.example.com:21005"
 
 
 def test_run_docker_reports_empty_exception_type(monkeypatch: pytest.MonkeyPatch) -> None:

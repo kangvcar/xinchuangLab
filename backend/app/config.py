@@ -41,6 +41,15 @@ def _as_bool(value: str, default: bool = False) -> bool:
     return value.lower() in {"1", "true", "yes", "y", "on"}
 
 
+def _as_int(value: str, default: int) -> int:
+    if value == "":
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
 def _default_builds_dir() -> Path:
     override = os.getenv("BUILD_CONTEXT_DIR", "").strip()
     if override:
@@ -58,10 +67,13 @@ class Settings:
     app_env: str = os.getenv("APP_ENV", "development")
     lab_runtime: str = os.getenv("LAB_RUNTIME", "mock").lower()
     allow_mock_fallback: bool = _as_bool(os.getenv("ALLOW_MOCK_FALLBACK", "true"), True)
+    public_scheme: str = os.getenv("PUBLIC_SCHEME", "http").lower().rstrip(":/") or "http"
     public_host: str = os.getenv("PUBLIC_HOST", "localhost")
     backend_public_url: str = os.getenv("BACKEND_PUBLIC_URL", "http://localhost:8000")
     docker_ws_host: str = os.getenv("DOCKER_WS_HOST", "host.docker.internal")
     docker_ws_url: str = os.getenv("DOCKER_WS_URL", "")
+    terminal_port_start: int = _as_int(os.getenv("TERMINAL_PORT_START", "20000"), 20000)
+    terminal_port_end: int = _as_int(os.getenv("TERMINAL_PORT_END", "20999"), 20999)
     ai_mode: str = os.getenv("AI_MODE", "auto").lower()
     deepseek_api_key: str = os.getenv("DEEPSEEK_API_KEY", "")
     deepseek_base_url: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com").rstrip("/")

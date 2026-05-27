@@ -145,7 +145,10 @@ class DockerManager:
         image_name = experiment["image_name"]
         if not image_name:
             raise RuntimeError("experiment image_name is empty")
-        port = _find_free_port()
+        port = _find_free_port(
+            int(getattr(self.settings, "terminal_port_start", 0) or 0),
+            int(getattr(self.settings, "terminal_port_end", 0) or 0),
+        )
         safe_suffix = uuid.uuid4().hex[:8]
         container_name = f"linux-ai-{student_id}-{experiment['id']}-{safe_suffix}".replace("_", "-").lower()
         ws_url = self.terminal_event_ws_url()
@@ -188,8 +191,14 @@ class DockerManager:
             mode="docker",
             container_id=container_id,
             container_name=container_name,
-            terminal_url=f"http://{self.settings.public_host}:{port}",
+            terminal_url=f"{self._public_terminal_scheme()}://{self.settings.public_host}:{port}",
         )
+
+    def _public_terminal_scheme(self) -> str:
+        scheme = str(getattr(self.settings, "public_scheme", "") or "http").lower().rstrip(":/")
+        if scheme not in {"http", "https"}:
+            return "http"
+        return scheme
 
     async def _run_docker(self, *args: str) -> tuple[int, str, str]:
         command = ("docker", *args)
@@ -255,9 +264,20 @@ class DockerManager:
         return "docker " + " ".join(args)
 
 
-def _find_free_port() -> int:
+def _find_free_port(start: int = 0, end: int = 0) -> int:
+    if start or end:
+        if start <= 0 or end <= 0 or start > end:
+            raise RuntimeError(f"invalid terminal port range: {start}-{end}")
+        for port in range(start, end + 1):
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                try:
+                    sock.bind(("0.0.0.0", port))
+                except OSError:
+                    continue
+                return port
+        raise RuntimeError(f"no free terminal port in range: {start}-{end}")
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
+        sock.bind(("0.0.0.0", 0))
         return sock.getsockname()[1]
 
 
