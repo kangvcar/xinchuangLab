@@ -1,0 +1,210 @@
+{
+  "experiment_id": "linux-permission-management",
+  "name": "Linux 权限管理",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:linux-permission-management-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 5,
+  "objective": "理解文件权限、chmod、umask 和私有目录的基础用法。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "查看权限位",
+      "goal": "观察文件权限字符串。",
+      "instructions": "执行 ls -l perm，查看 run.sh 和 readme.txt 的权限。",
+      "try_commands": [
+        "ls -l perm"
+      ],
+      "success_criteria": "能看到 rwx 或 rw- 权限字段。",
+      "coach_focus": "解释所有者、用户组、其他用户三组权限。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "ls -l perm"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "增加执行权限",
+      "goal": "让脚本可执行。",
+      "instructions": "对 run.sh 增加执行权限。",
+      "try_commands": [
+        "chmod +x perm/run.sh"
+      ],
+      "success_criteria": "perm/run.sh 拥有执行权限。",
+      "coach_focus": "说明 chmod +x 的影响范围。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "chmod +x perm/run.sh"
+            ]
+          },
+          {
+            "type": "exec_exit_code",
+            "command": "test -x perm/run.sh",
+            "exit_code": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "运行脚本",
+      "goal": "验证权限变更效果。",
+      "instructions": "执行 ./perm/run.sh。",
+      "try_commands": [
+        "./perm/run.sh"
+      ],
+      "success_criteria": "终端输出 permission-ok。",
+      "coach_focus": "强调可执行权限和路径写法。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "./perm/run.sh"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "创建私有目录",
+      "goal": "练习目录权限保护。",
+      "instructions": "创建 private 目录并设置 700 权限。",
+      "try_commands": [
+        "mkdir -p perm/private && chmod 700 perm/private"
+      ],
+      "success_criteria": "perm/private 目录存在且权限为 700。",
+      "coach_focus": "解释 700 表示仅所有者可读写执行。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "mkdir -p perm/private && chmod 700 perm/private"
+            ]
+          },
+          {
+            "type": "exec_exit_code",
+            "command": "test \"$(stat -c %a perm/private)\" = \"700\"",
+            "exit_code": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "查看默认权限",
+      "goal": "认识 umask 对新文件权限的影响。",
+      "instructions": "执行 umask，记录当前默认权限掩码。",
+      "try_commands": [
+        "umask"
+      ],
+      "success_criteria": "命令成功输出掩码。",
+      "coach_focus": "说明 umask 是创建文件时扣减的权限。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "umask"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "创建权限说明",
+      "goal": "用文本记录权限含义。",
+      "instructions": "写入本次权限实验结论。",
+      "try_commands": [
+        "echo \"700 owner only\" > perm/permission-note.txt"
+      ],
+      "success_criteria": "permission-note.txt 包含 owner only。",
+      "coach_focus": "帮助学生把数字权限转成自然语言。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"700 owner only\" > perm/permission-note.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "perm/permission-note.txt",
+            "text": "owner only"
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "title": "恢复脚本普通权限",
+      "goal": "练习去除执行权限。",
+      "instructions": "移除 run.sh 的执行权限。",
+      "try_commands": [
+        "chmod -x perm/run.sh"
+      ],
+      "success_criteria": "run.sh 不再可直接执行。",
+      "coach_focus": "说明最小权限原则。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "chmod -x perm/run.sh"
+            ]
+          },
+          {
+            "type": "exec_exit_code",
+            "command": "test ! -x perm/run.sh",
+            "exit_code": 0
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "perm"
+    ],
+    "student_files": [
+      {
+        "path": "perm/run.sh",
+        "content": "#!/bin/bash\necho permission-ok\n"
+      },
+      {
+        "path": "perm/readme.txt",
+        "content": "permission practice file\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

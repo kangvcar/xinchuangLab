@@ -1,0 +1,221 @@
+{
+  "experiment_id": "shell-programming-practice",
+  "name": "shell 编程应用",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:shell-programming-practice-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 12,
+  "objective": "编写一个简单巡检脚本，练习变量、循环、条件判断和输出重定向。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "创建巡检脚本",
+      "goal": "创建 check.sh。",
+      "instructions": "创建空脚本文件。",
+      "try_commands": [
+        "touch shell-app/check.sh"
+      ],
+      "success_criteria": "check.sh 文件存在。",
+      "coach_focus": "说明脚本是可重复执行的命令集合。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "touch shell-app/check.sh"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "shell-app/check.sh",
+            "path_type": "file"
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "写入 shebang",
+      "goal": "声明脚本解释器。",
+      "instructions": "把 shebang 写入脚本第一行。",
+      "try_commands": [
+        "echo \"#!/bin/bash\" > shell-app/check.sh"
+      ],
+      "success_criteria": "check.sh 第一行包含 /bin/bash。",
+      "coach_focus": "说明 shebang 的作用。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"#!/bin/bash\" > shell-app/check.sh"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "shell-app/check.sh",
+            "text": "#!/bin/bash"
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "统计主机数量",
+      "goal": "在脚本中统计主机清单行数。",
+      "instructions": "追加 wc -l 命令。",
+      "try_commands": [
+        "echo \"wc -l shell-app/hosts.txt\" >> shell-app/check.sh"
+      ],
+      "success_criteria": "脚本包含 hosts.txt。",
+      "coach_focus": "说明脚本可封装常用巡检命令。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"wc -l shell-app/hosts.txt\" >> shell-app/check.sh"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "shell-app/check.sh",
+            "text": "hosts.txt"
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "筛选错误日志",
+      "goal": "在脚本中加入错误筛选。",
+      "instructions": "追加 grep ERROR 命令。",
+      "try_commands": [
+        "echo \"grep ERROR shell-app/logs/app.log\" >> shell-app/check.sh"
+      ],
+      "success_criteria": "脚本包含 grep ERROR。",
+      "coach_focus": "强调自动化巡检关注异常关键词。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"grep ERROR shell-app/logs/app.log\" >> shell-app/check.sh"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "shell-app/check.sh",
+            "text": "grep ERROR"
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "赋予执行权限",
+      "goal": "使巡检脚本可运行。",
+      "instructions": "为 check.sh 增加执行权限。",
+      "try_commands": [
+        "chmod +x shell-app/check.sh"
+      ],
+      "success_criteria": "check.sh 可执行。",
+      "coach_focus": "说明脚本发布前需要确认权限。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "chmod +x shell-app/check.sh"
+            ]
+          },
+          {
+            "type": "exec_exit_code",
+            "command": "test -x shell-app/check.sh",
+            "exit_code": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "运行并保存输出",
+      "goal": "把巡检结果保存到文件。",
+      "instructions": "运行脚本并重定向输出。",
+      "try_commands": [
+        "./shell-app/check.sh > shell-app/output/check-result.txt"
+      ],
+      "success_criteria": "check-result.txt 存在并包含 ERROR。",
+      "coach_focus": "说明重定向便于留存结果。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "./shell-app/check.sh > shell-app/output/check-result.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "shell-app/output/check-result.txt",
+            "text": "ERROR"
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "title": "查看巡检结果",
+      "goal": "确认输出内容。",
+      "instructions": "查看巡检结果文件。",
+      "try_commands": [
+        "cat shell-app/output/check-result.txt"
+      ],
+      "success_criteria": "能看到主机数量或 ERROR 行。",
+      "coach_focus": "引导学生从结果判断下一步处理。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat shell-app/output/check-result.txt"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "shell-app/logs",
+      "shell-app/output"
+    ],
+    "student_files": [
+      {
+        "path": "shell-app/hosts.txt",
+        "content": "web01\nweb02\ndb01\n"
+      },
+      {
+        "path": "shell-app/logs/app.log",
+        "content": "INFO start\nERROR disk high\nINFO done\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

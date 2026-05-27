@@ -1,0 +1,169 @@
+{
+  "experiment_id": "linux-package-management",
+  "name": "Linux 软件管理",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:linux-package-management-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 7,
+  "objective": "认识 dnf、rpm、软件仓库和已安装软件查询等基础软件管理操作。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "查看 dnf 版本",
+      "goal": "确认系统软件管理工具。",
+      "instructions": "执行 dnf --version，观察版本信息。",
+      "try_commands": [
+        "dnf --version"
+      ],
+      "success_criteria": "dnf 输出版本或插件信息。",
+      "coach_focus": "说明 dnf 是 openEuler 常用包管理工具。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "dnf --version"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "查看软件仓库",
+      "goal": "认识软件源配置。",
+      "instructions": "执行 dnf repolist，查看启用仓库。",
+      "try_commands": [
+        "dnf repolist"
+      ],
+      "success_criteria": "输出仓库列表。",
+      "coach_focus": "解释仓库是软件下载来源。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "dnf repolist"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "查询已安装软件",
+      "goal": "用 rpm 查看安装包。",
+      "instructions": "列出部分已安装 rpm 包。",
+      "try_commands": [
+        "rpm -qa | head"
+      ],
+      "success_criteria": "输出若干软件包名称。",
+      "coach_focus": "说明 rpm 数据库记录本机安装状态。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "rpm -qa | head"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "定位命令路径",
+      "goal": "确认命令由哪个文件提供。",
+      "instructions": "执行 which curl，查看 curl 路径。",
+      "try_commands": [
+        "which curl"
+      ],
+      "success_criteria": "输出 curl 的可执行文件路径。",
+      "coach_focus": "说明 PATH 环境变量和命令查找。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "which curl"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "查看软件清单",
+      "goal": "阅读实验给定的软件清单。",
+      "instructions": "查看 package-list.txt。",
+      "try_commands": [
+        "cat packages/package-list.txt"
+      ],
+      "success_criteria": "能看到 bash、curl、tree 等软件名。",
+      "coach_focus": "引导学生区分清单和实际安装状态。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat packages/package-list.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "编写软件检查记录",
+      "goal": "记录仓库和已安装软件观察结论。",
+      "instructions": "将检查结果写入 package-summary.txt。",
+      "try_commands": [
+        "echo \"dnf rpm checked\" > packages/report/package-summary.txt"
+      ],
+      "success_criteria": "文件存在并包含 rpm。",
+      "coach_focus": "培养软件变更前先记录的习惯。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"dnf rpm checked\" > packages/report/package-summary.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "packages/report/package-summary.txt",
+            "text": "rpm"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "packages/report"
+    ],
+    "student_files": [
+      {
+        "path": "packages/package-list.txt",
+        "content": "bash\ncurl\nvim-minimal\ntree\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

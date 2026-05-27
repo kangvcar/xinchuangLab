@@ -1,0 +1,182 @@
+{
+  "experiment_id": "mail-server-configuration",
+  "name": "邮件服务器配置",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:mail-server-configuration-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 16,
+  "objective": "认识邮件服务配置中的主机名、域名、投递目录、别名和基础日志检查。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "查看邮件主配置",
+      "goal": "认识 main.cf 基础配置项。",
+      "instructions": "查看 myhostname、mydomain、home_mailbox。",
+      "try_commands": [
+        "cat mail/main.cf.sample"
+      ],
+      "success_criteria": "能看到邮件主机名和域名配置。",
+      "coach_focus": "说明邮件服务依赖主机名和域名。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat mail/main.cf.sample"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "复制邮件配置",
+      "goal": "创建可编辑配置文件。",
+      "instructions": "复制 main.cf.sample 为 main.cf。",
+      "try_commands": [
+        "cp mail/main.cf.sample mail/main.cf"
+      ],
+      "success_criteria": "mail/main.cf 存在。",
+      "coach_focus": "强调修改服务配置前先备份模板。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cp mail/main.cf.sample mail/main.cf"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "mail/main.cf",
+            "path_type": "file"
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "确认邮件域名",
+      "goal": "定位 mydomain 配置。",
+      "instructions": "筛选 mydomain 行。",
+      "try_commands": [
+        "grep mydomain mail/main.cf"
+      ],
+      "success_criteria": "输出 lab.local。",
+      "coach_focus": "解释邮件域名用于地址后缀。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep mydomain mail/main.cf"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "查看别名配置",
+      "goal": "认识邮件别名转发。",
+      "instructions": "查看 postmaster 和 admin 别名。",
+      "try_commands": [
+        "cat mail/aliases.sample"
+      ],
+      "success_criteria": "能看到 admin: student。",
+      "coach_focus": "说明 aliases 可把角色邮箱转给具体用户。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat mail/aliases.sample"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "分析邮件日志",
+      "goal": "从日志样例中查找投递记录。",
+      "instructions": "筛选 delivered 记录。",
+      "try_commands": [
+        "grep delivered mail/maillog.sample"
+      ],
+      "success_criteria": "输出 delivered to mailbox。",
+      "coach_focus": "强调邮件排错常从日志入手。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep delivered mail/maillog.sample"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "编写邮件配置摘要",
+      "goal": "总结邮件配置要点。",
+      "instructions": "写入邮件配置摘要。",
+      "try_commands": [
+        "echo \"mail domain lab.local mailbox Maildir\" > mail/report/mail-summary.txt"
+      ],
+      "success_criteria": "mail-summary.txt 包含 Maildir。",
+      "coach_focus": "帮助学生把主机名、域名、邮箱目录串起来。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"mail domain lab.local mailbox Maildir\" > mail/report/mail-summary.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "mail/report/mail-summary.txt",
+            "text": "Maildir"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "mail/report"
+    ],
+    "student_files": [
+      {
+        "path": "mail/main.cf.sample",
+        "content": "myhostname = mail.lab.local\nmydomain = lab.local\ninet_interfaces = all\nhome_mailbox = Maildir/\n"
+      },
+      {
+        "path": "mail/aliases.sample",
+        "content": "postmaster: root\nadmin: student\n"
+      },
+      {
+        "path": "mail/maillog.sample",
+        "content": "May 20 postfix/smtpd connect from client\nMay 20 postfix/local delivered to mailbox\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

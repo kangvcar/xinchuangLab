@@ -1,0 +1,195 @@
+{
+  "experiment_id": "regex-awareness",
+  "name": "正则表达式认知",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:regex-awareness-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 10,
+  "objective": "认识正则表达式的普通字符、锚点、字符类、数量词和 grep -E 基础用法。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "普通关键词匹配",
+      "goal": "用 grep 匹配固定文本。",
+      "instructions": "查找 alice 所在行。",
+      "try_commands": [
+        "grep alice regex/accounts.txt"
+      ],
+      "success_criteria": "输出 alice 行。",
+      "coach_focus": "说明普通字符串也是最简单的匹配模式。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep alice regex/accounts.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "行首匹配",
+      "goal": "使用 ^ 匹配行首。",
+      "instructions": "查找以 b 开头的账号。",
+      "try_commands": [
+        "grep \"^b\" regex/accounts.txt"
+      ],
+      "success_criteria": "输出 bob 行。",
+      "coach_focus": "解释 ^ 在正则中的锚点含义。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep \"^b\" regex/accounts.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "行尾匹配",
+      "goal": "使用 $ 匹配行尾。",
+      "instructions": "查找以 tcp 结尾的服务。",
+      "try_commands": [
+        "grep \"tcp$\" regex/services.txt"
+      ],
+      "success_criteria": "输出 http、ssh、mysql 等行。",
+      "coach_focus": "解释 $ 表示行尾。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep \"tcp$\" regex/services.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "字符类匹配",
+      "goal": "用字符类匹配多个候选字符。",
+      "instructions": "查找以 a 或 c 开头的账号。",
+      "try_commands": [
+        "grep \"^[ac]\" regex/accounts.txt"
+      ],
+      "success_criteria": "输出 alice 和 carol。",
+      "coach_focus": "说明 [] 表示字符集合。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep \"^[ac]\" regex/accounts.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "扩展正则数量词",
+      "goal": "用 grep -E 匹配数字长度。",
+      "instructions": "查找包含四位数字的账号行。",
+      "try_commands": [
+        "grep -E \"[0-9]{4}\" regex/accounts.txt"
+      ],
+      "success_criteria": "输出 UID 为 1000、1001、2001 的行。",
+      "coach_focus": "说明 -E 开启扩展正则。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep -E \"[0-9]{4}\" regex/accounts.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "匹配端口协议",
+      "goal": "组合数字和协议进行匹配。",
+      "instructions": "筛选 TCP 服务行。",
+      "try_commands": [
+        "grep -E \"^[a-z]+ [0-9]+/tcp$\" regex/services.txt"
+      ],
+      "success_criteria": "输出 tcp 服务记录。",
+      "coach_focus": "帮助学生读懂表达式结构。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep -E \"^[a-z]+ [0-9]+/tcp$\" regex/services.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "title": "保存匹配结果",
+      "goal": "把正则匹配结果写入文件。",
+      "instructions": "保存普通用户 UID 匹配结果。",
+      "try_commands": [
+        "grep -E \"[0-9]{4}\" regex/accounts.txt > regex/output/normal-users.txt"
+      ],
+      "success_criteria": "normal-users.txt 存在并包含 alice。",
+      "coach_focus": "强调正则常用于批量筛选。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep -E \"[0-9]{4}\" regex/accounts.txt > regex/output/normal-users.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "regex/output/normal-users.txt",
+            "text": "alice"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "regex/output"
+    ],
+    "student_files": [
+      {
+        "path": "regex/accounts.txt",
+        "content": "alice:x:1000\nbob:x:1001\ncarol:x:2001\ndaemon:x:2\n"
+      },
+      {
+        "path": "regex/services.txt",
+        "content": "http 80/tcp\ndns 53/udp\nssh 22/tcp\nmysql 3306/tcp\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

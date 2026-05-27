@@ -1,4 +1,4 @@
-import { Copy, FilePlus2, Search, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, FilePlus2, Search, Trash2 } from 'lucide-react';
 import type { Experiment } from '@/types';
 import type { ExperimentSortMode, StatusFilter } from '@/pages/teacherExperimentDraft';
 import {
@@ -24,6 +24,7 @@ interface ExperimentSidebarProps {
   onCreateBlank: () => void;
   onCopySelected: () => void;
   onDeactivateSelected: () => void;
+  onMoveExperiment: (experimentId: string, direction: -1 | 1) => void;
   canCopySelected: boolean;
   canDeactivateSelected: boolean;
   disabled?: boolean;
@@ -36,6 +37,7 @@ const FILTERS: Array<{ value: StatusFilter; label: string }> = [
 ];
 
 const SORT_OPTIONS: Array<{ value: ExperimentSortMode; label: string }> = [
+  { value: 'manual', label: '学生端顺序' },
   { value: 'name', label: '按名称' },
   { value: 'id', label: '按ID' },
   { value: 'status', label: '按状态' },
@@ -55,6 +57,7 @@ export default function ExperimentSidebar({
   onCreateBlank,
   onCopySelected,
   onDeactivateSelected,
+  onMoveExperiment,
   canCopySelected,
   canDeactivateSelected,
   disabled = false,
@@ -150,29 +153,59 @@ export default function ExperimentSidebar({
             {visibleExperiments.map((experiment) => {
               const selected = experiment.id === selectedExperimentId;
               const normalizedStatus = normalizeExperimentStatus(experiment.status);
+              const manualSort = sortMode === 'manual';
               return (
-                <button
+                <div
                   key={experiment.id}
-                  type="button"
-                  onClick={() => onSelect(experiment.id)}
-                  className={`w-full text-left rounded-md border p-3 transition-colors ${
+                  className={`rounded-md border p-3 transition-colors ${
                     selected
                       ? 'bg-white border-neutral-900 shadow-sm'
                       : 'bg-white border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
                   } ${normalizedStatus === 'inactive' ? 'opacity-75' : ''}`}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <strong className="text-sm font-semibold text-neutral-900 leading-snug">{experiment.name}</strong>
-                    <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] font-medium ${statusBadgeClass(experiment.status)}`}>
-                      {statusLabel(experiment.status)}
+                  <button type="button" onClick={() => onSelect(experiment.id)} className="w-full text-left">
+                    <div className="flex items-start justify-between gap-2">
+                      <strong className="text-sm font-semibold text-neutral-900 leading-snug">{experiment.name}</strong>
+                      <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] font-medium ${statusBadgeClass(experiment.status)}`}>
+                        {statusLabel(experiment.status)}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-xs text-neutral-500 font-mono truncate">{experiment.id}</div>
+                    <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-neutral-500">
+                      <span>{experimentStepCount(experiment)} 个步骤</span>
+                      <span className="truncate">{experiment.image_name || '未设置镜像'}</span>
+                    </div>
+                  </button>
+                  <div className="mt-2 flex items-center justify-between gap-2 border-t border-neutral-100 pt-2 text-[11px] text-neutral-500">
+                    <span>{manualSort ? '同步学生端顺序' : '切回学生端顺序后可调整'}</span>
+                    <span className="inline-flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onMoveExperiment(experiment.id, -1);
+                        }}
+                        disabled={disabled || !manualSort}
+                        title="上移学生端顺序"
+                        className="grid h-6 w-6 place-items-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ArrowUp size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onMoveExperiment(experiment.id, 1);
+                        }}
+                        disabled={disabled || !manualSort}
+                        title="下移学生端顺序"
+                        className="grid h-6 w-6 place-items-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ArrowDown size={12} />
+                      </button>
                     </span>
                   </div>
-                  <div className="mt-2 text-xs text-neutral-500 font-mono truncate">{experiment.id}</div>
-                  <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-neutral-500">
-                    <span>{experimentStepCount(experiment)} 个步骤</span>
-                    <span className="truncate">{experiment.image_name || '未设置镜像'}</span>
-                  </div>
-                </button>
+                </div>
               );
             })}
           </div>

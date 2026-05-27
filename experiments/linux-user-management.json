@@ -1,0 +1,175 @@
+{
+  "experiment_id": "linux-user-management",
+  "name": "Linux 用户管理",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:linux-user-management-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 4,
+  "objective": "认识用户、用户组、UID/GID 和账号文件结构，完成基础用户信息分析。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "确认当前用户",
+      "goal": "识别当前登录身份。",
+      "instructions": "执行 whoami 和 id，观察当前用户与组。",
+      "try_commands": [
+        "whoami",
+        "id"
+      ],
+      "success_criteria": "输出包含 student 或 UID/GID 信息。",
+      "coach_focus": "说明用户身份影响可执行操作。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "whoami",
+              "id"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "查看账号样例",
+      "goal": "认识 passwd 文件字段。",
+      "instructions": "查看 passwd.sample，观察冒号分隔字段。",
+      "try_commands": [
+        "cat users/passwd.sample"
+      ],
+      "success_criteria": "能看到 root、student、ops 三行。",
+      "coach_focus": "解释用户名、UID、家目录、shell 字段。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat users/passwd.sample"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "提取用户名",
+      "goal": "用 cut 提取账号名。",
+      "instructions": "按冒号分隔，提取第一列用户名。",
+      "try_commands": [
+        "cut -d: -f1 users/passwd.sample"
+      ],
+      "success_criteria": "输出 root、student、ops。",
+      "coach_focus": "说明 cut 对结构化文本的作用。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cut -d: -f1 users/passwd.sample"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "查看用户组样例",
+      "goal": "认识 group 文件结构。",
+      "instructions": "查看 group.sample。",
+      "try_commands": [
+        "cat users/group.sample"
+      ],
+      "success_criteria": "能看到组名和 GID。",
+      "coach_focus": "说明主组和附加组概念。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat users/group.sample"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "查找普通用户",
+      "goal": "根据 UID 范围识别普通用户。",
+      "instructions": "筛选 UID 1000 以上的样例用户。",
+      "try_commands": [
+        "grep \":100\" users/passwd.sample"
+      ],
+      "success_criteria": "输出 student 和 ops。",
+      "coach_focus": "引导学生理解系统用户与普通用户区别。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep \":100\" users/passwd.sample"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "编写用户分析记录",
+      "goal": "形成账号分析结果。",
+      "instructions": "把分析结果写入 user-analysis.txt。",
+      "try_commands": [
+        "echo \"student and ops are normal users\" > users/report/user-analysis.txt"
+      ],
+      "success_criteria": "分析文件存在并包含 normal users。",
+      "coach_focus": "鼓励把排查结论固化成文档。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"student and ops are normal users\" > users/report/user-analysis.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "users/report/user-analysis.txt",
+            "text": "normal users"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "users/report"
+    ],
+    "student_files": [
+      {
+        "path": "users/passwd.sample",
+        "content": "root:x:0:0:root:/root:/bin/bash\nstudent:x:1000:1000:Student:/home/student:/bin/bash\nops:x:1001:1001:Ops User:/home/ops:/bin/bash\n"
+      },
+      {
+        "path": "users/group.sample",
+        "content": "root:x:0:\nstudent:x:1000:\nops:x:1001:student\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

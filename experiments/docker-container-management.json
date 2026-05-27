@@ -1,0 +1,178 @@
+{
+  "experiment_id": "docker-container-management",
+  "name": "Docker 容器管理",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:docker-container-management-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 18,
+  "objective": "认识容器、状态、端口映射、日志和停止/清理流程。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "查看容器列表样例",
+      "goal": "认识容器状态字段。",
+      "instructions": "查看 containers.txt。",
+      "try_commands": [
+        "cat docker-container/containers.txt"
+      ],
+      "success_criteria": "能看到 Up 和 Exited 状态。",
+      "coach_focus": "说明容器是镜像运行后的实例。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat docker-container/containers.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "筛选运行中容器",
+      "goal": "查找 Up 状态容器。",
+      "instructions": "筛选运行中的容器。",
+      "try_commands": [
+        "grep \" Up \" docker-container/containers.txt"
+      ],
+      "success_criteria": "输出 web-demo 和 cache-demo。",
+      "coach_focus": "解释运行中和已退出状态。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep \" Up \" docker-container/containers.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "查看端口映射",
+      "goal": "定位 Web 容器端口映射。",
+      "instructions": "查找 8080 到 80 的映射。",
+      "try_commands": [
+        "grep \"8080->80\" docker-container/containers.txt"
+      ],
+      "success_criteria": "输出 web-demo 行。",
+      "coach_focus": "说明宿主端口到容器端口的关系。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep \"8080->80\" docker-container/containers.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "查看容器日志样例",
+      "goal": "认识服务日志内容。",
+      "instructions": "查看 web-demo.log。",
+      "try_commands": [
+        "cat docker-container/web-demo.log"
+      ],
+      "success_criteria": "能看到 HTTP 访问记录。",
+      "coach_focus": "说明 docker logs 常用于排查服务。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat docker-container/web-demo.log"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "记录停止流程",
+      "goal": "写出停止容器的命令思路。",
+      "instructions": "把停止容器命令写入计划文件。",
+      "try_commands": [
+        "echo \"docker stop web-demo\" > docker-container/report/stop-plan.txt"
+      ],
+      "success_criteria": "stop-plan.txt 包含 docker stop。",
+      "coach_focus": "强调先停止再删除，避免误删运行中服务。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"docker stop web-demo\" > docker-container/report/stop-plan.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "docker-container/report/stop-plan.txt",
+            "text": "docker stop"
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "编写容器巡检摘要",
+      "goal": "总结容器状态和端口信息。",
+      "instructions": "创建 container-summary.txt。",
+      "try_commands": [
+        "echo \"containers status ports logs checked\" > docker-container/report/container-summary.txt"
+      ],
+      "success_criteria": "文件包含 ports。",
+      "coach_focus": "帮助学生建立容器巡检 checklist。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"containers status ports logs checked\" > docker-container/report/container-summary.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "docker-container/report/container-summary.txt",
+            "text": "ports"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "docker-container/report"
+    ],
+    "student_files": [
+      {
+        "path": "docker-container/containers.txt",
+        "content": "CONTAINER ID IMAGE STATUS PORTS NAMES\nc1 nginx Up 0.0.0.0:8080->80/tcp web-demo\nc2 mysql Exited 3306/tcp db-demo\nc3 redis Up 6379/tcp cache-demo\n"
+      },
+      {
+        "path": "docker-container/web-demo.log",
+        "content": "server started\nGET /index.html 200\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

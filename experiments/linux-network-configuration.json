@@ -1,0 +1,173 @@
+{
+  "experiment_id": "linux-network-configuration",
+  "name": "Linux 网络配置",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:linux-network-configuration-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 6,
+  "objective": "认识 IP 地址、路由、DNS、端口监听和主机名等基础网络配置要素。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "查看 IP 地址",
+      "goal": "观察容器网卡地址。",
+      "instructions": "执行 ip addr，找到网卡和 inet 地址。",
+      "try_commands": [
+        "ip addr"
+      ],
+      "success_criteria": "命令成功输出网卡信息。",
+      "coach_focus": "解释 loopback 和普通网卡。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "ip addr"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "查看路由",
+      "goal": "了解默认网关信息。",
+      "instructions": "执行 ip route，观察 default 路由。",
+      "try_commands": [
+        "ip route"
+      ],
+      "success_criteria": "命令成功输出路由表。",
+      "coach_focus": "说明默认路由用于访问非本地网络。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "ip route"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "查看 DNS 配置",
+      "goal": "认识 resolv.conf 中的 nameserver。",
+      "instructions": "查看当前 DNS 解析配置。",
+      "try_commands": [
+        "cat /etc/resolv.conf"
+      ],
+      "success_criteria": "输出包含 nameserver 或搜索域配置。",
+      "coach_focus": "说明 DNS 负责名称到地址的解析。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat /etc/resolv.conf"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "解析本地主机名",
+      "goal": "用 getent 验证名称解析。",
+      "instructions": "执行 getent hosts localhost。",
+      "try_commands": [
+        "getent hosts localhost"
+      ],
+      "success_criteria": "输出 localhost 的地址。",
+      "coach_focus": "强调 getent 可同时使用 hosts 和 DNS。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "getent hosts localhost"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "查看监听端口",
+      "goal": "认识端口监听状态。",
+      "instructions": "执行 ss -tuln，观察 TCP/UDP 监听信息。",
+      "try_commands": [
+        "ss -tuln"
+      ],
+      "success_criteria": "命令成功输出套接字列表。",
+      "coach_focus": "解释地址、端口和 LISTEN 状态。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "ss -tuln"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "整理网络说明",
+      "goal": "记录 IP、DNS、路由的作用。",
+      "instructions": "把网络观察结果写入总结文件。",
+      "try_commands": [
+        "echo \"ip dns route checked\" > network/report/network-summary.txt"
+      ],
+      "success_criteria": "network-summary.txt 包含 dns。",
+      "coach_focus": "鼓励按网络层次整理排查结果。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"ip dns route checked\" > network/report/network-summary.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "network/report/network-summary.txt",
+            "text": "dns"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "network/report"
+    ],
+    "student_files": [
+      {
+        "path": "network/hosts.sample",
+        "content": "127.0.0.1 localhost\n10.10.10.20 lab-web\n10.10.10.30 lab-db\n"
+      },
+      {
+        "path": "network/resolv.conf.sample",
+        "content": "nameserver 223.5.5.5\nnameserver 8.8.8.8\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

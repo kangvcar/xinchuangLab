@@ -160,6 +160,11 @@ def ensure_experiment_draft_defaults(
     normalized.setdefault("schema_version", 2)
     normalized.setdefault("status", "draft")
     normalized.setdefault("objective", "")
+    if "sort_order" in draft:
+        try:
+            normalized["sort_order"] = int(draft["sort_order"])
+        except (TypeError, ValueError):
+            normalized.pop("sort_order", None)
     normalized["steps"] = normalize_steps_schema(normalized.get("steps"))
     normalized["image_name"] = normalize_experiment_image_name(
         normalized.get("image_name"),

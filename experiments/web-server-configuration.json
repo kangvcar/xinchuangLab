@@ -1,0 +1,184 @@
+{
+  "experiment_id": "web-server-configuration",
+  "name": "Web 服务器配置",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:web-server-configuration-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 13,
+  "objective": "认识 Web 服务端口、站点目录、首页文件和基础配置项。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "查看 Web 配置样例",
+      "goal": "认识 Listen 和 DocumentRoot。",
+      "instructions": "查看 httpd.conf.sample。",
+      "try_commands": [
+        "cat web/httpd.conf.sample"
+      ],
+      "success_criteria": "能看到 Listen 和 DocumentRoot。",
+      "coach_focus": "说明端口和站点目录的作用。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat web/httpd.conf.sample"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "复制配置文件",
+      "goal": "生成可编辑配置。",
+      "instructions": "复制样例为 httpd.conf。",
+      "try_commands": [
+        "cp web/httpd.conf.sample web/httpd.conf"
+      ],
+      "success_criteria": "web/httpd.conf 存在。",
+      "coach_focus": "强调先复制再编辑保护原始模板。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cp web/httpd.conf.sample web/httpd.conf"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "web/httpd.conf",
+            "path_type": "file"
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "创建首页文件",
+      "goal": "准备 Web 首页内容。",
+      "instructions": "复制首页模板为 index.html。",
+      "try_commands": [
+        "cp web/site/index.template.html web/site/index.html"
+      ],
+      "success_criteria": "index.html 存在。",
+      "coach_focus": "说明 DirectoryIndex 默认首页文件。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cp web/site/index.template.html web/site/index.html"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "web/site/index.html",
+            "path_type": "file"
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "确认监听端口",
+      "goal": "从配置中定位端口。",
+      "instructions": "筛选 Listen 行。",
+      "try_commands": [
+        "grep Listen web/httpd.conf"
+      ],
+      "success_criteria": "输出 Listen 8080。",
+      "coach_focus": "说明端口冲突是 Web 服务常见问题。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep Listen web/httpd.conf"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "确认站点目录",
+      "goal": "检查 DocumentRoot 路径。",
+      "instructions": "筛选 DocumentRoot 行。",
+      "try_commands": [
+        "grep DocumentRoot web/httpd.conf"
+      ],
+      "success_criteria": "输出站点目录路径。",
+      "coach_focus": "解释站点目录决定静态文件来源。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep DocumentRoot web/httpd.conf"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "写入配置说明",
+      "goal": "记录 Web 配置要点。",
+      "instructions": "创建 web-summary.txt。",
+      "try_commands": [
+        "echo \"web listen 8080 documentroot site\" > web/report/web-summary.txt"
+      ],
+      "success_criteria": "文件包含 documentroot。",
+      "coach_focus": "帮助学生把配置项和作用对应起来。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"web listen 8080 documentroot site\" > web/report/web-summary.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "web/report/web-summary.txt",
+            "text": "documentroot"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "web/site",
+      "web/report"
+    ],
+    "student_files": [
+      {
+        "path": "web/httpd.conf.sample",
+        "content": "Listen 8080\nDocumentRoot \"/home/student/web/site\"\nDirectoryIndex index.html\n"
+      },
+      {
+        "path": "web/site/index.template.html",
+        "content": "<h1>Linux AI Web Lab</h1>\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

@@ -1,0 +1,197 @@
+{
+  "experiment_id": "linux-text-processing",
+  "name": "Linux 文本处理",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:linux-text-processing-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 3,
+  "objective": "使用 cat、head、tail、grep、wc、sort、uniq、cut 等命令处理常见文本文件。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "查看文本文件",
+      "goal": "整体观察日志内容。",
+      "instructions": "使用 cat 查看 access.log。",
+      "try_commands": [
+        "cat text/access.log"
+      ],
+      "success_criteria": "能看到多行日志。",
+      "coach_focus": "说明文本文件是运维排查最常见输入。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat text/access.log"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "查看首尾内容",
+      "goal": "掌握 head 和 tail 的用途。",
+      "instructions": "分别查看日志前两行和后两行。",
+      "try_commands": [
+        "head -n 2 text/access.log",
+        "tail -n 2 text/access.log"
+      ],
+      "success_criteria": "命令成功输出指定行数。",
+      "coach_focus": "解释快速预览和查看最新记录的场景。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "head -n 2 text/access.log",
+              "tail -n 2 text/access.log"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "筛选错误日志",
+      "goal": "用 grep 定位 ERROR 行。",
+      "instructions": "筛选包含 ERROR 的日志。",
+      "try_commands": [
+        "grep ERROR text/access.log"
+      ],
+      "success_criteria": "输出只包含 ERROR 相关行。",
+      "coach_focus": "强调大小写和关键词准确性。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep ERROR text/access.log"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "统计日志行数",
+      "goal": "用 wc 统计文本行数。",
+      "instructions": "统计 access.log 的行数。",
+      "try_commands": [
+        "wc -l text/access.log"
+      ],
+      "success_criteria": "输出行数统计结果。",
+      "coach_focus": "说明 wc -l 常用于确认数据量。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "wc -l text/access.log"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "提取用户列",
+      "goal": "从 CSV 中提取第一列。",
+      "instructions": "使用逗号作为分隔符提取第一列。",
+      "try_commands": [
+        "cut -d, -f1 text/users.csv"
+      ],
+      "success_criteria": "输出 name、alice、bob 等内容。",
+      "coach_focus": "说明分隔符和字段编号。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cut -d, -f1 text/users.csv"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "去重排序用户",
+      "goal": "组合 sort 和 uniq 得到唯一用户名。",
+      "instructions": "过滤表头后排序去重。",
+      "try_commands": [
+        "cut -d, -f1 text/users.csv | tail -n +2 | sort | uniq"
+      ],
+      "success_criteria": "输出不重复的用户名。",
+      "coach_focus": "引导学生理解管道从左到右处理。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cut -d, -f1 text/users.csv | tail -n +2 | sort | uniq"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "title": "保存错误日志",
+      "goal": "把筛选结果保存为文件。",
+      "instructions": "将 ERROR 行重定向到 text/output/errors.log。",
+      "try_commands": [
+        "grep ERROR text/access.log > text/output/errors.log"
+      ],
+      "success_criteria": "errors.log 存在并包含 ERROR。",
+      "coach_focus": "说明重定向会覆盖目标文件。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep ERROR text/access.log > text/output/errors.log"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "text/output/errors.log",
+            "text": "ERROR"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "text/output"
+    ],
+    "student_files": [
+      {
+        "path": "text/access.log",
+        "content": "2026-05-20 10:01 INFO login user=alice ip=10.0.0.11\n2026-05-20 10:03 ERROR login user=bob ip=10.0.0.12\n2026-05-20 10:05 INFO upload user=alice ip=10.0.0.11\n2026-05-20 10:08 WARN retry user=carol ip=10.0.0.13\n2026-05-20 10:10 ERROR timeout user=bob ip=10.0.0.12\n"
+      },
+      {
+        "path": "text/users.csv",
+        "content": "name,team\nalice,ops\nbob,dev\ncarol,ops\nalice,ops\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

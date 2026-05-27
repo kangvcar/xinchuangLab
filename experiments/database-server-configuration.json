@@ -1,0 +1,183 @@
+{
+  "experiment_id": "database-server-configuration",
+  "name": "数据库服务器配置",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:database-server-configuration-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 14,
+  "objective": "认识数据库服务端口、配置文件、初始化 SQL 和基础备份思路。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "查看数据库配置样例",
+      "goal": "认识 my.cnf 基础字段。",
+      "instructions": "查看端口、数据目录和字符集配置。",
+      "try_commands": [
+        "cat db/my.cnf.sample"
+      ],
+      "success_criteria": "能看到 port、datadir、character-set-server。",
+      "coach_focus": "说明配置文件控制数据库服务行为。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat db/my.cnf.sample"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "复制数据库配置",
+      "goal": "创建可编辑配置文件。",
+      "instructions": "复制样例为 my.cnf。",
+      "try_commands": [
+        "cp db/my.cnf.sample db/my.cnf"
+      ],
+      "success_criteria": "db/my.cnf 存在。",
+      "coach_focus": "强调生产配置修改前先备份。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cp db/my.cnf.sample db/my.cnf"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "db/my.cnf",
+            "path_type": "file"
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "确认服务端口",
+      "goal": "定位数据库监听端口。",
+      "instructions": "筛选 port 配置。",
+      "try_commands": [
+        "grep port db/my.cnf"
+      ],
+      "success_criteria": "输出 port=3306。",
+      "coach_focus": "解释 3306 是 MySQL/MariaDB 常见端口。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep port db/my.cnf"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "查看初始化 SQL",
+      "goal": "理解数据库初始化语句。",
+      "instructions": "查看建库、建表和插入数据语句。",
+      "try_commands": [
+        "cat db/init.sql"
+      ],
+      "success_criteria": "能看到 CREATE DATABASE 和 CREATE TABLE。",
+      "coach_focus": "说明 SQL 脚本可重复初始化环境。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat db/init.sql"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "保存 SQL 备份副本",
+      "goal": "练习备份重要脚本。",
+      "instructions": "复制初始化脚本为备份。",
+      "try_commands": [
+        "cp db/init.sql db/init-backup.sql"
+      ],
+      "success_criteria": "init-backup.sql 存在。",
+      "coach_focus": "说明配置与脚本变更前备份。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cp db/init.sql db/init-backup.sql"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "db/init-backup.sql",
+            "path_type": "file"
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "编写数据库配置记录",
+      "goal": "总结本次配置观察。",
+      "instructions": "写入数据库配置摘要。",
+      "try_commands": [
+        "echo \"database port 3306 utf8mb4\" > db/report/db-summary.txt"
+      ],
+      "success_criteria": "db-summary.txt 包含 3306。",
+      "coach_focus": "引导学生记录端口、字符集、数据目录。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"database port 3306 utf8mb4\" > db/report/db-summary.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "db/report/db-summary.txt",
+            "text": "3306"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "db/report"
+    ],
+    "student_files": [
+      {
+        "path": "db/my.cnf.sample",
+        "content": "[mysqld]\nport=3306\ndatadir=/var/lib/mysql\ncharacter-set-server=utf8mb4\n"
+      },
+      {
+        "path": "db/init.sql",
+        "content": "CREATE DATABASE labdb;\nCREATE TABLE users(id INT, name VARCHAR(32));\nINSERT INTO users VALUES (1, \"alice\");\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

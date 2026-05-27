@@ -68,8 +68,28 @@ def _normalize_experiment_response(experiment: dict[str, Any]) -> dict[str, Any]
     item = dict(experiment)
     task_config = dict(item.get("task_config") or {})
     task_config["steps"] = normalize_steps_schema(task_config.get("steps"))
+    if "sort_order" in task_config:
+        item["sort_order"] = task_config["sort_order"]
     item["task_config"] = task_config
     return item
+
+
+def _sort_experiment_responses(experiments: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return sorted(
+        experiments,
+        key=lambda item: (
+            _sort_order_value(item.get("task_config", {}).get("sort_order")),
+            str(item.get("name") or item.get("id") or ""),
+            str(item.get("id") or ""),
+        ),
+    )
+
+
+def _sort_order_value(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 1_000_000
 
 
 def require_admin_password(x_admin_password: str | None = Header(default=None)) -> None:
@@ -110,12 +130,46 @@ async def health() -> dict[str, Any]:
 
 @app.get("/api/experiments")
 async def list_experiments() -> list[dict[str, Any]]:
-    return [_normalize_experiment_response(item) for item in db.list_experiments(active_only=True)]
+    return _sort_experiment_responses(
+        [_normalize_experiment_response(item) for item in db.list_experiments(active_only=True)]
+    )
 
 
 @app.get("/api/admin/experiments")
 async def admin_list_experiments(_admin: None = Depends(require_admin_password)) -> list[dict[str, Any]]:
-    return [_normalize_experiment_response(item) for item in db.list_experiments() if item.get("status") != "inactive"]
+    return _sort_experiment_responses(
+        [_normalize_experiment_response(item) for item in db.list_experiments() if item.get("status") != "inactive"]
+    )
+
+
+@app.put("/api/admin/experiments/order")
+async def admin_reorder_experiments(
+    payload: dict[str, Any],
+    _admin: None = Depends(require_admin_password),
+) -> dict[str, Any]:
+    experiment_ids = payload.get("experiment_ids")
+    if not isinstance(experiment_ids, list) or not experiment_ids:
+        raise HTTPException(status_code=400, detail="experiment_ids must be a non-empty list")
+    ordered_ids = [str(item).strip() for item in experiment_ids if str(item).strip()]
+    if len(ordered_ids) != len(set(ordered_ids)):
+        raise HTTPException(status_code=400, detail="experiment_ids contains duplicate values")
+
+    visible_experiments = [item for item in db.list_experiments() if item.get("status") != "inactive"]
+    visible_ids = {item["id"] for item in visible_experiments}
+    unknown_ids = [experiment_id for experiment_id in ordered_ids if experiment_id not in visible_ids]
+    if unknown_ids:
+        raise HTTPException(status_code=404, detail=f"experiment not found: {', '.join(unknown_ids)}")
+
+    remaining = [item["id"] for item in _sort_experiment_responses(visible_experiments) if item["id"] not in ordered_ids]
+    final_order = [*ordered_ids, *remaining]
+    for index, experiment_id in enumerate(final_order, start=1):
+        experiment = db.get_experiment(experiment_id)
+        if not experiment:
+            continue
+        task_config = dict(experiment["task_config"])
+        task_config["sort_order"] = index
+        db.upsert_experiment(task_config)
+    return {"experiment_ids": final_order}
 
 
 @app.post("/api/admin/auth")

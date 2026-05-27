@@ -1,0 +1,175 @@
+{
+  "experiment_id": "linux-security-management",
+  "name": "Linux 安全管理",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:linux-security-management-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 9,
+  "objective": "认识账号、权限、日志、安全基线检查和最小权限原则。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "确认当前身份",
+      "goal": "检查当前用户和权限范围。",
+      "instructions": "执行 whoami 和 id。",
+      "try_commands": [
+        "whoami",
+        "id"
+      ],
+      "success_criteria": "输出当前用户与组信息。",
+      "coach_focus": "强调安全检查从身份开始。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "whoami",
+              "id"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "查看敏感文件权限",
+      "goal": "观察系统账号文件的权限。",
+      "instructions": "查看 passwd 和 shadow 权限。",
+      "try_commands": [
+        "ls -l /etc/passwd /etc/shadow"
+      ],
+      "success_criteria": "能看到两个文件的权限差异。",
+      "coach_focus": "说明敏感信息需要更严格权限。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "ls -l /etc/passwd /etc/shadow"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "查看监听端口",
+      "goal": "识别可能暴露的服务端口。",
+      "instructions": "查看监听端口。",
+      "try_commands": [
+        "ss -tuln"
+      ],
+      "success_criteria": "命令成功输出端口列表。",
+      "coach_focus": "强调关闭不必要服务。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "ss -tuln"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "分析失败登录",
+      "goal": "从样例日志中筛选失败记录。",
+      "instructions": "筛选 failed 记录。",
+      "try_commands": [
+        "grep failed security/auth.log.sample"
+      ],
+      "success_criteria": "输出 login failed 行。",
+      "coach_focus": "引导学生关注失败登录和异常 sudo。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep failed security/auth.log.sample"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "查看安全基线",
+      "goal": "阅读基础安全检查清单。",
+      "instructions": "查看 baseline.txt。",
+      "try_commands": [
+        "cat security/baseline.txt"
+      ],
+      "success_criteria": "能看到账号、端口、权限等检查项。",
+      "coach_focus": "说明基线是重复巡检的标准。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat security/baseline.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "生成安全检查记录",
+      "goal": "写出本次安全检查结论。",
+      "instructions": "创建 security-summary.txt。",
+      "try_commands": [
+        "echo \"security baseline checked\" > security/report/security-summary.txt"
+      ],
+      "success_criteria": "文件包含 baseline。",
+      "coach_focus": "鼓励从现象到结论的记录方式。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"security baseline checked\" > security/report/security-summary.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "security/report/security-summary.txt",
+            "text": "baseline"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "security/report"
+    ],
+    "student_files": [
+      {
+        "path": "security/auth.log.sample",
+        "content": "May 20 10:01 login accepted user=student\nMay 20 10:02 sudo denied user=guest\nMay 20 10:03 login failed user=root\n"
+      },
+      {
+        "path": "security/baseline.txt",
+        "content": "check password policy\ncheck sudo users\ncheck open ports\ncheck file permissions\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

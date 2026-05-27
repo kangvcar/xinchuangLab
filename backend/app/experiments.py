@@ -53,6 +53,13 @@ def load_experiment_files(experiments_dir: Path) -> list[dict[str, Any]]:
 def sync_experiments(db: Database, experiments_dir: Path) -> None:
     for config in load_experiment_files(experiments_dir):
         config = dict(config)
+        existing = db.get_experiment(config["experiment_id"])
+        if existing:
+            existing_config = existing["task_config"]
+            if "sort_order" in existing_config:
+                config["sort_order"] = existing_config["sort_order"]
+            if existing.get("status") == "inactive":
+                config["status"] = "inactive"
         config["steps"] = normalize_steps_schema(config.get("steps"))
         config.setdefault("schema_version", 2)
         db.upsert_experiment(config)

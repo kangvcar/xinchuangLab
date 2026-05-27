@@ -26,6 +26,7 @@ import {
   defaultContainerSpec,
   editorSnapshotKey,
   normalizeExperimentStatus,
+  sortExperiments,
   statusBadgeClass,
   statusLabel,
   validateSnapshot,
@@ -41,7 +42,7 @@ export default function TeacherPage() {
   const [selectedExperimentId, setSelectedExperimentId] = useState<string>('file-basic');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [sortMode, setSortMode] = useState<ExperimentSortMode>('name');
+  const [sortMode, setSortMode] = useState<ExperimentSortMode>('manual');
   const [adminDraft, setAdminDraft] = useState<AdminDraft | null>(null);
   const [adminStepsText, setAdminStepsText] = useState('');
   const [adminContainerSpecText, setAdminContainerSpecText] = useState('');
@@ -205,6 +206,7 @@ export default function TeacherPage() {
           objective: String(draft.objective ?? ''),
           status: normalizeExperimentStatus(String(draft.status ?? 'draft')),
           schema_version: Number(draft.schema_version ?? 2),
+          sort_order: draft.sort_order === undefined ? undefined : Number(draft.sort_order),
         },
         stepsText: JSON.stringify(steps, null, 2),
         containerSpecText: JSON.stringify(containerSpec, null, 2),
@@ -265,7 +267,31 @@ export default function TeacherPage() {
     } catch (error) {
       setAdminStatus(error instanceof Error ? error.message : '删除实验失败');
     }
-  }, [api, applySnapshot, isBuildRunning, refreshAdminExperiments, selectedExperiment]);
+  }, [api, isBuildRunning, refreshAdminExperiments, selectedExperiment]);
+
+  const moveExperimentOrder = useCallback(async (experimentId: string, direction: -1 | 1) => {
+    const ordered = sortExperiments(
+      experiments.filter((item) => normalizeExperimentStatus(item.status) !== 'inactive'),
+      'manual'
+    );
+    const currentIndex = ordered.findIndex((item) => item.id === experimentId);
+    const targetIndex = currentIndex + direction;
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= ordered.length) return;
+    const next = [...ordered];
+    const [moved] = next.splice(currentIndex, 1);
+    next.splice(targetIndex, 0, moved);
+    setSortMode('manual');
+    setExperiments(next);
+    setAdminStatus('正在保存实验顺序');
+    try {
+      await api.reorderExperiments(next.map((item) => item.id));
+      await refreshAdminExperiments(experimentId);
+      setAdminStatus('实验顺序已同步到学生端');
+    } catch (error) {
+      await refreshAdminExperiments();
+      setAdminStatus(error instanceof Error ? error.message : '保存实验顺序失败');
+    }
+  }, [api, experiments, refreshAdminExperiments]);
 
   const saveAdminExperiment = useCallback(async () => {
     if (!adminDraft) return;
@@ -403,6 +429,7 @@ export default function TeacherPage() {
           onCreateBlank={createBlankExperiment}
           onCopySelected={copySelectedExperiment}
           onDeactivateSelected={deactivateSelectedExperiment}
+          onMoveExperiment={moveExperimentOrder}
           canCopySelected={Boolean(selectedExperiment)}
           canDeactivateSelected={Boolean(selectedExperiment && normalizeExperimentStatus(selectedExperiment.status) !== 'inactive')}
           disabled={isBuildRunning}

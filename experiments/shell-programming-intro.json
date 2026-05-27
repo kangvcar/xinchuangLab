@@ -1,0 +1,189 @@
+{
+  "experiment_id": "shell-programming-intro",
+  "name": "shell 编程初探",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:shell-programming-intro-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 11,
+  "objective": "完成第一个 Shell 脚本，认识 shebang、变量、参数和脚本执行方式。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "创建脚本文件",
+      "goal": "创建 hello.sh 脚本。",
+      "instructions": "复制模板为 hello.sh。",
+      "try_commands": [
+        "cp shell-intro/template.sh shell-intro/hello.sh"
+      ],
+      "success_criteria": "hello.sh 文件存在。",
+      "coach_focus": "说明先用模板降低输入错误。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cp shell-intro/template.sh shell-intro/hello.sh"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "shell-intro/hello.sh",
+            "path_type": "file"
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "写入输出语句",
+      "goal": "让脚本输出问候文本。",
+      "instructions": "向脚本追加 echo 语句。",
+      "try_commands": [
+        "echo \"echo hello shell\" >> shell-intro/hello.sh"
+      ],
+      "success_criteria": "hello.sh 包含 hello shell。",
+      "coach_focus": "说明 echo 是脚本中最常用的输出方式。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"echo hello shell\" >> shell-intro/hello.sh"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "shell-intro/hello.sh",
+            "text": "hello shell"
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "增加执行权限",
+      "goal": "使脚本可以直接执行。",
+      "instructions": "为 hello.sh 增加执行权限。",
+      "try_commands": [
+        "chmod +x shell-intro/hello.sh"
+      ],
+      "success_criteria": "hello.sh 可执行。",
+      "coach_focus": "解释脚本文件和可执行权限的关系。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "chmod +x shell-intro/hello.sh"
+            ]
+          },
+          {
+            "type": "exec_exit_code",
+            "command": "test -x shell-intro/hello.sh",
+            "exit_code": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "运行脚本",
+      "goal": "执行第一个 Shell 脚本。",
+      "instructions": "运行 hello.sh，观察输出。",
+      "try_commands": [
+        "./shell-intro/hello.sh"
+      ],
+      "success_criteria": "终端输出 hello shell。",
+      "coach_focus": "提醒使用 ./ 表示当前目录下的脚本。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "./shell-intro/hello.sh"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "使用变量",
+      "goal": "在脚本中加入变量。",
+      "instructions": "追加 name=student 变量定义。",
+      "try_commands": [
+        "echo \"name=student\" >> shell-intro/hello.sh"
+      ],
+      "success_criteria": "脚本包含 name=student。",
+      "coach_focus": "说明变量赋值等号两边不加空格。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"name=student\" >> shell-intro/hello.sh"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "shell-intro/hello.sh",
+            "text": "name=student"
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "保存脚本说明",
+      "goal": "记录脚本执行方法。",
+      "instructions": "写入脚本运行说明。",
+      "try_commands": [
+        "echo \"run with ./hello.sh\" > shell-intro/script-note.txt"
+      ],
+      "success_criteria": "script-note.txt 包含 ./hello.sh。",
+      "coach_focus": "帮助学生沉淀命令用法。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"run with ./hello.sh\" > shell-intro/script-note.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "shell-intro/script-note.txt",
+            "text": "./hello.sh"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "shell-intro"
+    ],
+    "student_files": [
+      {
+        "path": "shell-intro/template.sh",
+        "content": "#!/bin/bash\n# write your first script here\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

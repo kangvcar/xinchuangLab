@@ -1,0 +1,214 @@
+{
+  "experiment_id": "linux-file-management",
+  "name": "Linux 文件管理",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:linux-file-management-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 2,
+  "objective": "掌握目录创建、文件复制、移动、查看、查找和清理等基础文件管理操作。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "查看实验素材",
+      "goal": "确认 files/source 下已有素材文件。",
+      "instructions": "执行 ls -l files/source，观察 readme.txt 和 app.conf。",
+      "try_commands": [
+        "ls -l files/source"
+      ],
+      "success_criteria": "能看到两个素材文件。",
+      "coach_focus": "说明 ls -l 每列含义。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "ls -l files/source"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "创建工作目录",
+      "goal": "建立独立练习目录。",
+      "instructions": "创建 files/work 目录用于后续操作。",
+      "try_commands": [
+        "mkdir -p files/work"
+      ],
+      "success_criteria": "files/work 目录存在。",
+      "coach_focus": "说明 -p 的幂等效果。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "mkdir -p files/work"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "files/work",
+            "path_type": "dir"
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "复制文件",
+      "goal": "把素材复制到工作目录。",
+      "instructions": "复制 readme.txt，并保留原文件。",
+      "try_commands": [
+        "cp files/source/readme.txt files/work/readme-copy.txt"
+      ],
+      "success_criteria": "files/work/readme-copy.txt 存在。",
+      "coach_focus": "强调复制不会删除源文件。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cp files/source/readme.txt files/work/readme-copy.txt"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "files/work/readme-copy.txt",
+            "path_type": "file"
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "移动并重命名",
+      "goal": "练习 mv 的移动和改名作用。",
+      "instructions": "把 readme-copy.txt 重命名为 notes.txt。",
+      "try_commands": [
+        "mv files/work/readme-copy.txt files/work/notes.txt"
+      ],
+      "success_criteria": "notes.txt 存在且 readme-copy.txt 不再存在。",
+      "coach_focus": "区分路径变化和文件内容变化。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "mv files/work/readme-copy.txt files/work/notes.txt"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "files/work/notes.txt",
+            "path_type": "file"
+          },
+          {
+            "type": "path_absent",
+            "path": "files/work/readme-copy.txt"
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "查看文件内容",
+      "goal": "确认文件内容复制正确。",
+      "instructions": "使用 cat 查看 notes.txt 内容。",
+      "try_commands": [
+        "cat files/work/notes.txt"
+      ],
+      "success_criteria": "终端输出包含 file management practice。",
+      "coach_focus": "提醒学生查看前先确认路径。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat files/work/notes.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "查找文本文件",
+      "goal": "用 find 根据名称定位文件。",
+      "instructions": "执行 find files -name \"*.txt\"，观察匹配结果。",
+      "try_commands": [
+        "find files -name \"*.txt\""
+      ],
+      "success_criteria": "输出包含 notes.txt 或 readme.txt。",
+      "coach_focus": "说明通配符需要加引号避免 shell 提前展开。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "find files -name \"*.txt\""
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "title": "清理临时文件",
+      "goal": "删除练习中产生的临时文件。",
+      "instructions": "删除 notes.txt，保留目录结构。",
+      "try_commands": [
+        "rm files/work/notes.txt"
+      ],
+      "success_criteria": "files/work/notes.txt 不存在。",
+      "coach_focus": "提醒 rm 操作不可逆，删除前确认路径。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "rm files/work/notes.txt"
+            ],
+            "require_success": false
+          },
+          {
+            "type": "path_absent",
+            "path": "files/work/notes.txt"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "files/source"
+    ],
+    "student_files": [
+      {
+        "path": "files/source/readme.txt",
+        "content": "Linux file management practice\ncopy me safely\n"
+      },
+      {
+        "path": "files/source/app.conf",
+        "content": "mode=demo\nport=8080\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

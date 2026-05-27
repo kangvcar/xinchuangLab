@@ -8,6 +8,7 @@ export interface AdminDraft {
   objective: string;
   status: ExperimentStatus;
   schema_version: number;
+  sort_order?: number;
 }
 
 export interface EditorSnapshot {
@@ -22,7 +23,7 @@ export interface ValidationResult {
 }
 
 export type StatusFilter = 'all' | 'draft' | 'published';
-export type ExperimentSortMode = 'name' | 'id' | 'status' | 'steps';
+export type ExperimentSortMode = 'manual' | 'name' | 'id' | 'status' | 'steps';
 
 export function defaultContainerSpec(): ContainerSpec {
   return {
@@ -75,6 +76,7 @@ export function createSnapshotFromExperiment(experiment: Experiment): EditorSnap
       objective: config.objective ?? '',
       status: normalizeExperimentStatus(experiment.status),
       schema_version: config.schema_version ?? 2,
+      sort_order: experiment.sort_order ?? config.sort_order,
     },
     stepsText: JSON.stringify(normalizeStepsForEditor(config.steps ?? []), null, 2),
     containerSpecText: JSON.stringify(config.container_spec ?? defaultContainerSpec(), null, 2),
@@ -107,6 +109,7 @@ export function createCopySnapshot(experiment: Experiment, existingIds: Set<stri
       experiment_id: copiedId,
       name: `${experiment.name} 副本`,
       status: 'draft',
+      sort_order: undefined,
     },
   };
 }
@@ -321,6 +324,9 @@ export function matchesStatusFilter(experiment: Experiment, filter: StatusFilter
 
 export function sortExperiments(experiments: Experiment[], sortMode: ExperimentSortMode): Experiment[] {
   return [...experiments].sort((a, b) => {
+    if (sortMode === 'manual') {
+      return experimentSortOrder(a) - experimentSortOrder(b) || a.name.localeCompare(b.name, 'zh-Hans-CN');
+    }
     if (sortMode === 'steps') {
       return experimentStepCount(b) - experimentStepCount(a) || a.name.localeCompare(b.name, 'zh-Hans-CN');
     }
@@ -332,6 +338,11 @@ export function sortExperiments(experiments: Experiment[], sortMode: ExperimentS
     }
     return a.name.localeCompare(b.name, 'zh-Hans-CN') || a.id.localeCompare(b.id, 'en');
   });
+}
+
+function experimentSortOrder(experiment: Experiment): number {
+  const value = experiment.sort_order ?? experiment.task_config?.sort_order;
+  return Number.isFinite(Number(value)) ? Number(value) : 1_000_000;
 }
 
 function statusRank(status: string | undefined): number {

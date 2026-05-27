@@ -159,6 +159,18 @@ export function useApi() {
     return response.json();
   }, []);
 
+  const reorderExperiments = useCallback(async (experimentIds: string[]): Promise<{ experiment_ids: string[] }> => {
+    const response = await fetch(`${API_BASE}/api/admin/experiments/order`, {
+      method: 'PUT',
+      headers: adminHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ experiment_ids: experimentIds }),
+    });
+    if (!response.ok) {
+      throw new Error(await errorMessage(response, '保存实验顺序失败'));
+    }
+    return response.json();
+  }, []);
+
   const buildExperiment = useCallback(async (data: Record<string, unknown>): Promise<BuildState> => {
     const response = await fetch(`${API_BASE}/api/admin/experiments/build`, {
       method: 'POST',
@@ -243,6 +255,7 @@ export function useApi() {
     generateReport,
     saveExperiment,
     deleteExperiment,
+    reorderExperiments,
     buildExperiment,
     importText,
     importFile,

@@ -1,0 +1,178 @@
+{
+  "experiment_id": "docker-image-management",
+  "name": "Docker 镜像管理",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:docker-image-management-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 17,
+  "objective": "认识镜像、标签、Dockerfile、镜像列表和基础镜像清理思路。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "查看镜像列表样例",
+      "goal": "认识镜像仓库、标签和大小。",
+      "instructions": "查看 images.txt。",
+      "try_commands": [
+        "cat docker-image/images.txt"
+      ],
+      "success_criteria": "能看到 REPOSITORY、TAG、SIZE。",
+      "coach_focus": "说明镜像列表字段对应 docker images 输出。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat docker-image/images.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "筛选基础镜像",
+      "goal": "查找 openEuler 镜像记录。",
+      "instructions": "筛选 openeuler 行。",
+      "try_commands": [
+        "grep openeuler docker-image/images.txt"
+      ],
+      "success_criteria": "输出 openeuler 22.03。",
+      "coach_focus": "解释基础镜像是构建新镜像的起点。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "grep openeuler docker-image/images.txt"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "查看 Dockerfile",
+      "goal": "认识镜像构建描述文件。",
+      "instructions": "查看 FROM、LABEL、RUN 指令。",
+      "try_commands": [
+        "cat docker-image/Dockerfile.sample"
+      ],
+      "success_criteria": "能看到 FROM 指令。",
+      "coach_focus": "说明 Dockerfile 是镜像构建脚本。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat docker-image/Dockerfile.sample"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "复制 Dockerfile",
+      "goal": "创建可编辑构建文件。",
+      "instructions": "复制样例为 Dockerfile。",
+      "try_commands": [
+        "cp docker-image/Dockerfile.sample docker-image/Dockerfile"
+      ],
+      "success_criteria": "Dockerfile 文件存在。",
+      "coach_focus": "提醒修改前保留模板。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cp docker-image/Dockerfile.sample docker-image/Dockerfile"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "docker-image/Dockerfile",
+            "path_type": "file"
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "追加镜像标签说明",
+      "goal": "记录镜像命名规则。",
+      "instructions": "写入镜像标签说明。",
+      "try_commands": [
+        "echo \"tag format repository:tag\" > docker-image/report/image-note.txt"
+      ],
+      "success_criteria": "image-note.txt 包含 repository:tag。",
+      "coach_focus": "帮助学生理解标签不是版本号本身但常用于版本管理。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"tag format repository:tag\" > docker-image/report/image-note.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "docker-image/report/image-note.txt",
+            "text": "repository:tag"
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "统计镜像数量",
+      "goal": "用文本命令统计样例镜像。",
+      "instructions": "去掉表头后统计镜像条数。",
+      "try_commands": [
+        "tail -n +2 docker-image/images.txt | wc -l"
+      ],
+      "success_criteria": "输出 3。",
+      "coach_focus": "说明镜像管理要关注数量和体积。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "tail -n +2 docker-image/images.txt | wc -l"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "docker-image/report"
+    ],
+    "student_files": [
+      {
+        "path": "docker-image/images.txt",
+        "content": "REPOSITORY TAG IMAGE ID SIZE\nopeneuler 22.03 abc123 220MB\nnginx latest def456 180MB\nlinux-ai demo ghi789 260MB\n"
+      },
+      {
+        "path": "docker-image/Dockerfile.sample",
+        "content": "FROM openeuler/openeuler:22.03-lts-sp3\nLABEL maintainer=\"student\"\nRUN echo image-lab\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

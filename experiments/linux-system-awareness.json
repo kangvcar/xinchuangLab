@@ -1,0 +1,173 @@
+{
+  "experiment_id": "linux-system-awareness",
+  "name": "Linux 系统认知",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:linux-system-awareness-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 1,
+  "objective": "认识 Linux 系统环境、当前用户、目录位置、基础资源信息和系统版本信息。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "确认当前位置",
+      "goal": "确认登录后所在目录。",
+      "instructions": "执行 pwd，观察当前工作目录。",
+      "try_commands": [
+        "pwd"
+      ],
+      "success_criteria": "终端输出一个绝对路径。",
+      "coach_focus": "说明当前工作目录和绝对路径。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "pwd"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "查看系统版本",
+      "goal": "了解系统发行版信息。",
+      "instructions": "执行 cat /etc/os-release，找到 NAME 和 VERSION 字段。",
+      "try_commands": [
+        "cat /etc/os-release"
+      ],
+      "success_criteria": "能够看到 openEuler 或基础镜像版本信息。",
+      "coach_focus": "引导学生区分内核版本和发行版版本。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "cat /etc/os-release"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "查看内核信息",
+      "goal": "认识内核和架构信息。",
+      "instructions": "执行 uname -a，观察 Linux 内核、主机名和架构。",
+      "try_commands": [
+        "uname -a"
+      ],
+      "success_criteria": "命令成功输出内核信息。",
+      "coach_focus": "解释内核、发行版和架构之间的关系。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "uname -a"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "识别当前用户",
+      "goal": "确认当前终端使用的用户身份。",
+      "instructions": "执行 whoami 和 id，观察用户名、UID、GID。",
+      "try_commands": [
+        "whoami",
+        "id"
+      ],
+      "success_criteria": "能看到 student 用户和对应 UID/GID。",
+      "coach_focus": "强调普通用户与管理员权限的区别。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "whoami",
+              "id"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "查看资源概况",
+      "goal": "观察磁盘与内存基本状态。",
+      "instructions": "执行 df -h 和 free -h，识别容量、已用和可用列。",
+      "try_commands": [
+        "df -h",
+        "free -h"
+      ],
+      "success_criteria": "能读出磁盘空间和内存容量。",
+      "coach_focus": "帮助学生理解 h 参数的人类可读格式。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "df -h",
+              "free -h"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "记录系统摘要",
+      "goal": "把观察结果写入实验摘要文件。",
+      "instructions": "创建 reports/system-summary.txt，写入本次系统认知摘要。",
+      "try_commands": [
+        "echo \"system checked\" > reports/system-summary.txt"
+      ],
+      "success_criteria": "reports/system-summary.txt 文件存在并包含内容。",
+      "coach_focus": "鼓励学生形成操作后记录的习惯。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"system checked\" > reports/system-summary.txt"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "reports/system-summary.txt",
+            "path_type": "file"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "reports"
+    ],
+    "student_files": [
+      {
+        "path": "system/os-release-note.txt",
+        "content": "openEuler 是面向数字基础设施的开源操作系统。本实验关注系统识别与基础观察。"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

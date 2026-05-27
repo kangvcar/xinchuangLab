@@ -1,0 +1,188 @@
+{
+  "experiment_id": "linux-disk-management",
+  "name": "Linux 磁盘管理",
+  "system": "openEuler",
+  "image_name": "linux-ai-exp:linux-disk-management-v1",
+  "status": "published",
+  "schema_version": 2,
+  "sort_order": 8,
+  "objective": "认识磁盘容量、目录占用、块设备信息和基础归档整理操作。",
+  "steps": [
+    {
+      "id": 1,
+      "title": "查看文件系统容量",
+      "goal": "了解挂载点容量信息。",
+      "instructions": "执行 df -h，观察 Size、Used、Avail。",
+      "try_commands": [
+        "df -h"
+      ],
+      "success_criteria": "命令成功输出文件系统容量。",
+      "coach_focus": "说明磁盘空间不足排查入口。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "df -h"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "查看目录占用",
+      "goal": "统计实验目录大小。",
+      "instructions": "执行 du -sh disk。",
+      "try_commands": [
+        "du -sh disk"
+      ],
+      "success_criteria": "输出 disk 目录占用。",
+      "coach_focus": "解释 du 与 df 的区别。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "du -sh disk"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "title": "查看块设备",
+      "goal": "认识 lsblk 输出结构。",
+      "instructions": "执行 lsblk，观察 NAME、SIZE、TYPE。",
+      "try_commands": [
+        "lsblk"
+      ],
+      "success_criteria": "命令成功输出块设备表。",
+      "coach_focus": "说明磁盘、分区、挂载点的关系。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "lsblk"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "title": "查找临时文件",
+      "goal": "定位后缀为 tmp 的文件。",
+      "instructions": "使用 find 查找临时文件。",
+      "try_commands": [
+        "find disk -name \"*.tmp\""
+      ],
+      "success_criteria": "输出 c.tmp 路径。",
+      "coach_focus": "说明按名称查找适合清理前确认。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "find disk -name \"*.tmp\""
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "移动日志归档",
+      "goal": "把日志文件整理到归档目录。",
+      "instructions": "移动 .log 文件到 archive。",
+      "try_commands": [
+        "mv disk/work/*.log disk/archive/"
+      ],
+      "success_criteria": "archive 中存在 a.log 和 b.log。",
+      "coach_focus": "说明归档前后目录结构变化。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "mv disk/work/*.log disk/archive/"
+            ]
+          },
+          {
+            "type": "path_exists",
+            "path": "disk/archive/a.log",
+            "path_type": "file"
+          },
+          {
+            "type": "path_exists",
+            "path": "disk/archive/b.log",
+            "path_type": "file"
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "记录磁盘检查",
+      "goal": "形成磁盘巡检摘要。",
+      "instructions": "写入磁盘检查摘要文件。",
+      "try_commands": [
+        "echo \"disk usage checked\" > disk/disk-summary.txt"
+      ],
+      "success_criteria": "disk-summary.txt 包含 usage。",
+      "coach_focus": "引导学生做基础巡检记录。",
+      "verification": {
+        "mode": "all",
+        "checks": [
+          {
+            "type": "command_match",
+            "commands": [
+              "echo \"disk usage checked\" > disk/disk-summary.txt"
+            ]
+          },
+          {
+            "type": "file_contains",
+            "path": "disk/disk-summary.txt",
+            "text": "usage"
+          }
+        ]
+      }
+    }
+  ],
+  "container_spec": {
+    "base_image": "openeuler/openeuler:22.03-lts-sp3",
+    "packages": [],
+    "pip_packages": [],
+    "npm_packages": [],
+    "student_dirs": [
+      "disk/work",
+      "disk/archive"
+    ],
+    "student_files": [
+      {
+        "path": "disk/work/a.log",
+        "content": "alpha\n"
+      },
+      {
+        "path": "disk/work/b.log",
+        "content": "beta\n"
+      },
+      {
+        "path": "disk/work/c.tmp",
+        "content": "temporary\n"
+      }
+    ],
+    "sources": {
+      "openeuler_mirror": "https://repo.huaweicloud.com/openeuler",
+      "pip_index_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+      "npm_registry": "https://registry.npmmirror.com"
+    }
+  }
+}

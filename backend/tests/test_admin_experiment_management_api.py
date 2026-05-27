@@ -119,3 +119,33 @@ def test_public_experiment_list_excludes_drafts_and_inactive(
     result = asyncio.run(main.list_experiments())
 
     assert [item["id"] for item in result] == ["active-lab", "published-lab"]
+
+
+def test_admin_reorder_experiments_controls_teacher_and_student_order(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db = prepare_database(tmp_path)
+    upsert_experiment(db, "linux-system", "published")
+    upsert_experiment(db, "linux-files", "published")
+    upsert_experiment(db, "linux-network", "published")
+    monkeypatch.setattr(main, "db", db)
+
+    result = asyncio.run(
+        main.admin_reorder_experiments(
+            {"experiment_ids": ["linux-network", "linux-system", "linux-files"]},
+            _admin=None,
+        )
+    )
+
+    assert result["experiment_ids"] == ["linux-network", "linux-system", "linux-files"]
+    assert [item["id"] for item in asyncio.run(main.admin_list_experiments(_admin=None))] == [
+        "linux-network",
+        "linux-system",
+        "linux-files",
+    ]
+    assert [item["id"] for item in asyncio.run(main.list_experiments())] == [
+        "linux-network",
+        "linux-system",
+        "linux-files",
+    ]

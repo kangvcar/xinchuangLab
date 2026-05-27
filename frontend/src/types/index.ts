@@ -6,6 +6,7 @@ export interface Experiment {
   system_type: string;
   image_name: string;
   status: ExperimentStatus;
+  sort_order?: number;
   task_config: TaskConfig;
 }
 
@@ -16,6 +17,7 @@ export interface TaskConfig {
   steps: Step[];
   container_spec?: ContainerSpec;
   schema_version?: number;
+  sort_order?: number;
 }
 
 export interface Step {
