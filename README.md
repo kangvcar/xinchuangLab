@@ -221,6 +221,8 @@ cd xinchuangLab
 
 # PUBLIC_HOST 填服务器公网 IP；ADMIN_PASSWORD 建议自行设置。
 sudo -E PUBLIC_HOST=你的服务器公网IP \
+  AI_MODE=deepseek \
+  DEEPSEEK_API_KEY='你的 DeepSeek API Key' \
   ADMIN_PASSWORD='请改成强密码' \
   bash scripts/deploy-aliyun-ubuntu24.sh
 ```
@@ -278,6 +280,8 @@ journalctl -u xinchuang-lab -f
 docker images 'linux-ai-exp:*'
 curl http://127.0.0.1:8000/api/health
 ```
+
+健康检查返回里的 `ai_provider` 应为 `deepseek`，`deepseek_configured` 应为 `true`，才表示 AI 陪练已经接入 DeepSeek。
 
 ---
 

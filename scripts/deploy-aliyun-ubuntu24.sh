@@ -26,6 +26,11 @@ TTYD_URL="${TTYD_URL:-https://github.com/tsl0922/ttyd/releases/download/1.7.7/tt
 TTYD_CACHE_FILE="${TTYD_CACHE_FILE:-/var/cache/${APP_NAME}/ttyd.x86_64}"
 TTYD_LOCAL_FILE="${TTYD_LOCAL_FILE:-}"
 
+AI_MODE_WAS_SET="${AI_MODE+x}"
+DEEPSEEK_API_KEY_WAS_SET="${DEEPSEEK_API_KEY+x}"
+DEEPSEEK_BASE_URL_WAS_SET="${DEEPSEEK_BASE_URL+x}"
+DEEPSEEK_MODEL_WAS_SET="${DEEPSEEK_MODEL+x}"
+
 APP_ENV="${APP_ENV:-production}"
 LAB_RUNTIME="${LAB_RUNTIME:-docker}"
 AI_MODE="${AI_MODE:-auto}"
@@ -59,6 +64,7 @@ Common environment variables:
   ADMIN_PASSWORD='change-me'
   TERMINAL_PORT_START=20000 TERMINAL_PORT_END=20999
   DOCKER_REGISTRY_MIRRORS='["https://your-id.mirror.aliyuncs.com"]'
+  AI_MODE=deepseek DEEPSEEK_API_KEY='sk-...'
   FORCE_REBUILD_IMAGES=1
 EOF
 }
@@ -82,6 +88,26 @@ log() {
 die() {
   echo "ERROR: $*" >&2
   exit 1
+}
+
+existing_env_value() {
+  local key="$1"
+  local env_file="${DEPLOY_DIR}/.env"
+  [[ -f "${env_file}" ]] || return 1
+  grep -E "^${key}=" "${env_file}" | tail -n 1 | cut -d= -f2-
+}
+
+preserve_existing_env_value() {
+  local key="$1"
+  local was_set="$2"
+  local existing
+  if [[ -n "${was_set}" ]]; then
+    return
+  fi
+  existing="$(existing_env_value "${key}" || true)"
+  if [[ -n "${existing}" ]]; then
+    printf -v "${key}" '%s' "${existing}"
+  fi
 }
 
 require_root() {
@@ -251,6 +277,10 @@ create_env_file() {
       ADMIN_PASSWORD="$(openssl rand -base64 18 | tr -d '\n')"
     fi
   fi
+  preserve_existing_env_value "AI_MODE" "${AI_MODE_WAS_SET}"
+  preserve_existing_env_value "DEEPSEEK_API_KEY" "${DEEPSEEK_API_KEY_WAS_SET}"
+  preserve_existing_env_value "DEEPSEEK_BASE_URL" "${DEEPSEEK_BASE_URL_WAS_SET}"
+  preserve_existing_env_value "DEEPSEEK_MODEL" "${DEEPSEEK_MODEL_WAS_SET}"
   log "Writing ${DEPLOY_DIR}/.env"
   cat >"${DEPLOY_DIR}/.env" <<EOF
 APP_ENV=${APP_ENV}
