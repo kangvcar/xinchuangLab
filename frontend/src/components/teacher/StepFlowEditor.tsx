@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { AlertTriangle, ArrowDown, ArrowUp, ListChecks, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowUp, Info, ListChecks, Plus, Trash2 } from 'lucide-react';
 import type { Step } from '@/types';
 import {
   commandLinesToList,
@@ -16,19 +16,42 @@ interface StepFlowEditorProps {
   onValidationError: (message: string) => void;
 }
 
-type StepTextField = 'title' | 'goal' | 'instructions' | 'success_criteria' | 'success_hint' | 'coach_focus';
+type StepTextField = 'title' | 'goal' | 'instructions' | 'success_criteria' | 'coach_focus';
 
 const BLANK_STEP: Omit<Step, 'id'> = {
   title: '新步骤',
-  hint: '',
   goal: '',
   instructions: '',
   try_commands: [],
   success_criteria: '',
-  success_hint: '',
   coach_focus: '',
   verification: { checks: [] },
 };
+
+const FIELD_HELP: Record<'title' | 'goal' | 'try_commands' | 'instructions' | 'success_criteria' | 'coach_focus', string> = {
+  title: '学生看到的步骤名称，建议用一个动作描述清楚当前任务。',
+  goal: '说明这一步要达成的学习目标或操作结果，帮助学生理解为什么做。',
+  try_commands: '给学生的参考命令，每行一条。系统也会用它辅助识别步骤归属。',
+  instructions: '面向学生的详细操作说明，写清楚操作顺序、注意事项和观察点。',
+  success_criteria: '完成判断标准，描述什么现象代表这一步已经完成。',
+  coach_focus: 'AI 辅导时重点关注的概念、易错点或提示方向。',
+};
+
+function FieldCaption({ label, help }: { label: string; help: string }) {
+  return (
+    <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-neutral-900">
+      {label}
+      <span
+        aria-label={`${label}说明`}
+        title={help}
+        tabIndex={0}
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-neutral-400 hover:text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-900"
+      >
+        <Info size={13} />
+      </span>
+    </span>
+  );
+}
 
 export default function StepFlowEditor({
   stepsText,
@@ -129,6 +152,7 @@ export default function StepFlowEditor({
                 {index + 1}
               </span>
               <div className="min-w-0">
+                <FieldCaption label="标题" help={FIELD_HELP.title} />
                 <input
                   value={step.title ?? ''}
                   onChange={(event) => updateStepField(index, 'title', event.target.value)}
@@ -172,7 +196,7 @@ export default function StepFlowEditor({
 
           <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-neutral-900">目标</span>
+              <FieldCaption label="目标" help={FIELD_HELP.goal} />
               <textarea
                 value={step.goal ?? ''}
                 onChange={(event) => updateStepField(index, 'goal', event.target.value)}
@@ -182,7 +206,7 @@ export default function StepFlowEditor({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-neutral-900">参考命令</span>
+              <FieldCaption label="参考命令" help={FIELD_HELP.try_commands} />
               <textarea
                 value={commandListToLines(step.try_commands)}
                 onChange={(event) => updateCommands(index, event.target.value)}
@@ -193,7 +217,7 @@ export default function StepFlowEditor({
               />
             </label>
             <label className="block lg:col-span-2">
-              <span className="mb-1.5 block text-xs font-semibold text-neutral-900">操作说明</span>
+              <FieldCaption label="操作说明" help={FIELD_HELP.instructions} />
               <textarea
                 value={step.instructions ?? ''}
                 onChange={(event) => updateStepField(index, 'instructions', event.target.value)}
@@ -203,7 +227,7 @@ export default function StepFlowEditor({
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-neutral-900">成功标准</span>
+              <FieldCaption label="成功标准" help={FIELD_HELP.success_criteria} />
               <textarea
                 value={step.success_criteria ?? ''}
                 onChange={(event) => updateStepField(index, 'success_criteria', event.target.value)}
@@ -212,18 +236,8 @@ export default function StepFlowEditor({
                 className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm leading-relaxed text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 disabled:opacity-50"
               />
             </label>
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-neutral-900">成功提示</span>
-              <textarea
-                value={step.success_hint ?? ''}
-                onChange={(event) => updateStepField(index, 'success_hint', event.target.value)}
-                rows={2}
-                disabled={disabled}
-                className="w-full resize-y rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm leading-relaxed text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 disabled:opacity-50"
-              />
-            </label>
             <label className="block lg:col-span-2">
-              <span className="mb-1.5 block text-xs font-semibold text-neutral-900">AI 辅导关注点</span>
+              <FieldCaption label="AI 辅导关注点" help={FIELD_HELP.coach_focus} />
               <textarea
                 value={step.coach_focus ?? ''}
                 onChange={(event) => updateStepField(index, 'coach_focus', event.target.value)}

@@ -7,7 +7,7 @@ from typing import Any
 import httpx
 
 from .config import Settings
-from .experiments import build_experiment_draft_from_text
+from .experiments import build_experiment_draft_from_text, normalize_steps_schema
 
 
 SUPPORTED_IMPORT_EXTENSIONS = {".md", ".txt"}
@@ -47,10 +47,11 @@ async def design_experiment_from_document(
             )
             return {"draft": draft, "source": "deepseek", "warnings": warnings, "raw_output": raw_output}
         except ExperimentDesignError as exc:
+            fallback = ensure_experiment_draft_defaults(build_experiment_draft_from_text(text, filename=filename))
             return {
-                "draft": None,
-                "source": "deepseek",
-                "warnings": [str(exc)],
+                "draft": fallback,
+                "source": "rule_fallback",
+                "warnings": [str(exc), "AI 结果不可用，已回退为本地规则草稿，请检查后保存。"],
                 "raw_output": exc.raw_output,
             }
 
@@ -118,8 +119,7 @@ def _normalize_experiment_draft(
                 "goal": str(raw_step.get("goal") or ""),
                 "instructions": str(raw_step.get("instructions") or ""),
                 "try_commands": _string_list(raw_step.get("try_commands")),
-                "success_criteria": str(raw_step.get("success_criteria") or ""),
-                "success_hint": str(raw_step.get("success_hint") or raw_step.get("success_criteria") or ""),
+                "success_criteria": str(raw_step.get("success_criteria") or raw_step.get("success_hint") or ""),
                 "coach_focus": str(raw_step.get("coach_focus") or ""),
                 "verification": {
                     "mode": str(verification.get("mode") or "all"),
@@ -160,6 +160,7 @@ def ensure_experiment_draft_defaults(
     normalized.setdefault("schema_version", 2)
     normalized.setdefault("status", "draft")
     normalized.setdefault("objective", "")
+    normalized["steps"] = normalize_steps_schema(normalized.get("steps"))
     normalized["image_name"] = normalize_experiment_image_name(
         normalized.get("image_name"),
         experiment_id=experiment_id,
@@ -322,8 +323,8 @@ def _build_prompt(*, text: str, filename: str) -> str:
         "- system: 固定填 \"openEuler\"。\n"
         "- image_name: 实验最终构建出来的 Docker 镜像 tag，必须类似 \"linux-ai-exp:file-basic-v1\"，不能填系统名。\n"
         "- schema_version: 2。\n"
-        "- steps: 数组，每步包含 id, title, goal, instructions, try_commands, success_criteria, "
-        "success_hint, coach_focus, verification。\n"
+        "- steps: 数组，根据实验内容复杂度设计，一般 6-10 步左右；不要固定 6 步，也不要为凑数量拆出空泛步骤。\n"
+        "- steps 每步只包含 id, title, goal, instructions, try_commands, success_criteria, coach_focus, verification。\n"
         "- container_spec: 对象，包含 base_image, packages, pip_packages, npm_packages, student_dirs, student_files。\n"
         "- container_spec 只描述实验依赖，不要生成 Dockerfile；base_image 固定填 "
         f"\"{DEFAULT_BASE_IMAGE}\"。\n"
@@ -356,7 +357,6 @@ def _build_prompt(*, text: str, filename: str) -> str:
         "      \"instructions\": \"在终端执行 pwd。\",\n"
         "      \"try_commands\": [\"pwd\"],\n"
         "      \"success_criteria\": \"终端输出 /home/student。\",\n"
-        "      \"success_hint\": \"输出以 / 开头的绝对路径。\",\n"
         "      \"coach_focus\": \"提醒学生理解当前工作目录。\",\n"
         "      \"verification\": {\"mode\": \"all\", \"checks\": [{\"type\": \"command_match\", \"commands\": [\"pwd\"]}]}\n"
         "    }\n"

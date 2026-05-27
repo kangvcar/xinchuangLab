@@ -1,11 +1,12 @@
 import { Copy, FilePlus2, Search, Trash2 } from 'lucide-react';
 import type { Experiment } from '@/types';
-import type { StatusFilter } from '@/pages/teacherExperimentDraft';
+import type { ExperimentSortMode, StatusFilter } from '@/pages/teacherExperimentDraft';
 import {
   experimentStepCount,
   matchesExperimentSearch,
   matchesStatusFilter,
   normalizeExperimentStatus,
+  sortExperiments,
   statusBadgeClass,
   statusLabel,
 } from '@/pages/teacherExperimentDraft';
@@ -15,8 +16,10 @@ interface ExperimentSidebarProps {
   selectedExperimentId: string;
   searchQuery: string;
   statusFilter: StatusFilter;
+  sortMode: ExperimentSortMode;
   onSearchChange: (value: string) => void;
   onStatusFilterChange: (value: StatusFilter) => void;
+  onSortModeChange: (value: ExperimentSortMode) => void;
   onSelect: (experimentId: string) => void;
   onCreateBlank: () => void;
   onCopySelected: () => void;
@@ -30,7 +33,13 @@ const FILTERS: Array<{ value: StatusFilter; label: string }> = [
   { value: 'all', label: '全部' },
   { value: 'draft', label: '草稿' },
   { value: 'published', label: '已发布' },
-  { value: 'inactive', label: '已删除' },
+];
+
+const SORT_OPTIONS: Array<{ value: ExperimentSortMode; label: string }> = [
+  { value: 'name', label: '按名称' },
+  { value: 'id', label: '按ID' },
+  { value: 'status', label: '按状态' },
+  { value: 'steps', label: '按步骤数' },
 ];
 
 export default function ExperimentSidebar({
@@ -38,8 +47,10 @@ export default function ExperimentSidebar({
   selectedExperimentId,
   searchQuery,
   statusFilter,
+  sortMode,
   onSearchChange,
   onStatusFilterChange,
+  onSortModeChange,
   onSelect,
   onCreateBlank,
   onCopySelected,
@@ -48,8 +59,11 @@ export default function ExperimentSidebar({
   canDeactivateSelected,
   disabled = false,
 }: ExperimentSidebarProps) {
-  const visibleExperiments = experiments.filter(
-    (experiment) => matchesExperimentSearch(experiment, searchQuery) && matchesStatusFilter(experiment, statusFilter)
+  const visibleExperiments = sortExperiments(
+    experiments.filter(
+      (experiment) => matchesExperimentSearch(experiment, searchQuery) && matchesStatusFilter(experiment, statusFilter)
+    ),
+    sortMode
   );
 
   return (
@@ -68,7 +82,7 @@ export default function ExperimentSidebar({
             className="w-full h-9 pl-8 pr-3 rounded-md border border-neutral-200 bg-white text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900"
           />
         </label>
-        <div className="grid grid-cols-4 gap-1 mt-3">
+        <div className="grid grid-cols-3 gap-1 mt-3">
           {FILTERS.map((item) => (
             <button
               key={item.value}
@@ -84,6 +98,18 @@ export default function ExperimentSidebar({
             </button>
           ))}
         </div>
+        <label className="mt-3 flex items-center gap-2">
+          <span className="shrink-0 text-xs font-semibold text-neutral-900">排序</span>
+          <select
+            value={sortMode}
+            onChange={(event) => onSortModeChange(event.target.value as ExperimentSortMode)}
+            className="h-8 min-w-0 flex-1 rounded-md border border-neutral-200 bg-white px-2 text-xs font-medium text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900"
+          >
+            {SORT_OPTIONS.map((item) => (
+              <option key={item.value} value={item.value}>{item.label}</option>
+            ))}
+          </select>
+        </label>
         <div className="grid grid-cols-3 gap-2 mt-3">
           <button
             type="button"

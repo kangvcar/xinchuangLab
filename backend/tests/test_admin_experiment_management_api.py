@@ -90,6 +90,21 @@ def test_admin_delete_unknown_experiment_returns_404(
     assert exc_info.value.status_code == 404
 
 
+def test_admin_experiment_list_excludes_deleted_by_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db = prepare_database(tmp_path)
+    upsert_experiment(db, "draft-lab", "draft")
+    upsert_experiment(db, "published-lab", "published")
+    upsert_experiment(db, "deleted-lab", "inactive")
+    monkeypatch.setattr(main, "db", db)
+
+    result = asyncio.run(main.admin_list_experiments(_admin=None))
+
+    assert [item["id"] for item in result] == ["draft-lab", "published-lab"]
+
+
 def test_public_experiment_list_excludes_drafts_and_inactive(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

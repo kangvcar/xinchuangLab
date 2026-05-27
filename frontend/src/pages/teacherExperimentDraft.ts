@@ -1,4 +1,4 @@
-import type { ContainerSpec, Experiment, ExperimentStatus, Step, TaskConfig } from '@/types';
+import type { Check, ContainerSpec, Experiment, ExperimentStatus, Step, TaskConfig, Verification } from '@/types';
 
 export interface AdminDraft {
   experiment_id: string;
@@ -21,7 +21,8 @@ export interface ValidationResult {
   warnings: string[];
 }
 
-export type StatusFilter = 'all' | 'draft' | 'published' | 'inactive';
+export type StatusFilter = 'all' | 'draft' | 'published';
+export type ExperimentSortMode = 'name' | 'id' | 'status' | 'steps';
 
 export function defaultContainerSpec(): ContainerSpec {
   return {
@@ -75,7 +76,7 @@ export function createSnapshotFromExperiment(experiment: Experiment): EditorSnap
       status: normalizeExperimentStatus(experiment.status),
       schema_version: config.schema_version ?? 2,
     },
-    stepsText: JSON.stringify(config.steps ?? [], null, 2),
+    stepsText: JSON.stringify(normalizeStepsForEditor(config.steps ?? []), null, 2),
     containerSpecText: JSON.stringify(config.container_spec ?? defaultContainerSpec(), null, 2),
   };
 }
@@ -118,22 +119,123 @@ export function editorSnapshotKey(snapshot: EditorSnapshot | null): string {
 export function buildSavePayload(snapshot: EditorSnapshot): Record<string, unknown> {
   return {
     ...snapshot.draft,
-    steps: JSON.parse(snapshot.stepsText || '[]'),
+    steps: normalizeStepsForEditor(JSON.parse(snapshot.stepsText || '[]')),
     container_spec: JSON.parse(snapshot.containerSpecText || '{}'),
   };
 }
 
 export function parseStepsText(stepsText: string): Step[] {
   const parsed = JSON.parse(stepsText || '[]');
-  return Array.isArray(parsed) ? (parsed as Step[]) : [];
+  return normalizeStepsForEditor(parsed);
 }
 
 export function serializeSteps(steps: Step[]): string {
-  return JSON.stringify(renumberSteps(steps), null, 2);
+  return JSON.stringify(normalizeStepsForEditor(steps), null, 2);
 }
 
 export function renumberSteps(steps: Step[]): Step[] {
-  return steps.map((step, index) => ({ ...step, id: index + 1 }));
+  return normalizeStepsForEditor(steps);
+}
+
+export function normalizeStepsForEditor(value: unknown): Step[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(isRecord)
+    .map((step, index) => normalizeStepForEditor(step, index));
+}
+
+function normalizeStepForEditor(raw: Record<string, unknown>, index: number): Step {
+  const tryCommands = stringList(raw.try_commands);
+  return {
+    id: index + 1,
+    title: stringValue(raw.title, `步骤${index + 1}`),
+    goal: stringValue(raw.goal),
+    instructions: stringValue(raw.instructions || raw.hint),
+    try_commands: tryCommands,
+    success_criteria: stringValue(raw.success_criteria || raw.success_hint),
+    coach_focus: stringValue(raw.coach_focus),
+    verification: normalizeVerification(raw.verification, raw.verify, tryCommands),
+  };
+}
+
+function normalizeVerification(verification: unknown, legacyVerify: unknown, tryCommands: string[]): Verification {
+  if (isRecord(verification)) {
+    const rawChecks = Array.isArray(verification.checks) ? verification.checks : [];
+    const checks = rawChecks.filter(isRecord).map(normalizeCheck).filter(isUsefulCheck);
+    return {
+      mode: stringValue(verification.mode, 'all'),
+      checks: checks.length ? checks : defaultCommandChecks(tryCommands),
+    };
+  }
+  if (isRecord(legacyVerify)) {
+    const checks = [];
+    const sequence = stringList(legacyVerify.sequence);
+    const commands = stringList(legacyVerify.commands);
+    if (sequence.length) checks.push({ type: 'command_sequence', sequence });
+    if (commands.length) checks.push({ type: 'command_match', commands });
+    return { mode: 'all', checks: checks.length ? checks : defaultCommandChecks(tryCommands) };
+  }
+  return { mode: 'all', checks: defaultCommandChecks(tryCommands) };
+}
+
+function normalizeCheck(raw: Record<string, unknown>): Check {
+  const type = stringValue(raw.type);
+  if (type === 'command_match') {
+    const check: Check = {
+      type,
+      commands: stringList(raw.commands || raw.command),
+    };
+    if ('require_success' in raw) check.require_success = Boolean(raw.require_success);
+    return check;
+  }
+  if (type === 'command_sequence') return { type, sequence: stringList(raw.sequence) };
+  if (type === 'path_exists') {
+    const check: Check = { type, path: stringValue(raw.path) };
+    if (raw.path_type) check.path_type = stringValue(raw.path_type);
+    return check;
+  }
+  if (type === 'path_absent') return { type, path: stringValue(raw.path) };
+  if (type === 'exec_exit_code') {
+    return { type, command: stringValue(raw.command), exit_code: Number(raw.exit_code ?? 0) || 0 };
+  }
+  if (type === 'exec_output_contains') {
+    return { type, command: stringValue(raw.command), contains: stringList(raw.contains) };
+  }
+  if (type === 'file_contains') {
+    return { type, path: stringValue(raw.path), text: stringValue(raw.text) };
+  }
+  return { type };
+}
+
+function isUsefulCheck(check: Check): boolean {
+  if (check.type === 'command_match') return Boolean(check.commands?.length);
+  if (check.type === 'command_sequence') return Boolean(check.sequence?.length);
+  if (check.type === 'path_exists' || check.type === 'path_absent') return Boolean(check.path);
+  if (check.type === 'exec_exit_code') return Boolean(check.command);
+  if (check.type === 'exec_output_contains') return Boolean(check.command && check.contains?.length);
+  if (check.type === 'file_contains') return Boolean(check.path && check.text);
+  return false;
+}
+
+function defaultCommandChecks(tryCommands: string[]): Check[] {
+  return tryCommands.length ? [{ type: 'command_match', commands: tryCommands }] : [];
+}
+
+function stringList(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    const text = stringValue(value);
+    return text ? [text] : [];
+  }
+  return value.map((item) => stringValue(item)).filter(Boolean);
+}
+
+function stringValue(value: unknown, fallback = ''): string {
+  if (value === undefined || value === null) return fallback;
+  return String(value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 export function commandLinesToList(value: string): string[] {
@@ -191,7 +293,7 @@ export function validateSnapshot(snapshot: EditorSnapshot, mode: 'save' | 'publi
       seenStepIds.add(step.id);
     }
     if (!String(step.title ?? '').trim()) errors.push(`${label} 缺少标题。`);
-    if (!String(step.goal ?? step.instructions ?? step.success_criteria ?? '').trim()) {
+    if (!String(step.goal || step.instructions || step.success_criteria || '').trim()) {
       warnings.push(`${label} 建议补充目标、操作说明或成功标准。`);
     }
   });
@@ -215,6 +317,28 @@ export function matchesExperimentSearch(experiment: Experiment, query: string): 
 export function matchesStatusFilter(experiment: Experiment, filter: StatusFilter): boolean {
   if (filter === 'all') return true;
   return normalizeExperimentStatus(experiment.status) === filter;
+}
+
+export function sortExperiments(experiments: Experiment[], sortMode: ExperimentSortMode): Experiment[] {
+  return [...experiments].sort((a, b) => {
+    if (sortMode === 'steps') {
+      return experimentStepCount(b) - experimentStepCount(a) || a.name.localeCompare(b.name, 'zh-Hans-CN');
+    }
+    if (sortMode === 'status') {
+      return statusRank(a.status) - statusRank(b.status) || a.name.localeCompare(b.name, 'zh-Hans-CN');
+    }
+    if (sortMode === 'id') {
+      return a.id.localeCompare(b.id, 'en');
+    }
+    return a.name.localeCompare(b.name, 'zh-Hans-CN') || a.id.localeCompare(b.id, 'en');
+  });
+}
+
+function statusRank(status: string | undefined): number {
+  const normalized = normalizeExperimentStatus(status);
+  if (normalized === 'draft') return 0;
+  if (normalized === 'published') return 1;
+  return 2;
 }
 
 function uniqueExperimentId(base: string, existingIds: Set<string>): string {

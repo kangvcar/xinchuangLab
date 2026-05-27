@@ -32,17 +32,18 @@ class VerificationService:
         if verification:
             checks_config = verification.get("checks", [])
             if checks_config and self._needs_docker(checks_config) and not await self._docker_available():
-                passed = self.legacy_verifier.verify(step, command_event, terminal_logs, command_events)
+                passed, fallback_checks = self._verify_local_fallback(
+                    step,
+                    checks_config,
+                    command_event,
+                    terminal_logs,
+                    command_events,
+                    verification.get("mode", "all"),
+                )
                 return {
                     "passed": passed,
-                    "mode": "legacy-fallback",
-                    "checks": [
-                        {
-                            "type": "legacy-fallback",
-                            "passed": passed,
-                            "detail": "docker unavailable; fallback to legacy verify/keywords rule",
-                        }
-                    ],
+                    "mode": "local-fallback",
+                    "checks": fallback_checks,
                 }
             checks = []
             for check in checks_config:
@@ -63,6 +64,67 @@ class VerificationService:
                 }
             ],
         }
+
+    def _verify_local_fallback(
+        self,
+        step: dict[str, Any],
+        checks_config: list[dict[str, Any]],
+        command_event: CommandEvent,
+        terminal_logs: list[str],
+        command_events: list[CommandEvent],
+        mode: str,
+    ) -> tuple[bool, list[dict[str, Any]]]:
+        checks = [
+            self._run_local_check(check, command_event, command_events)
+            for check in checks_config
+            if check.get("type") in {"command_match", "command_sequence"}
+        ]
+        if checks:
+            passed = any(item["passed"] for item in checks) if mode == "any" else all(item["passed"] for item in checks)
+            checks.append(
+                {
+                    "type": "docker-skipped",
+                    "passed": passed,
+                    "detail": "docker unavailable; used local command checks",
+                }
+            )
+            return passed, checks
+
+        passed = self.legacy_verifier.verify(step, command_event, terminal_logs, command_events)
+        return passed, [
+            {
+                "type": "legacy-fallback",
+                "passed": passed,
+                "detail": "docker unavailable; fallback to legacy verify/keywords rule",
+            }
+        ]
+
+    def _run_local_check(
+        self,
+        check: dict[str, Any],
+        command_event: CommandEvent,
+        command_events: list[CommandEvent],
+    ) -> dict[str, Any]:
+        check_type = check.get("type", "")
+        if check_type == "command_match":
+            commands = _as_list(check.get("commands") or check.get("command"))
+            passed = bool(commands) and any(
+                self.legacy_verifier._command_matches(command_event.command, expected) for expected in commands
+            )
+            if check.get("require_success", True) and command_event.exit_code not in (None, 0):
+                passed = False
+            return {
+                "type": check_type,
+                "passed": passed,
+                "detail": f"command={command_event.command!r}, expected={commands}",
+            }
+
+        if check_type == "command_sequence":
+            sequence = _as_list(check.get("sequence"))
+            passed = self.legacy_verifier._verify_sequence(sequence, command_events)
+            return {"type": check_type, "passed": passed, "detail": f"sequence={sequence}"}
+
+        return {"type": check_type or "unknown", "passed": False, "detail": "not available in local fallback"}
 
     @classmethod
     def _needs_docker(cls, checks: list[dict[str, Any]]) -> bool:

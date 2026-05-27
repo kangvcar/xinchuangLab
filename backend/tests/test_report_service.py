@@ -12,24 +12,21 @@ STEPS = [
         "title": "查看当前目录",
         "goal": "确认当前工作目录。",
         "try_commands": ["pwd"],
-        "success_hint": "输出 /home/student。",
-        "keywords": ["pwd"],
+        "success_criteria": "输出 /home/student。",
     },
     {
         "id": 2,
         "title": "创建实验目录",
         "goal": "创建 linux_lab 目录。",
         "try_commands": ["mkdir linux_lab"],
-        "success_hint": "ls 能看到 linux_lab。",
-        "keywords": ["mkdir", "linux_lab"],
+        "success_criteria": "ls 能看到 linux_lab。",
     },
     {
         "id": 3,
         "title": "创建实验文件",
         "goal": "创建 hello.txt 文件。",
         "try_commands": ["touch hello.txt"],
-        "success_hint": "ls -l hello.txt 能看到文件。",
-        "keywords": ["touch", "hello.txt"],
+        "success_criteria": "ls -l hello.txt 能看到文件。",
     },
 ]
 

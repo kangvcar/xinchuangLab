@@ -66,7 +66,7 @@ export default function TaskPanel({
 
             {/* Goal */}
             <p className="text-neutral-600 leading-relaxed text-sm">
-              {displayedStep.goal ?? displayedStep.hint}
+              {displayedStep.goal || displayedStep.instructions}
             </p>
 
             {/* Try Commands */}
@@ -86,14 +86,14 @@ export default function TaskPanel({
               </div>
             )}
 
-            {/* Success Hint */}
+            {/* Success Criteria */}
             <div className="mt-3 rounded-md p-3 bg-neutral-50 border border-neutral-200 space-y-2">
               <strong className="text-neutral-900 text-xs font-semibold flex items-center gap-1.5">
                 <CheckCircle size={13} className="text-green-600" />
                 完成判断
               </strong>
               <span className="text-neutral-600 text-sm leading-relaxed">
-                {displayedStep.success_hint ?? displayedStep.hint}
+                {displayedStep.success_criteria || '按步骤目标完成操作。'}
               </span>
             </div>
 

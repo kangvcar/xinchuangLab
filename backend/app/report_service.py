@@ -113,13 +113,12 @@ class ReportService:
                 {
                     "id": step_id,
                     "title": step.get("title", f"步骤{step_id}"),
-                    "goal": step.get("goal") or step.get("success_criteria") or step.get("hint") or "",
+                    "goal": step.get("goal") or step.get("success_criteria") or "",
                     "status": status,
                     "status_label": STATUS_LABELS.get(status, status),
                     "completed_at": item.get("confirmed_at") or item.get("detected_at") or "",
                     "try_commands": step.get("try_commands", []),
-                    "success_hint": step.get("success_hint", ""),
-                    "keywords": step.get("keywords", []),
+                    "success_criteria": step.get("success_criteria", ""),
                 }
             )
         return rows
@@ -257,7 +256,7 @@ class ReportService:
         ] or ["本次报告暂未检测到已完成步骤，建议先完成当前进行中的实验任务。"]
 
         needs_practice = [
-            f"“{item['title']}”仍需巩固：{item['goal'] or item['success_hint'] or '请按实验提示完成该步骤。'}"
+            f"“{item['title']}”仍需巩固：{item['goal'] or item['success_criteria'] or '请按实验提示完成该步骤。'}"
             for item in unfinished
         ] or ["本次实验步骤完成情况较好，可继续练习更综合的 Linux 操作任务。"]
 

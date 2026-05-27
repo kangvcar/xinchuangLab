@@ -24,7 +24,7 @@ from .experiment_designer import (
     design_experiment_from_document,
     ensure_experiment_draft_defaults,
 )
-from .experiments import import_steps_from_text, sync_experiments
+from .experiments import import_steps_from_text, normalize_steps_schema, sync_experiments
 from .knowledge import KnowledgeBase
 from .log_processor import ERROR_RE, CommandEvent, LogProcessor
 from .report_service import ReportService
@@ -62,6 +62,14 @@ settings.reports_dir.mkdir(parents=True, exist_ok=True)
 settings.raw_logs_dir.mkdir(parents=True, exist_ok=True)
 settings.builds_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/reports-static", StaticFiles(directory=settings.reports_dir), name="reports-static")
+
+
+def _normalize_experiment_response(experiment: dict[str, Any]) -> dict[str, Any]:
+    item = dict(experiment)
+    task_config = dict(item.get("task_config") or {})
+    task_config["steps"] = normalize_steps_schema(task_config.get("steps"))
+    item["task_config"] = task_config
+    return item
 
 
 def require_admin_password(x_admin_password: str | None = Header(default=None)) -> None:
@@ -102,12 +110,12 @@ async def health() -> dict[str, Any]:
 
 @app.get("/api/experiments")
 async def list_experiments() -> list[dict[str, Any]]:
-    return db.list_experiments(active_only=True)
+    return [_normalize_experiment_response(item) for item in db.list_experiments(active_only=True)]
 
 
 @app.get("/api/admin/experiments")
 async def admin_list_experiments(_admin: None = Depends(require_admin_password)) -> list[dict[str, Any]]:
-    return db.list_experiments()
+    return [_normalize_experiment_response(item) for item in db.list_experiments() if item.get("status") != "inactive"]
 
 
 @app.post("/api/admin/auth")
@@ -180,7 +188,7 @@ async def admin_update_steps(
     steps = payload.get("steps")
     if not isinstance(steps, list):
         raise HTTPException(status_code=400, detail="steps must be a list")
-    task_config["steps"] = steps
+    task_config["steps"] = normalize_steps_schema(steps)
     task_config["schema_version"] = 2
     db.upsert_experiment(task_config)
     saved = db.get_experiment(experiment_id)
@@ -398,10 +406,8 @@ async def get_steps(session_id: str) -> dict[str, Any]:
             {
                 "id": s["id"],
                 "title": s.get("title", ""),
-                "hint": s.get("hint", ""),
                 "goal": s.get("goal", ""),
                 "try_commands": s.get("try_commands", []),
-                "success_hint": s.get("success_hint", ""),
                 "coach_focus": s.get("coach_focus", ""),
             }
             for s in steps

@@ -8,6 +8,36 @@ from typing import Any
 from .database import Database
 
 
+def normalize_steps_schema(steps: Any) -> list[dict[str, Any]]:
+    """Return steps using the v2 editable schema, dropping legacy duplicate fields."""
+    if not isinstance(steps, list):
+        return []
+
+    normalized: list[dict[str, Any]] = []
+    for index, raw_step in enumerate(steps, start=1):
+        if not isinstance(raw_step, dict):
+            continue
+        try_commands = _string_list(raw_step.get("try_commands"))
+        legacy_hint = str(raw_step.get("hint") or "").strip()
+        normalized.append(
+            {
+                "id": len(normalized) + 1,
+                "title": str(raw_step.get("title") or f"步骤{index}"),
+                "goal": str(raw_step.get("goal") or ""),
+                "instructions": str(raw_step.get("instructions") or legacy_hint),
+                "try_commands": try_commands,
+                "success_criteria": str(raw_step.get("success_criteria") or raw_step.get("success_hint") or ""),
+                "coach_focus": str(raw_step.get("coach_focus") or ""),
+                "verification": _normalize_verification(
+                    raw_step.get("verification"),
+                    raw_step.get("verify"),
+                    try_commands,
+                ),
+            }
+        )
+    return normalized
+
+
 def load_experiment_files(experiments_dir: Path) -> list[dict[str, Any]]:
     configs: list[dict[str, Any]] = []
     if not experiments_dir.exists():
@@ -22,6 +52,9 @@ def load_experiment_files(experiments_dir: Path) -> list[dict[str, Any]]:
 
 def sync_experiments(db: Database, experiments_dir: Path) -> None:
     for config in load_experiment_files(experiments_dir):
+        config = dict(config)
+        config["steps"] = normalize_steps_schema(config.get("steps"))
+        config.setdefault("schema_version", 2)
         db.upsert_experiment(config)
 
 
@@ -55,7 +88,6 @@ def import_steps_from_text(text: str) -> list[dict[str, Any]]:
             "instructions": "",
             "try_commands": [],
             "success_criteria": "",
-            "success_hint": "",
             "coach_focus": "",
             "verification": {"mode": "all", "checks": []},
         }
@@ -88,7 +120,6 @@ def import_steps_from_text(text: str) -> list[dict[str, Any]]:
             continue
         if any(key in stripped for key in ("完成条件", "成功标准", "验收", "判断")):
             current["success_criteria"] = _after_colon(stripped)
-            current["success_hint"] = current["success_criteria"]
         elif any(key in stripped for key in ("命令", "输入", "执行")) and "`" in stripped:
             current["try_commands"].extend(re.findall(r"`([^`]+)`", stripped))
             current["instructions"] = _append_text(current["instructions"], stripped)
@@ -105,11 +136,10 @@ def import_steps_from_text(text: str) -> list[dict[str, Any]]:
     for step in steps:
         step["try_commands"] = list(dict.fromkeys(step.get("try_commands", [])))
         if not step["success_criteria"]:
-            step["success_criteria"] = step.get("success_hint") or "教师需补充完成判断。"
-            step["success_hint"] = step["success_criteria"]
+            step["success_criteria"] = "教师需补充完成判断。"
         if step["try_commands"]:
             step["verification"]["checks"].append({"type": "command_match", "commands": step["try_commands"]})
-    return steps
+    return normalize_steps_schema(steps)
 
 
 def build_experiment_draft_from_text(
@@ -146,6 +176,99 @@ def _after_colon(text: str) -> str:
 
 def _append_text(existing: str, text: str) -> str:
     return f"{existing}\n{text}".strip() if existing else text
+
+
+def _normalize_verification(
+    verification: Any,
+    legacy_verify: Any,
+    try_commands: list[str],
+) -> dict[str, Any]:
+    mode = "all"
+    checks: list[dict[str, Any]] = []
+
+    if isinstance(verification, dict):
+        mode = str(verification.get("mode") or "all")
+        raw_checks = verification.get("checks")
+        if isinstance(raw_checks, list):
+            checks = [_normalize_check(check) for check in raw_checks if isinstance(check, dict)]
+            checks = [check for check in checks if _is_useful_check(check)]
+    elif isinstance(legacy_verify, dict):
+        sequence = _string_list(legacy_verify.get("sequence"))
+        commands = _string_list(legacy_verify.get("commands"))
+        if sequence:
+            checks.append({"type": "command_sequence", "sequence": sequence})
+        if commands:
+            checks.append({"type": "command_match", "commands": commands})
+
+    if not checks and try_commands:
+        checks.append({"type": "command_match", "commands": try_commands})
+    return {"mode": mode, "checks": checks}
+
+
+def _normalize_check(check: dict[str, Any]) -> dict[str, Any]:
+    check_type = str(check.get("type") or "").strip()
+    if check_type == "command_match":
+        result: dict[str, Any] = {"type": check_type, "commands": _string_list(check.get("commands") or check.get("command"))}
+        if "require_success" in check:
+            result["require_success"] = bool(check.get("require_success"))
+        return result
+    if check_type == "command_sequence":
+        return {"type": check_type, "sequence": _string_list(check.get("sequence"))}
+    if check_type == "path_exists":
+        result = {"type": check_type, "path": str(check.get("path") or "")}
+        if check.get("path_type"):
+            result["path_type"] = str(check.get("path_type"))
+        return result
+    if check_type == "path_absent":
+        return {"type": check_type, "path": str(check.get("path") or "")}
+    if check_type == "file_contains":
+        return {"type": check_type, "path": str(check.get("path") or ""), "text": str(check.get("text") or "")}
+    if check_type == "exec_exit_code":
+        return {
+            "type": check_type,
+            "command": str(check.get("command") or ""),
+            "exit_code": _int_or_default(check.get("exit_code"), 0),
+        }
+    if check_type == "exec_output_contains":
+        return {
+            "type": check_type,
+            "command": str(check.get("command") or ""),
+            "contains": _string_list(check.get("contains")),
+        }
+    return {"type": check_type}
+
+
+def _is_useful_check(check: dict[str, Any]) -> bool:
+    check_type = check.get("type")
+    if check_type == "command_match":
+        return bool(check.get("commands"))
+    if check_type == "command_sequence":
+        return bool(check.get("sequence"))
+    if check_type in {"path_exists", "path_absent"}:
+        return bool(check.get("path"))
+    if check_type == "file_contains":
+        return bool(check.get("path") and check.get("text"))
+    if check_type == "exec_exit_code":
+        return bool(check.get("command"))
+    if check_type == "exec_output_contains":
+        return bool(check.get("command") and check.get("contains"))
+    return False
+
+
+def _string_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value).strip()
+    return [text] if text else []
+
+
+def _int_or_default(value: Any, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def _step_source(text: str) -> str:

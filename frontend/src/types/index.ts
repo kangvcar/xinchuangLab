@@ -21,24 +21,30 @@ export interface TaskConfig {
 export interface Step {
   id: number;
   title: string;
-  hint: string;
   goal?: string;
   instructions?: string;
   try_commands?: string[];
   success_criteria?: string;
-  success_hint?: string;
   coach_focus?: string;
   verification?: Verification;
 }
 
 export interface Verification {
+  mode?: 'all' | 'any' | string;
   checks?: Check[];
 }
 
 export interface Check {
   type: string;
   command?: string;
+  commands?: string[];
+  sequence?: string[];
   path?: string;
+  path_type?: string;
+  text?: string;
+  contains?: string[];
+  exit_code?: number;
+  require_success?: boolean;
   content?: string;
   expected?: string | number | boolean;
 }

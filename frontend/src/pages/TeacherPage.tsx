@@ -30,6 +30,7 @@ import {
   statusLabel,
   validateSnapshot,
   type AdminDraft,
+  type ExperimentSortMode,
   type EditorSnapshot,
   type StatusFilter,
 } from './teacherExperimentDraft';
@@ -40,6 +41,7 @@ export default function TeacherPage() {
   const [selectedExperimentId, setSelectedExperimentId] = useState<string>('file-basic');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [sortMode, setSortMode] = useState<ExperimentSortMode>('name');
   const [adminDraft, setAdminDraft] = useState<AdminDraft | null>(null);
   const [adminStepsText, setAdminStepsText] = useState('');
   const [adminContainerSpecText, setAdminContainerSpecText] = useState('');
@@ -92,11 +94,13 @@ export default function TeacherPage() {
   const refreshAdminExperiments = useCallback(async (preferredId?: string) => {
     const data = await api.loadAdminExperiments();
     setExperiments(data);
-    const nextSelectedId = preferredId || selectedExperimentId;
+    const preferredExists = Boolean(preferredId && data.find((item) => item.id === preferredId));
+    const nextSelectedId = preferredExists ? preferredId : selectedExperimentId;
     if (data.length && !data.find((item) => item.id === nextSelectedId)) {
       setSelectedExperimentId(data[0].id);
+    } else if (preferredExists && preferredId) {
+      setSelectedExperimentId(preferredId);
     }
-    if (preferredId) setSelectedExperimentId(preferredId);
     return data;
   }, [api, selectedExperimentId]);
 
@@ -256,11 +260,7 @@ export default function TeacherPage() {
     setAdminStatus('正在删除实验');
     try {
       await api.deleteExperiment(selectedExperiment.id);
-      const data = await refreshAdminExperiments(selectedExperiment.id);
-      const refreshed = data.find((item) => item.id === selectedExperiment.id);
-      if (refreshed) {
-        applySnapshot(createSnapshotFromExperiment(refreshed));
-      }
+      await refreshAdminExperiments();
       setAdminStatus('实验已删除');
     } catch (error) {
       setAdminStatus(error instanceof Error ? error.message : '删除实验失败');
@@ -395,8 +395,10 @@ export default function TeacherPage() {
           selectedExperimentId={selectedExperimentId}
           searchQuery={searchQuery}
           statusFilter={statusFilter}
+          sortMode={sortMode}
           onSearchChange={setSearchQuery}
           onStatusFilterChange={setStatusFilter}
+          onSortModeChange={setSortMode}
           onSelect={selectExperiment}
           onCreateBlank={createBlankExperiment}
           onCopySelected={copySelectedExperiment}
@@ -463,7 +465,6 @@ export default function TeacherPage() {
                   >
                     <option value="draft">草稿</option>
                     <option value="published">已发布</option>
-                    <option value="inactive">已删除</option>
                   </select>
                 </Field.Root>
               </div>

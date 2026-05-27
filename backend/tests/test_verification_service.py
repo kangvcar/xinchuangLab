@@ -92,6 +92,39 @@ def test_path_exists_uses_docker_exec(monkeypatch):
     ) in calls
 
 
+def test_docker_unavailable_falls_back_to_new_command_checks(monkeypatch):
+    docker = manager()
+
+    async def run_docker(*_args: str):
+        return 1, "", "docker unavailable"
+
+    monkeypatch.setattr(docker, "_run_docker", run_docker)
+    service = VerificationService(docker)
+    session = {"container_name": "linux-ai-test"}
+    step = {
+        "verification": {
+            "mode": "all",
+            "checks": [
+                {"type": "command_match", "commands": ["mkdir linux_lab"]},
+                {"type": "path_exists", "path": "linux_lab", "path_type": "dir"},
+            ],
+        }
+    }
+
+    result = asyncio.run(
+        service.verify_step(
+            session=session,
+            step=step,
+            command_event=event("mkdir linux_lab"),
+            terminal_logs=[],
+            command_events=[event("mkdir linux_lab")],
+        )
+    )
+
+    assert result["passed"] is True
+    assert result["mode"] == "local-fallback"
+
+
 def test_path_absent_failure_marks_step_unfinished(monkeypatch):
     docker = manager()
 

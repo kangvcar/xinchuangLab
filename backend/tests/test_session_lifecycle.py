@@ -11,8 +11,22 @@ from app.docker_manager import RuntimeInfo
 
 
 STEPS = [
-    {"id": 1, "title": "查看当前目录", "verify": {"commands": ["pwd"]}},
-    {"id": 2, "title": "查看目录内容", "verify": {"commands": ["ls"]}},
+    {
+        "id": 1,
+        "title": "查看当前目录",
+        "goal": "确认当前工作目录。",
+        "try_commands": ["pwd"],
+        "success_criteria": "输出当前路径。",
+        "verification": {"mode": "all", "checks": [{"type": "command_match", "commands": ["pwd"]}]},
+    },
+    {
+        "id": 2,
+        "title": "查看目录内容",
+        "goal": "查看当前目录内容。",
+        "try_commands": ["ls"],
+        "success_criteria": "列出目录内容。",
+        "verification": {"mode": "all", "checks": [{"type": "command_match", "commands": ["ls"]}]},
+    },
 ]
 
 
