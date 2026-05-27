@@ -364,7 +364,7 @@ EOF
 
 prepare_experiment_image_contexts() {
   log "Preparing experiment image contexts"
-  DEPLOY_DIR="${DEPLOY_DIR}" IMAGE_CONTEXT_DIR="${IMAGE_CONTEXT_DIR}" "${DEPLOY_DIR}/backend/venv/bin/python" - <<'PY'
+  DEPLOY_DIR="${DEPLOY_DIR}" IMAGE_CONTEXT_DIR="${IMAGE_CONTEXT_DIR}" PYTHONPATH="${DEPLOY_DIR}/backend" "${DEPLOY_DIR}/backend/venv/bin/python" - <<'PY'
 import json
 import os
 import shutil
