@@ -46,6 +46,7 @@ FORCE_REBUILD_IMAGES="${FORCE_REBUILD_IMAGES:-0}"
 SKIP_SYSTEM="${SKIP_SYSTEM:-0}"
 SKIP_IMAGE_BUILD="${SKIP_IMAGE_BUILD:-0}"
 SKIP_APP_BUILD="${SKIP_APP_BUILD:-0}"
+SKIP_BACKEND_DEPS="${SKIP_BACKEND_DEPS:-0}"
 ORIGINAL_ARGS=("$@")
 
 usage() {
@@ -54,7 +55,8 @@ Usage: sudo -E bash scripts/deploy-aliyun-ubuntu24.sh [options]
 
 Options:
   --skip-system        Skip apt/Docker/Nginx/Node installation.
-  --skip-app-build     Skip frontend/backend dependency installation and frontend build.
+  --skip-app-build     Skip both backend pip install and frontend npm build.
+  --skip-backend-deps  Skip backend pip install only; frontend is still rebuilt.
   --skip-image-build   Skip experiment Docker image builds.
   --force-images       Rebuild experiment images even if tags already exist.
   -h, --help           Show this help.
@@ -73,6 +75,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-system) SKIP_SYSTEM=1 ;;
     --skip-app-build) SKIP_APP_BUILD=1 ;;
+    --skip-backend-deps) SKIP_BACKEND_DEPS=1 ;;
     --skip-image-build) SKIP_IMAGE_BUILD=1 ;;
     --force-images) FORCE_REBUILD_IMAGES=1 ;;
     -h|--help) usage; exit 0 ;;
@@ -303,18 +306,25 @@ EOF
   chown "${SERVICE_USER}:${SERVICE_USER}" "${DEPLOY_DIR}/.env"
 }
 
-build_application() {
+build_backend_deps() {
   log "Installing backend dependencies from ${PIP_INDEX_URL}"
   python3 -m venv "${DEPLOY_DIR}/backend/venv"
   "${DEPLOY_DIR}/backend/venv/bin/python" -m pip install --upgrade pip -i "${PIP_INDEX_URL}" --trusted-host "$(echo "${PIP_INDEX_URL}" | awk -F/ '{print $3}')"
   "${DEPLOY_DIR}/backend/venv/bin/python" -m pip install -r "${DEPLOY_DIR}/backend/requirements.txt" -i "${PIP_INDEX_URL}" --trusted-host "$(echo "${PIP_INDEX_URL}" | awk -F/ '{print $3}')"
+}
 
+build_frontend() {
   log "Building frontend with npm registry ${NPM_REGISTRY}"
   cd "${DEPLOY_DIR}/frontend"
   npm config set registry "${NPM_REGISTRY}" >/dev/null
   npm ci --registry="${NPM_REGISTRY}"
   npm run build
   cd - >/dev/null
+}
+
+build_application() {
+  build_backend_deps
+  build_frontend
 }
 
 write_systemd_service() {
@@ -552,7 +562,10 @@ main() {
   ensure_service_user
   create_env_file
   if [[ "${SKIP_APP_BUILD}" != "1" ]]; then
-    build_application
+    if [[ "${SKIP_BACKEND_DEPS}" != "1" ]]; then
+      build_backend_deps
+    fi
+    build_frontend
   fi
   write_systemd_service
   write_nginx_site
