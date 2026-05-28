@@ -691,7 +691,7 @@ export default function StudentPage() {
       {/* Mobile layout with bottom tabs */}
       <main className="flex-1 min-h-0 flex flex-col lg:hidden">
         <div className="flex-1 min-h-0 flex flex-col p-3 pb-0">
-          {mobileTab === 'task' && (
+          <div className={`flex-1 min-h-0 flex flex-col ${mobileTab === 'task' ? '' : 'hidden'}`}>
             <TaskPanel
               currentSteps={currentSteps}
               stepProgressMap={stepProgressMap}
@@ -703,8 +703,8 @@ export default function StudentPage() {
               onConfirmStep={confirmStep}
               renderMarkdown={renderMarkdown}
             />
-          )}
-          {mobileTab === 'coach' && (
+          </div>
+          <div className={`flex-1 min-h-0 flex flex-col ${mobileTab === 'coach' ? '' : 'hidden'}`}>
             <CoachPanel
               aiRecords={aiRecords}
               analyzingCommand={analyzingCommand}
@@ -713,8 +713,8 @@ export default function StudentPage() {
               streamingRecord={streamingRecord}
               experimentCompleted={experimentCompleted}
             />
-          )}
-          {mobileTab === 'terminal' && (
+          </div>
+          <div className={`flex-1 min-h-0 flex flex-col ${mobileTab === 'terminal' ? '' : 'hidden'}`}>
             <TerminalPanel
               activeSession={activeSession}
               selectedExperimentName={selectedExperiment?.name}
@@ -728,7 +728,7 @@ export default function StudentPage() {
               onSendMockCommand={sendMockCommand}
               busy={busy}
             />
-          )}
+          </div>
         </div>
 
         {/* Bottom Tab Bar */}
