@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from typing import AsyncIterator
+
 import httpx
 
 from .config import Settings
@@ -18,6 +21,27 @@ class CoachProvider:
         step_progress: list[dict[str, Any]] | None = None,
     ) -> str:
         raise NotImplementedError
+
+    async def explain_stream(
+        self,
+        *,
+        experiment: dict,
+        command_context: str,
+        knowledge_context: str,
+        step_progress: list[dict[str, Any]] | None = None,
+    ) -> AsyncIterator[str]:
+        """Yield text chunks as they arrive from the AI provider.
+
+        Default implementation falls back to explain() and yields the full text once.
+        Subclasses should override for true streaming.
+        """
+        text = await self.explain(
+            experiment=experiment,
+            command_context=command_context,
+            knowledge_context=knowledge_context,
+            step_progress=step_progress,
+        )
+        yield text
 
 
 class MockCoachProvider(CoachProvider):
@@ -45,6 +69,31 @@ class MockCoachProvider(CoachProvider):
             "终端输出就是现场证据，路径、文件名、权限位这些信息都在跟你打招呼呢，好好读读。"
             "继续往下走，每步都看看输出对不对；要是输出空了，也可能是命令跑成功了但没废话。"
         )
+
+    async def explain_stream(
+        self,
+        *,
+        experiment: dict,
+        command_context: str,
+        knowledge_context: str,
+        step_progress: list[dict[str, Any]] | None = None,
+    ) -> AsyncIterator[str]:
+        """Simulate streaming by yielding the mock response word-by-word."""
+        full_text = await self.explain(
+            experiment=experiment,
+            command_context=command_context,
+            knowledge_context=knowledge_context,
+            step_progress=step_progress,
+        )
+        # Split by words and yield a few at a time for visible typing effect
+        words = full_text.split(" ")
+        chunk_size = 3
+        for i in range(0, len(words), chunk_size):
+            chunk = " ".join(words[i : i + chunk_size])
+            yield chunk + " "
+            # Tiny delay to make the streaming visible in UI
+            import asyncio
+            await asyncio.sleep(0.05)
 
 
 class DeepSeekCoachProvider(CoachProvider):

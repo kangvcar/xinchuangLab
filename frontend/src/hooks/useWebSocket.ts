@@ -1,11 +1,11 @@
 import { useRef, useCallback } from 'react';
-import type { TerminalLog, AICoachRecord } from '@/types';
+import type { TerminalLog, AICoachRecord, AIStreamChunk, ExperimentCompletedPayload } from '@/types';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '';
 
 export interface CoachMessage {
-  type: 'terminal_log' | 'ai_pending' | 'ai_coach' | 'step_completed';
-  payload: TerminalLog | { command: string } | AICoachRecord | unknown;
+  type: 'terminal_log' | 'ai_pending' | 'ai_stream' | 'ai_coach' | 'step_completed' | 'experiment_completed';
+  payload: TerminalLog | { command: string } | AIStreamChunk | AICoachRecord | ExperimentCompletedPayload | unknown;
 }
 
 export function useWebSocket() {
@@ -14,8 +14,10 @@ export function useWebSocket() {
   const connect = useCallback((sessionId: string, handlers: {
     onTerminalLog?: (log: TerminalLog) => void;
     onAIPending?: (command: string) => void;
+    onAIStream?: (chunk: AIStreamChunk) => void;
     onAICoach?: (record: AICoachRecord) => void;
     onStepCompleted?: () => void;
+    onExperimentCompleted?: (payload: ExperimentCompletedPayload) => void;
   }) => {
     if (socketRef.current) {
       socketRef.current.close();
@@ -36,11 +38,17 @@ export function useWebSocket() {
           case 'ai_pending':
             handlers.onAIPending?.((message.payload as { command: string }).command ?? '刚才的命令');
             break;
+          case 'ai_stream':
+            handlers.onAIStream?.(message.payload as AIStreamChunk);
+            break;
           case 'ai_coach':
             handlers.onAICoach?.(message.payload as AICoachRecord);
             break;
           case 'step_completed':
             handlers.onStepCompleted?.();
+            break;
+          case 'experiment_completed':
+            handlers.onExperimentCompleted?.(message.payload as ExperimentCompletedPayload);
             break;
         }
       } catch {

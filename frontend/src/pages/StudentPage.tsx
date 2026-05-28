@@ -9,7 +9,7 @@ import CoachPanel from '@/components/CoachPanel';
 import TerminalPanel from '@/components/TerminalPanel';
 import { useApi } from '@/hooks/useApi';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import type { Experiment, LabSession, StepProgress, AICoachRecord } from '@/types';
+import type { Experiment, LabSession, StepProgress, AICoachRecord, AIStreamChunk, ExperimentCompletedPayload } from '@/types';
 
 const sessionStorageKey = (studentId: string) => `linux-ai-active-session:${studentId}`;
 const experimentStorageKey = (studentId: string) => `linux-ai-active-experiment:${studentId}`;
@@ -110,6 +110,8 @@ export default function StudentPage() {
   const [remainingSeconds, setRemainingSeconds] = useState(60 * 60);
   const [analyzingCommand, setAnalyzingCommand] = useState('');
   const [activeStepId, setActiveStepId] = useState<number | null>(null);
+  const [streamingRecord, setStreamingRecord] = useState<AICoachRecord | null>(null);
+  const [experimentCompleted, setExperimentCompleted] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const selectedExperiment = useMemo(
@@ -250,14 +252,42 @@ export default function StudentPage() {
     (sessionId: string) => {
       connectCoach(sessionId, {
         onAIPending: (command) => setAnalyzingCommand(command),
+        onAIStream: (chunk: AIStreamChunk) => {
+          setAnalyzingCommand('');
+          setStreamingRecord((prev) => {
+            if (prev) {
+              return { ...prev, ai_response: prev.ai_response + chunk.chunk };
+            }
+            return {
+              id: `streaming-${Date.now()}`,
+              command: chunk.command,
+              ai_response: chunk.chunk,
+              created_at: new Date().toISOString(),
+            };
+          });
+        },
         onAICoach: (record) => {
           setAnalyzingCommand('');
+          setStreamingRecord(null);
           setAiRecords((prev) => mergeAiRecordsById(prev, [record]));
         },
         onStepCompleted: () => loadProgressForSession(sessionId),
+        onExperimentCompleted: (payload: ExperimentCompletedPayload) => {
+          setExperimentCompleted(true);
+          setStatusText('实验已完成');
+          setRemainingSeconds(0);
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          // Refresh session to get updated end_time
+          void getSession(payload.session_id).then((session) => {
+            if (session) setActiveSession(session);
+          });
+        },
       });
     },
-    [connectCoach, loadProgressForSession]
+    [connectCoach, loadProgressForSession, getSession]
   );
 
   const submitStudentLogin = useCallback(async (event?: FormEvent<HTMLFormElement>) => {
@@ -630,6 +660,8 @@ export default function StudentPage() {
             analyzingCommand={analyzingCommand}
             statusText={statusText}
             renderMarkdown={renderMarkdown}
+            streamingRecord={streamingRecord}
+            experimentCompleted={experimentCompleted}
           />
         </aside>
 

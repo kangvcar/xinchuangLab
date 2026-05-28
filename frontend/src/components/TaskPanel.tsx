@@ -1,4 +1,4 @@
-import { ArrowRight, Terminal, Sprout, CheckCircle, Sparkles } from 'lucide-react';
+import { ArrowRight, Terminal, Sprout, CheckCircle, Sparkles, Trophy } from 'lucide-react';
 import { Progress } from '@base-ui/react/progress';
 import { motion, AnimatePresence } from 'motion/react';
 import StepNav from './StepNav';
@@ -42,14 +42,39 @@ export default function TaskPanel({
           <div className="max-w-[640px] mx-auto mb-5">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs font-semibold text-slate-500">实验进度</span>
-              <span className="text-xs font-bold text-brand-600">{progressPercent}%</span>
+              <span className={`text-xs font-bold ${progressPercent === 100 ? 'text-emerald-600' : 'text-brand-600'}`}>
+                {progressPercent === 100 ? '全部完成！' : `${progressPercent}%`}
+              </span>
             </div>
-            <Progress.Root value={progressPercent} className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+            <Progress.Root value={progressPercent} className="h-2 w-full rounded-full bg-slate-100 overflow-hidden relative">
               <Progress.Indicator
-                className="h-full rounded-full bg-gradient-to-r from-brand-400 to-accent-500 transition-all duration-700 ease-out"
+                className={`h-full rounded-full transition-all duration-700 ease-out ${
+                  progressPercent === 100
+                    ? 'bg-gradient-to-r from-emerald-400 via-brand-400 to-accent-500'
+                    : 'bg-gradient-to-r from-brand-400 to-accent-500'
+                }`}
                 style={{ width: `${progressPercent}%` }}
               />
+              {progressPercent === 100 && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute right-0 -top-1 w-4 h-4 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/40"
+                >
+                  <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-50" />
+                </motion.div>
+              )}
             </Progress.Root>
+            {progressPercent === 100 && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-2 flex items-center gap-1.5 text-xs font-bold text-emerald-600"
+              >
+                <Trophy size={12} />
+                所有实验步骤已完成，太棒了！
+              </motion.div>
+            )}
           </div>
         )}
 

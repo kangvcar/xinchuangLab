@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Bot, Sparkles } from 'lucide-react';
+import { Bot, Sparkles, PartyPopper, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { AICoachRecord } from '@/types';
 
@@ -8,16 +8,25 @@ interface CoachPanelProps {
   analyzingCommand: string;
   statusText: string;
   renderMarkdown: (text: string) => string | Promise<string>;
+  streamingRecord?: AICoachRecord | null;
+  experimentCompleted?: boolean;
 }
 
-export default function CoachPanel({ aiRecords, analyzingCommand, statusText, renderMarkdown }: CoachPanelProps) {
+export default function CoachPanel({
+  aiRecords,
+  analyzingCommand,
+  statusText,
+  renderMarkdown,
+  streamingRecord,
+  experimentCompleted,
+}: CoachPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [aiRecords, analyzingCommand]);
+  }, [aiRecords, analyzingCommand, streamingRecord]);
 
   return (
     <section className="min-w-0 min-h-0 overflow-hidden rounded-xl bg-white flex flex-col shadow-sm shadow-slate-200/50 border border-slate-200/80">
@@ -36,6 +45,55 @@ export default function CoachPanel({ aiRecords, analyzingCommand, statusText, re
 
       {/* Content */}
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto p-3 space-y-2.5">
+        {/* Experiment completed celebration */}
+        <AnimatePresence>
+          {experimentCompleted && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white p-4 shadow-md shadow-emerald-100/30 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-200/20 rounded-full blur-2xl" />
+              <div className="relative flex items-start gap-3">
+                <span className="w-10 h-10 grid place-items-center rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shrink-0 shadow-sm shadow-emerald-500/20">
+                  <PartyPopper size={20} />
+                </span>
+                <div>
+                  <strong className="text-dark text-sm font-bold">🎉 恭喜完成全部实验步骤！</strong>
+                  <p className="text-slate-500 text-xs mt-1 leading-relaxed">
+                    你已经完成了所有实验任务。可以生成实验报告查看详细的学习总结和分析。
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Streaming record */}
+        <AnimatePresence>
+          {streamingRecord && (
+            <motion.article
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="border border-brand-200 rounded-xl p-3.5 bg-gradient-to-r from-brand-50/60 to-white relative overflow-hidden"
+            >
+              {/* Pulsing left accent line */}
+              <div className="absolute left-0 top-3 bottom-3 w-1 rounded-full bg-gradient-to-b from-brand-400 to-brand-600 animate-pulse" />
+              <time className="block mb-1.5 text-brand-400 text-[11px] font-semibold">
+                正在输出…
+              </time>
+              <div
+                className="markdown-content text-sm text-slate-700"
+                dangerouslySetInnerHTML={{ __html: String(renderMarkdown(streamingRecord.ai_response)) }}
+              />
+              {/* Blinking cursor */}
+              <span className="inline-block w-0.5 h-4 bg-brand-500 ml-0.5 align-middle animate-pulse" />
+            </motion.article>
+          )}
+        </AnimatePresence>
+
         <AnimatePresence initial={false}>
           {aiRecords.map((record, index) => (
             <motion.article
@@ -59,7 +117,7 @@ export default function CoachPanel({ aiRecords, analyzingCommand, statusText, re
           ))}
         </AnimatePresence>
 
-        {analyzingCommand && (
+        {analyzingCommand && !streamingRecord && (
           <motion.article
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -87,7 +145,7 @@ export default function CoachPanel({ aiRecords, analyzingCommand, statusText, re
           </motion.article>
         )}
 
-        {aiRecords.length === 0 && !analyzingCommand && (
+        {aiRecords.length === 0 && !analyzingCommand && !streamingRecord && !experimentCompleted && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

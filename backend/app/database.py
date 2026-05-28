@@ -237,6 +237,30 @@ class Database:
                     (session_id, next_step_id),
                 )
 
+    def is_experiment_fully_confirmed(self, session_id: str) -> bool:
+        """Check if all steps for this session are confirmed (experiment fully completed)."""
+        with self.connect() as conn:
+            row = conn.execute(
+                """
+                SELECT COUNT(*) as total, SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed
+                FROM step_progress
+                WHERE session_id = ?
+                """,
+                (session_id,),
+            ).fetchone()
+        total = row["total"] if row else 0
+        confirmed = row["confirmed"] if row else 0
+        return total > 0 and total == confirmed
+
+    def complete_session(self, session_id: str) -> None:
+        """Mark session as completed and set end_time."""
+        completed_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        with self.connect() as conn:
+            conn.execute(
+                "UPDATE lab_session SET status = 'completed', end_time = ? WHERE id = ?",
+                (completed_at, session_id),
+            )
+
     def upsert_experiment(self, config: dict[str, Any]) -> None:
         experiment_id = config["experiment_id"]
         with self.connect() as conn:

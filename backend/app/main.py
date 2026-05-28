@@ -592,6 +592,22 @@ async def confirm_step(session_id: str, step_id: int) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="step is not completed yet")
     next_step_id = db.get_next_step_id(session_id, step_id)
     db.confirm_step(session_id, step_id, next_step_id)
+
+    # Check if all steps are confirmed -> experiment completed
+    if db.is_experiment_fully_confirmed(session_id):
+        db.complete_session(session_id)
+        completed_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        await ws_manager.send_json(
+            session_id,
+            {
+                "type": "experiment_completed",
+                "payload": {
+                    "session_id": session_id,
+                    "completed_at": completed_at,
+                },
+            },
+        )
+
     updated_progress = db.get_step_progress(session_id)
     return {"status": "confirmed", "step_id": step_id, "next_step_id": next_step_id, "progress": updated_progress}
 
@@ -858,7 +874,7 @@ async def _analyze_async(
     current_step: dict[str, Any] | None = None,
     verification_result: dict[str, Any] | None = None,
 ) -> None:
-    """后台异步执行 AI 分析，结果通过 WebSocket 推送。"""
+    """后台异步执行 AI 分析，结果通过 WebSocket 流式推送。"""
     if _is_duplicate_command_event(session_id, command_event):
         return
 
@@ -886,19 +902,32 @@ async def _analyze_async(
         verification_result=verification_result,
     )
     step_progress = db.get_step_progress(session_id)
+    accumulated_text = ""
     try:
-        ai_text = await coach_provider.explain(
+        async for chunk in coach_provider.explain_stream(
             experiment=experiment,
             command_context=command_context,
             knowledge_context=knowledge_base.load_context(session["experiment_id"]),
             step_progress=step_progress,
-        )
+        ):
+            accumulated_text += chunk
+            await ws_manager.send_json(
+                session_id,
+                {
+                    "type": "ai_stream",
+                    "payload": {
+                        "chunk": chunk,
+                        "command": command_event.command,
+                    },
+                },
+            )
     except Exception as exc:
-        ai_text = (
-            f"我已经看到你执行了 `{command_event.command}`，不过这次 AI 服务暂时没有成功返回：{exc}\n\n"
-            "你可以先继续观察终端输出，按任务步骤往下做；这些日志已经保存，稍后仍然可以在记录里回看。"
-        )
-    ai_record = db.add_ai_record(session_id, command_context, ai_text)
+        if not accumulated_text:
+            accumulated_text = (
+                f"我已经看到你执行了 `{command_event.command}`，不过这次 AI 服务暂时没有成功返回：{exc}\n\n"
+                "你可以先继续观察终端输出，按任务步骤往下做；这些日志已经保存，稍后仍然可以在记录里回看。"
+            )
+    ai_record = db.add_ai_record(session_id, command_context, accumulated_text)
     await ws_manager.send_json(session_id, {"type": "ai_coach", "payload": ai_record})
 
 

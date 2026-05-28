@@ -111,6 +111,16 @@ export interface AICoachRecord {
   created_at: string;
 }
 
+export interface AIStreamChunk {
+  chunk: string;
+  command: string;
+}
+
+export interface ExperimentCompletedPayload {
+  session_id: string;
+  completed_at: string;
+}
+
 export interface TerminalLog {
   id: string;
   clean_content: string;
