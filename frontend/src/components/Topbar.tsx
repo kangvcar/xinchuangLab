@@ -1,4 +1,5 @@
 import { Clock3, LogOut, Play, Loader2, UserRound } from 'lucide-react';
+import LogoIcon from '@/components/LogoIcon';
 import { Select } from '@base-ui/react/select';
 import { Link } from 'react-router-dom';
 import type { Experiment, LabSession } from '@/types';
@@ -34,9 +35,7 @@ export default function Topbar({
     <header className="h-14 flex items-center gap-6 px-6 bg-white border-b border-neutral-200 shrink-0">
       {/* Brand */}
       <div className="flex items-center gap-2.5 min-w-[178px]">
-        <div className="w-8 h-8 grid place-items-center rounded-lg text-white bg-blue-600 font-mono font-bold text-sm select-none">
-          <span style={{ letterSpacing: '-1px' }}>{'>'}_</span>
-        </div>
+        <LogoIcon variant="dark" size={32} />
         <strong className="text-neutral-900 text-sm font-semibold whitespace-nowrap">
           信创Linux AI实时陪练实训平台
         </strong>

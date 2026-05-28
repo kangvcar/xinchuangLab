@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import LogoIcon from '@/components/LogoIcon';
 
 export default function FooterSection() {
   const scrollTo = (id: string) => {
@@ -13,9 +14,7 @@ export default function FooterSection() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-full bg-[#181925] flex items-center justify-center text-white font-mono font-bold text-xs">
-                {'>'}_
-              </div>
+              <LogoIcon variant="dark" size={28} />
               <span className="text-sm font-medium text-[#181925]">
                 信创Linux
               </span>

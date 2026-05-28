@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import LogoIcon from '@/components/LogoIcon';
 
 
 export default function Navbar() {
@@ -14,8 +15,8 @@ export default function Navbar() {
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
       <nav className="flex items-center gap-1 bg-[#181925] rounded-full px-2 py-2">
         {/* Logo */}
-        <Link to="/" className="flex items-center justify-center w-8 h-8 bg-white rounded-full ml-1">
-          <span className="text-[#181925] font-bold text-xs">{'>_'}</span>
+        <Link to="/" className="ml-1">
+          <LogoIcon variant="light" size={32} />
         </Link>
 
         {/* Nav links */}
