@@ -57,7 +57,7 @@ export function statusLabel(status: string | undefined): string {
 export function statusBadgeClass(status: string | undefined): string {
   const normalized = normalizeExperimentStatus(status);
   if (normalized === 'published') return 'text-green-700 border-green-200 bg-green-50';
-  if (normalized === 'inactive') return 'text-neutral-500 border-neutral-200 bg-neutral-50';
+  if (normalized === 'inactive') return 'text-slate-400 border-slate-200 bg-slate-50';
   return 'text-amber-700 border-amber-200 bg-amber-50';
 }
 

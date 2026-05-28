@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type FormEvent } from 'react';
 import { marked } from 'marked';
 import { Loader2, LogIn } from 'lucide-react';
+import LogoIcon from '@/components/LogoIcon';
 import Topbar from '@/components/Topbar';
 import StepNav from '@/components/StepNav';
 import TaskPanel from '@/components/TaskPanel';
@@ -541,48 +542,54 @@ export default function StudentPage() {
 
   if (!studentId) {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
-        <header className="h-14 flex items-center justify-between gap-4 px-6 bg-white border-b border-neutral-200">
+      <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute top-0 left-0 right-0 h-80 bg-gradient-to-b from-brand-100/40 to-transparent pointer-events-none" />
+        <div className="absolute -top-20 -right-20 w-80 h-80 bg-brand-200/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-40 -left-20 w-60 h-60 bg-accent-200/15 rounded-full blur-3xl pointer-events-none" />
+        
+        <header className="h-14 flex items-center justify-between gap-4 px-6 bg-white/80 backdrop-blur-sm border-b border-slate-200/80 relative z-10">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 grid place-items-center rounded-lg text-white bg-blue-600 font-mono font-bold text-sm select-none">
-              <span style={{ letterSpacing: '-1px' }}>{'>'}_</span>
-            </div>
-            <strong className="text-neutral-900 text-sm font-semibold whitespace-nowrap">
+            <LogoIcon variant="dark" size={32} />
+            <strong className="text-dark text-sm font-semibold whitespace-nowrap tracking-tight">
               信创Linux AI实时陪练实训平台
             </strong>
           </div>
         </header>
-        <main className="flex-1 grid place-items-center px-4 py-8">
+        <main className="flex-1 grid place-items-center px-4 py-8 relative z-10">
           <form
             onSubmit={submitStudentLogin}
-            className="w-full max-w-sm rounded-lg border border-neutral-200 bg-white p-6 shadow-sm"
+            className="w-full max-w-sm rounded-2xl border border-slate-200/80 bg-white p-8 shadow-xl shadow-slate-200/50"
           >
-            <strong className="block text-base font-semibold text-neutral-900">学生登录</strong>
-            <p className="mt-2 text-sm leading-6 text-neutral-500">
+            <div className="w-12 h-12 grid place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/25 mb-4">
+              <LogIn size={20} />
+            </div>
+            <strong className="block text-lg font-bold text-dark tracking-tight">学生登录</strong>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
               请输入教师端已录入的学号，通过校验后即可进入实验平台。
             </p>
-            <label className="mt-5 block">
-              <span className="mb-1.5 block text-xs font-semibold text-neutral-900">学号</span>
+            <label className="mt-6 block">
+              <span className="mb-1.5 block text-xs font-bold text-dark">学号</span>
               <input
                 value={studentLoginInput}
                 onChange={(event) => setStudentLoginInput(event.target.value)}
                 disabled={busy}
                 autoFocus
-                className="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 disabled:opacity-50"
+                className="h-11 w-full rounded-xl border-0 bg-slate-50 px-4 text-sm text-dark outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white disabled:opacity-50 placeholder:text-slate-400"
                 placeholder="例如：2026001"
               />
             </label>
             {loginError && (
-              <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-semibold text-red-700">
                 {loginError}
               </div>
             )}
             <button
               type="submit"
               disabled={busy}
-              className="mt-4 h-10 w-full inline-flex items-center justify-center gap-1.5 rounded-md border border-neutral-900 bg-neutral-900 px-4 text-xs font-medium text-white transition-colors hover:bg-neutral-800 active:bg-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-5 h-11 w-full inline-flex items-center justify-center gap-1.5 rounded-xl border-0 bg-gradient-to-r from-brand-500 to-brand-600 px-4 text-sm font-semibold text-white shadow-lg shadow-brand-500/20 hover:from-brand-600 hover:to-brand-700 hover:shadow-xl hover:shadow-brand-500/30 hover:-translate-y-px active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 transition-all"
             >
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <LogIn size={14} />}
+              {busy ? <Loader2 size={15} className="animate-spin" /> : <LogIn size={15} />}
               {busy ? '正在校验' : '进入实验平台'}
             </button>
           </form>
@@ -592,7 +599,7 @@ export default function StudentPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-white overflow-hidden">
+    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
       <Topbar
         experiments={experiments}
         selectedExperimentId={selectedExperimentId}

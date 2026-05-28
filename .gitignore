@@ -11,3 +11,6 @@ frontend/**/*.log
 
 .env
 backend/.env
+
+# Playwright MCP temp files
+.playwright-mcp/

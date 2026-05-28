@@ -1,5 +1,6 @@
-import { ArrowRight, Terminal, Sprout, CheckCircle } from 'lucide-react';
+import { ArrowRight, Terminal, Sprout, CheckCircle, Sparkles } from 'lucide-react';
 import { Progress } from '@base-ui/react/progress';
+import { motion, AnimatePresence } from 'motion/react';
 import StepNav from './StepNav';
 import type { Step } from '@/types';
 
@@ -27,7 +28,7 @@ export default function TaskPanel({
   renderMarkdown,
 }: TaskPanelProps) {
   return (
-    <section className="min-w-0 min-h-0 overflow-hidden border border-neutral-200 rounded-lg bg-white flex flex-col">
+    <section className="min-w-0 min-h-0 overflow-hidden rounded-xl bg-white flex flex-col shadow-sm shadow-slate-200/50 border border-slate-200/80">
       <StepNav
         currentSteps={currentSteps}
         stepProgressMap={stepProgressMap}
@@ -38,84 +39,109 @@ export default function TaskPanel({
       <div className="flex-1 min-h-0 overflow-auto px-5 py-4">
         {/* Progress */}
         {currentSteps.length > 0 && (
-          <div className="max-w-[640px] mx-auto mb-4">
+          <div className="max-w-[640px] mx-auto mb-5">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium text-neutral-500">实验进度</span>
-              <span className="text-xs font-semibold text-neutral-900">{progressPercent}%</span>
+              <span className="text-xs font-semibold text-slate-500">实验进度</span>
+              <span className="text-xs font-bold text-brand-600">{progressPercent}%</span>
             </div>
-            <Progress.Root value={progressPercent} className="h-1.5 w-full rounded-full bg-neutral-100 overflow-hidden">
+            <Progress.Root value={progressPercent} className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
               <Progress.Indicator
-                className="h-full rounded-full bg-neutral-900 transition-all duration-500 ease-out"
+                className="h-full rounded-full bg-gradient-to-r from-brand-400 to-accent-500 transition-all duration-700 ease-out"
                 style={{ width: `${progressPercent}%` }}
               />
             </Progress.Root>
           </div>
         )}
 
-        {displayedStep ? (
-          <div
-            className={`
-              max-w-[640px] mx-auto mb-4 bg-white transition-all
-              ${displayedStepStatus === 'completed' ? 'text-green-950' : 'text-neutral-900'}
-            `}
-          >
-            {/* Title */}
-            <h2 className="mb-2 text-lg font-semibold text-neutral-900 tracking-tight">
-              {displayedStep.title}
-            </h2>
+        <AnimatePresence mode="wait">
+          {displayedStep ? (
+            <motion.div
+              key={displayedStep.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+              className={`
+                max-w-[640px] mx-auto transition-all
+                ${displayedStepStatus === 'completed' ? 'text-emerald-950' : 'text-dark'}
+              `}
+            >
+              {/* Title */}
+              <h2 className="mb-2.5 text-lg font-bold text-dark tracking-tight leading-snug">
+                {displayedStep.title}
+              </h2>
 
-            {/* Goal */}
-            <p className="text-neutral-600 leading-relaxed text-sm">
-              {displayedStep.goal || displayedStep.instructions}
-            </p>
+              {/* Goal */}
+              <div
+                className="text-slate-600 leading-relaxed text-sm"
+                dangerouslySetInnerHTML={{ __html: String(renderMarkdown(displayedStep.goal || displayedStep.instructions || '')) }}
+              />
 
-            {/* Try Commands */}
-            {displayedStep.try_commands && displayedStep.try_commands.length > 0 && (
-              <div className="mt-3 rounded-md p-3 bg-neutral-50 border border-neutral-200 space-y-2">
-                <strong className="text-neutral-900 text-xs font-semibold flex items-center gap-1.5">
-                  <Sprout size={13} className="text-green-600" />
-                  建议先试试
-                </strong>
-                <div className="flex flex-wrap gap-2">
-                  {displayedStep.try_commands.map((cmd) => (
-                    <code key={cmd} className="bg-green-50 text-green-700 border border-green-200 font-semibold text-xs">
-                      {cmd}
-                    </code>
-                  ))}
+              {/* Try Commands */}
+              {displayedStep.try_commands && displayedStep.try_commands.length > 0 && (
+                <div className="mt-4 rounded-xl p-3.5 bg-brand-50/60 border border-brand-100/80 space-y-2.5">
+                  <strong className="text-dark text-xs font-bold flex items-center gap-2">
+                    <span className="w-5 h-5 grid place-items-center rounded-md bg-brand-500 text-white">
+                      <Sprout size={12} />
+                    </span>
+                    建议先试试
+                  </strong>
+                  <div className="flex flex-wrap gap-2">
+                    {displayedStep.try_commands.map((cmd) => (
+                      <code key={cmd} className="bg-white text-brand-700 border border-brand-200 font-semibold text-xs shadow-sm shadow-brand-100/50">
+                        {cmd}
+                      </code>
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              {/* Success Criteria */}
+              <div className="mt-3 rounded-xl p-3.5 bg-emerald-50/60 border border-emerald-100/80 space-y-2.5">
+                <strong className="text-dark text-xs font-bold flex items-center gap-2">
+                  <span className="w-5 h-5 grid place-items-center rounded-md bg-emerald-500 text-white">
+                    <CheckCircle size={12} />
+                  </span>
+                  完成判断
+                </strong>
+                <span className="text-slate-600 text-sm leading-relaxed">
+                  {displayedStep.success_criteria || '按步骤目标完成操作。'}
+                </span>
               </div>
-            )}
 
-            {/* Success Criteria */}
-            <div className="mt-3 rounded-md p-3 bg-neutral-50 border border-neutral-200 space-y-2">
-              <strong className="text-neutral-900 text-xs font-semibold flex items-center gap-1.5">
-                <CheckCircle size={13} className="text-green-600" />
-                完成判断
-              </strong>
-              <span className="text-neutral-600 text-sm leading-relaxed">
-                {displayedStep.success_criteria || '按步骤目标完成操作。'}
-              </span>
-            </div>
-
-            {/* Next Step Action */}
-            {displayedStepStatus === 'completed' && (
-              <div className="mt-4 flex justify-end">
-                <button
-                  onClick={() => onConfirmStep(displayedStep.id)}
-                  className="h-9 inline-flex items-center justify-center gap-1.5 px-4 rounded-md font-medium text-xs tracking-wide text-white bg-neutral-900 border border-neutral-900 hover:bg-neutral-800 active:bg-neutral-950 transition-colors"
+              {/* Next Step Action */}
+              {displayedStepStatus === 'completed' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-5 flex justify-end"
                 >
-                  <ArrowRight size={14} />
-                  下一步
-                </button>
+                  <button
+                    onClick={() => onConfirmStep(displayedStep.id)}
+                    className="h-10 inline-flex items-center justify-center gap-1.5 px-5 rounded-lg font-semibold text-xs tracking-wide text-white bg-gradient-to-r from-brand-500 to-brand-600 border border-transparent hover:from-brand-600 hover:to-brand-700 hover:shadow-lg hover:shadow-brand-500/25 hover:-translate-y-px active:translate-y-0 transition-all"
+                  >
+                    <ArrowRight size={14} />
+                    下一步
+                  </button>
+                </motion.div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="h-full flex flex-col items-center justify-center gap-3 text-slate-400"
+            >
+              <div className="w-14 h-14 grid place-items-center rounded-2xl bg-gradient-to-br from-brand-100 to-accent-100 text-brand-500">
+                <Sparkles size={24} />
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center gap-2 text-neutral-400">
-            <Terminal size={28} />
-            <p className="font-medium text-sm">请开始实验以查看任务</p>
-          </div>
-        )}
+              <div className="text-center">
+                <p className="font-semibold text-sm text-slate-700">准备好开始实验了吗？</p>
+                <p className="text-xs text-slate-400 mt-1">点击右上角「开始实验」按钮启动环境</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );

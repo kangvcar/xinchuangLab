@@ -6,6 +6,33 @@ export default {
   ],
   theme: {
     extend: {
+      colors: {
+        brand: {
+          50: '#f5f3ff',
+          100: '#ede9fe',
+          200: '#ddd6fe',
+          300: '#c4b5fd',
+          400: '#a78bfa',
+          500: '#9580ff',
+          600: '#7c65e6',
+          700: '#6d5ed6',
+          800: '#5b4dbf',
+          900: '#4c3f9f',
+        },
+        accent: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#2c78fc',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+        },
+        dark: '#181925',
+      },
       fontFamily: {
         sans: [
           'Inter',

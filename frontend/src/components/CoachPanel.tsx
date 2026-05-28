@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Bot, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import type { AICoachRecord } from '@/types';
 
 interface CoachPanelProps {
@@ -19,60 +20,88 @@ export default function CoachPanel({ aiRecords, analyzingCommand, statusText, re
   }, [aiRecords, analyzingCommand]);
 
   return (
-    <section className="min-w-0 min-h-0 overflow-hidden border border-neutral-200 rounded-lg bg-white flex flex-col">
+    <section className="min-w-0 min-h-0 overflow-hidden rounded-xl bg-white flex flex-col shadow-sm shadow-slate-200/50 border border-slate-200/80">
       {/* Header */}
-      <div className="h-11 flex items-center justify-between gap-3 px-4 border-b border-neutral-200 bg-neutral-50 shrink-0">
-        <div className="inline-flex items-center gap-2 text-neutral-900 font-semibold text-sm">
-          <Bot size={16} />
-          <span>陪练碎碎念</span>
+      <div className="h-11 flex items-center justify-between gap-3 px-4 border-b border-slate-200/80 bg-gradient-to-r from-brand-50/50 to-white shrink-0">
+        <div className="inline-flex items-center gap-2 text-dark font-bold text-sm">
+          <span className="w-6 h-6 grid place-items-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-white shadow-sm shadow-brand-500/20">
+            <Bot size={14} />
+          </span>
+          <span>AI 陪练</span>
         </div>
-        <span className="max-w-[220px] overflow-hidden text-neutral-500 text-xs font-medium text-ellipsis whitespace-nowrap">
+        <span className="max-w-[220px] overflow-hidden text-slate-400 text-xs font-medium text-ellipsis whitespace-nowrap">
           {statusText}
         </span>
       </div>
 
       {/* Content */}
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto p-3 space-y-2">
-        {aiRecords.map((record, index) => (
-          <article
-            key={record.id || index}
-            className="border border-neutral-200 rounded-lg p-3 bg-white transition-colors hover:bg-neutral-50"
-          >
-            <time className="block mb-1.5 text-neutral-400 text-[11px] font-medium">
-              {record.created_at}
-            </time>
-            <div
-              className="markdown-content text-sm text-neutral-700"
-              dangerouslySetInnerHTML={{ __html: String(renderMarkdown(record.ai_response)) }}
-            />
-          </article>
-        ))}
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto p-3 space-y-2.5">
+        <AnimatePresence initial={false}>
+          {aiRecords.map((record, index) => (
+            <motion.article
+              key={record.id || index}
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
+              className="border border-slate-200/80 rounded-xl p-3.5 bg-white transition-all duration-200 hover:shadow-md hover:shadow-slate-100/50 hover:border-slate-300 relative overflow-hidden group"
+            >
+              {/* Left accent line */}
+              <div className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full bg-gradient-to-b from-brand-400 to-brand-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <time className="block mb-1.5 text-slate-400 text-[11px] font-semibold">
+                {record.created_at}
+              </time>
+              <div
+                className="markdown-content text-sm text-slate-600"
+                dangerouslySetInnerHTML={{ __html: String(renderMarkdown(record.ai_response)) }}
+              />
+            </motion.article>
+          ))}
+        </AnimatePresence>
 
         {analyzingCommand && (
-          <article className="flex items-start gap-2.5 border border-neutral-300 rounded-lg p-3 bg-neutral-50">
-            <Bot size={16} className="shrink-0 mt-0.5 text-neutral-500" />
-            <div>
-              <strong className="text-sm font-medium text-neutral-900">
+          <motion.article
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-3 border border-brand-200 rounded-xl p-3.5 bg-gradient-to-r from-brand-50/80 to-white relative overflow-hidden"
+          >
+            {/* Animated gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-r from-brand-500/5 via-transparent to-brand-500/5 animate-pulse" />
+            
+            <span className="relative w-8 h-8 grid place-items-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-white shrink-0 shadow-sm shadow-brand-500/20">
+              <Bot size={16} />
+            </span>
+            <div className="relative">
+              <strong className="text-sm font-semibold text-dark">
                 哟，{analyzingCommand}？让我验验你这波什么水平
-                <span className="inline-block w-1 h-1 ml-1 rounded-full bg-neutral-400 animate-pulse" />
+                <span className="inline-flex gap-0.5 ml-1.5 align-middle">
+                  <span className="inline-block w-1 h-1 rounded-full bg-brand-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="inline-block w-1 h-1 rounded-full bg-brand-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="inline-block w-1 h-1 rounded-full bg-brand-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                </span>
               </strong>
-              <span className="block mt-1 text-neutral-500 text-xs leading-relaxed">
+              <span className="block mt-1 text-slate-500 text-xs leading-relaxed">
                 正在扒拉你的终端输出和实验步骤，马上告诉你这操作是神是鬼。
               </span>
             </div>
-          </article>
+          </motion.article>
         )}
 
         {aiRecords.length === 0 && !analyzingCommand && (
-          <article className="h-full min-h-[140px] flex flex-col items-center justify-center gap-2 text-neutral-400 text-center">
-            <div className="w-12 h-12 grid place-items-center rounded-lg bg-neutral-100 text-neutral-400">
-              <Sparkles size={20} />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="h-full min-h-[140px] flex flex-col items-center justify-center gap-2.5 text-slate-400 text-center"
+          >
+            <div className="w-14 h-14 grid place-items-center rounded-2xl bg-gradient-to-br from-brand-100 to-accent-100 text-brand-500 shadow-sm shadow-brand-100/30">
+              <Sparkles size={24} />
             </div>
-            <strong className="text-neutral-900 font-semibold text-sm">别光盯着屏幕发呆啊 👀</strong>
-            <span className="max-w-[400px] text-xs leading-relaxed">
+            <strong className="text-dark font-bold text-sm">别光盯着屏幕发呆啊 👀</strong>
+            <span className="max-w-[400px] text-xs leading-relaxed text-slate-400">
               键盘在你手里，终端在等你，我板凳都搬好了。你倒是敲啊——敲错了算我的，一直不敲……那我可去刷视频了。
             </span>
-          </article>
+          </motion.div>
         )}
       </div>
     </section>

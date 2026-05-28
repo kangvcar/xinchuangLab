@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { ExternalLink, FileText, Play, RefreshCcw, Square, Terminal, Loader2, Download } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useXterm } from '@/hooks/useXterm';
 import type { LabSession } from '@/types';
 
@@ -76,15 +77,15 @@ export default function TerminalPanel({
   }, [fit]);
 
   return (
-    <section className="min-w-0 min-h-0 overflow-hidden border border-neutral-200 rounded-lg bg-neutral-900 flex flex-col">
-      {/* Header */}
-      <div className="h-11 flex items-center justify-between px-3 border-b border-neutral-700 bg-white shrink-0">
+    <section className="min-w-0 min-h-0 overflow-hidden rounded-xl bg-dark flex flex-col shadow-lg shadow-slate-900/20 border border-slate-800">
+      {/* Header - Dark themed to blend with terminal */}
+      <div className="h-11 flex items-center justify-between px-3 border-b border-slate-700/80 bg-dark/95 shrink-0">
         {activeSession ? (
-          <div className="inline-flex items-center gap-2 min-w-0">
-            <span className="text-neutral-900 font-semibold text-sm truncate max-w-[280px]">
+          <div className="inline-flex items-center gap-2.5 min-w-0">
+            <span className="text-white font-bold text-sm truncate max-w-[280px]">
               {selectedExperimentName ?? 'Linux 实验'}
             </span>
-            <span className="h-5 inline-flex items-center rounded-md px-2 text-neutral-500 bg-neutral-50 text-[10px] font-semibold border border-neutral-200">
+            <span className="h-5 inline-flex items-center rounded-md px-2 text-slate-400 bg-slate-800/80 text-[10px] font-semibold border border-slate-700/60">
               {runtimeLabel}
             </span>
           </div>
@@ -98,7 +99,7 @@ export default function TerminalPanel({
               href={activeSession.terminal_url}
               target="_blank"
               rel="noreferrer"
-              className="h-8 inline-flex items-center gap-1.5 text-neutral-600 bg-white rounded-md px-3 text-xs font-medium border border-neutral-200 hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 active:bg-neutral-100 transition-colors no-underline"
+              className="h-8 inline-flex items-center gap-1.5 text-slate-300 bg-slate-800 rounded-lg px-3 text-xs font-medium border border-slate-700 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:bg-slate-800 transition-all no-underline"
             >
               <ExternalLink size={13} />
               新窗口
@@ -107,7 +108,7 @@ export default function TerminalPanel({
           <button
             onClick={onStopSession}
             disabled={!activeSession || busy}
-            className="h-8 inline-flex items-center gap-1.5 text-red-600 bg-white rounded-md px-3 text-xs font-medium border border-red-200 hover:bg-red-50 hover:border-red-300 active:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="h-8 inline-flex items-center gap-1.5 text-red-400 bg-slate-800 rounded-lg px-3 text-xs font-medium border border-red-900/40 hover:bg-red-950/40 hover:border-red-800/60 hover:text-red-300 active:bg-red-950/60 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <Square size={12} />
             停止
@@ -115,7 +116,7 @@ export default function TerminalPanel({
           <button
             onClick={onResetSession}
             disabled={!activeSession || busy}
-            className="h-8 w-8 inline-flex items-center justify-center text-neutral-600 bg-white rounded-md border border-neutral-200 hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="h-8 w-8 inline-flex items-center justify-center text-slate-400 bg-slate-800 rounded-lg border border-slate-700 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             title="重置实验"
           >
             <RefreshCcw size={13} />
@@ -123,7 +124,7 @@ export default function TerminalPanel({
           <button
             onClick={onGenerateReport}
             disabled={!activeSession || busy}
-            className="h-8 w-8 inline-flex items-center justify-center text-neutral-600 bg-white rounded-md border border-neutral-200 hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="h-8 w-8 inline-flex items-center justify-center text-slate-400 bg-slate-800 rounded-lg border border-slate-700 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             title="生成报告"
           >
             <FileText size={13} />
@@ -131,7 +132,7 @@ export default function TerminalPanel({
           <button
             onClick={onExportDocx}
             disabled={!activeSession || busy}
-            className="h-8 w-8 inline-flex items-center justify-center text-neutral-600 bg-white rounded-md border border-neutral-200 hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="h-8 w-8 inline-flex items-center justify-center text-slate-400 bg-slate-800 rounded-lg border border-slate-700 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             title="导出 Word 报告"
           >
             <Download size={13} />
@@ -140,9 +141,9 @@ export default function TerminalPanel({
       </div>
 
       {/* Body */}
-      <div className="flex-1 min-h-0 p-2 bg-neutral-900">
+      <div className="flex-1 min-h-0 p-2 bg-dark">
         {hasTerminalFrame ? (
-          <div className="relative w-full h-full rounded-md overflow-hidden bg-neutral-900">
+          <div className="relative w-full h-full rounded-lg overflow-hidden bg-dark">
             <iframe
               key={terminalFrameKey}
               className="w-full h-full border-0"
@@ -151,16 +152,16 @@ export default function TerminalPanel({
               onLoad={handleFrameLoad}
             />
             {terminalFrameFailed && !terminalFrameLoaded && (
-              <div className="absolute left-4 right-4 bottom-4 max-w-[560px] p-3 border border-neutral-200 rounded-md bg-white text-neutral-700 shadow-lg">
-                <strong className="block text-neutral-900 font-semibold text-sm mb-1">终端还没有连上</strong>
-                <span className="block text-neutral-500 text-xs font-medium break-all mb-2">
+              <div className="absolute left-4 right-4 bottom-4 max-w-[560px] p-4 border border-slate-700 rounded-xl bg-slate-900/95 text-slate-300 shadow-xl backdrop-blur-sm">
+                <strong className="block text-white font-bold text-sm mb-1">终端还没有连上</strong>
+                <span className="block text-slate-500 text-xs font-medium break-all mb-3">
                   {activeSession!.terminal_url}
                 </span>
                 <a
                   href={activeSession!.terminal_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-neutral-900 font-semibold text-xs no-underline hover:underline"
+                  className="inline-flex items-center gap-1.5 text-brand-400 font-semibold text-xs no-underline hover:text-brand-300 transition-colors"
                 >
                   <ExternalLink size={12} />
                   在新窗口打开终端
@@ -169,22 +170,29 @@ export default function TerminalPanel({
             )}
           </div>
         ) : activeSession ? (
-          <div ref={containerRef} className="w-full h-full rounded-md overflow-hidden bg-neutral-900" />
+          <div ref={containerRef} className="w-full h-full rounded-lg overflow-hidden bg-dark" />
         ) : (
-          <div className="w-full h-full rounded-md flex flex-col items-center justify-center gap-3 text-neutral-300 text-center bg-neutral-900">
-            <div className="w-12 h-12 grid place-items-center rounded-lg bg-neutral-800 text-neutral-400">
-              <Terminal size={24} />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="w-full h-full rounded-lg flex flex-col items-center justify-center gap-3.5 text-slate-400 text-center bg-dark"
+          >
+            <div className="w-16 h-16 grid place-items-center rounded-2xl bg-gradient-to-br from-brand-500/20 to-accent-500/20 text-brand-400 border border-brand-500/10">
+              <Terminal size={28} />
             </div>
-            <h1 className="text-base font-semibold text-neutral-200">Linux 实验终端</h1>
+            <div>
+              <h1 className="text-base font-bold text-slate-200">Linux 实验终端</h1>
+              <p className="text-xs text-slate-500 mt-1">真实 openEuler 环境，零配置即刻使用</p>
+            </div>
             <button
               onClick={onStartSession}
               disabled={busy}
-              className="h-9 inline-flex items-center justify-center gap-1.5 px-5 rounded-md font-medium text-xs tracking-wide text-white bg-neutral-900 border border-neutral-700 hover:bg-neutral-800 active:bg-neutral-950 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="h-10 inline-flex items-center justify-center gap-1.5 px-6 rounded-lg font-semibold text-xs tracking-wide text-white bg-gradient-to-r from-brand-500 to-brand-600 border border-transparent hover:from-brand-600 hover:to-brand-700 hover:shadow-lg hover:shadow-brand-500/25 hover:-translate-y-px active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all"
             >
               {busy ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
               {busy ? '正在启动...' : '开始实验'}
             </button>
-          </div>
+          </motion.div>
         )}
       </div>
     </section>

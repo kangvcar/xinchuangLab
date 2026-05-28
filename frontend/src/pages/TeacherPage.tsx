@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
   CheckCircle2,
+  FilePlus2,
   FileText,
   FlaskConical,
   Loader2,
@@ -11,6 +12,7 @@ import {
   Save,
   Send,
   SlidersHorizontal,
+  Sparkles,
   Trash2,
   Upload,
   UserPlus,
@@ -479,26 +481,31 @@ export default function TeacherPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <header className="h-14 flex items-center gap-4 px-6 bg-white border-b border-neutral-200">
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <header className="h-14 flex items-center gap-4 px-6 bg-white/80 backdrop-blur-sm border-b border-slate-200/80 shadow-sm shadow-slate-100/50">
         <div className="flex items-center gap-2.5 min-w-[140px]">
-          <div className="w-8 h-8 grid place-items-center rounded-md text-white bg-neutral-900">
+          <div className="w-8 h-8 grid place-items-center rounded-lg text-white bg-gradient-to-br from-brand-500 to-brand-600 shadow-sm shadow-brand-500/20">
             <FlaskConical size={18} />
           </div>
-          <strong className="text-neutral-900 text-sm font-semibold">教师实验管理</strong>
+          <strong className="text-dark text-sm font-bold tracking-tight">教师实验管理</strong>
         </div>
 
         {adminDraft && (
-          <span className={`h-6 inline-flex items-center rounded-md border px-2 text-xs font-medium ${statusBadgeClass(adminDraft.status)}`}>
+          <span className={`h-6 inline-flex items-center rounded-lg border px-2.5 text-xs font-semibold ${statusBadgeClass(adminDraft.status)} shadow-sm`}>
             {statusLabel(adminDraft.status)}
           </span>
         )}
 
-        {isDirty && <span className="text-xs font-medium text-amber-700">有未保存修改</span>}
+        {isDirty && (
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            有未保存修改
+          </span>
+        )}
 
         <Link
           to="/lab"
-          className="ml-auto h-8 inline-flex items-center px-3 rounded-md font-medium text-xs border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 active:bg-neutral-100 transition-colors no-underline"
+          className="ml-auto h-8 inline-flex items-center px-3 rounded-lg font-semibold text-xs border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-dark hover:border-slate-300 active:bg-slate-100 transition-all no-underline shadow-sm"
         >
           返回学生端
         </Link>
@@ -525,14 +532,16 @@ export default function TeacherPage() {
         />
 
         <section className="flex-1 min-w-0 overflow-auto p-6">
-          <div className="max-w-6xl mx-auto mb-4 rounded-lg border border-neutral-200 bg-white p-4">
+          <div className="max-w-6xl mx-auto mb-5 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-200/40">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex min-w-0 items-center gap-2">
-                <Users size={16} className="text-neutral-700" />
-                <strong className="text-sm font-semibold text-neutral-900">学生准入</strong>
-                <span className="text-xs font-medium text-neutral-500">{students.length} 个学号</span>
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="w-7 h-7 grid place-items-center rounded-lg bg-brand-50 text-brand-600">
+                  <Users size={14} />
+                </span>
+                <strong className="text-sm font-bold text-dark">学生准入</strong>
+                <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">{students.length} 个学号</span>
                 {studentRosterStatus && (
-                  <span className="truncate text-xs font-medium text-neutral-500">{studentRosterStatus}</span>
+                  <span className="truncate text-xs font-semibold text-slate-400">{studentRosterStatus}</span>
                 )}
               </div>
               <form
@@ -546,27 +555,27 @@ export default function TeacherPage() {
                   value={studentInput}
                   onChange={(event) => setStudentInput(event.target.value)}
                   placeholder="学号"
-                  className="h-8 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 sm:w-36"
+                  className="h-9 w-full rounded-xl border-0 bg-slate-50 px-3 text-sm text-dark outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white sm:w-36 placeholder:text-slate-400"
                 />
                 <input
                   value={studentNameInput}
                   onChange={(event) => setStudentNameInput(event.target.value)}
                   placeholder="姓名，可选"
-                  className="h-8 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors hover:border-neutral-300 focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900 sm:w-36"
+                  className="h-9 w-full rounded-xl border-0 bg-slate-50 px-3 text-sm text-dark outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white sm:w-36 placeholder:text-slate-400"
                 />
                 <button
                   type="submit"
-                  className="h-8 inline-flex items-center justify-center gap-1.5 rounded-md border border-neutral-900 bg-neutral-900 px-3 text-xs font-medium text-white transition-colors hover:bg-neutral-800 active:bg-neutral-950"
+                  className="h-9 inline-flex items-center justify-center gap-1.5 rounded-xl border-0 bg-gradient-to-r from-brand-500 to-brand-600 px-4 text-xs font-bold text-white shadow-md shadow-brand-500/20 hover:from-brand-600 hover:to-brand-700 hover:shadow-lg hover:shadow-brand-500/30 hover:-translate-y-px active:translate-y-0 transition-all"
                 >
                   <UserPlus size={13} />
                   录入
                 </button>
               </form>
             </div>
-            <div className="mt-3 flex flex-col gap-2 border-t border-neutral-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex min-w-0 flex-col gap-1">
-                <span className="text-xs font-semibold text-neutral-900">批量导入学生 TXT</span>
-                <span className="text-xs text-neutral-500">每行：学号,姓名。重复学号会更新姓名并恢复准入。</span>
+                <span className="text-xs font-bold text-dark">批量导入学生 TXT</span>
+                <span className="text-xs text-slate-400">每行：学号,姓名。重复学号会更新姓名并恢复准入。</span>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
@@ -574,13 +583,13 @@ export default function TeacherPage() {
                   accept=".txt,text/plain"
                   disabled={isStudentImporting}
                   onChange={(event) => setStudentImportFile(event.target.files?.[0] ?? null)}
-                  className="w-full text-xs file:mr-3 file:rounded-md file:border file:border-neutral-200 file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-neutral-900 hover:file:bg-neutral-50 disabled:opacity-50 sm:w-56"
+                  className="w-full text-xs file:mr-3 file:rounded-lg file:border file:border-slate-200 file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-dark hover:file:bg-slate-50 disabled:opacity-50 sm:w-56"
                 />
                 <button
                   type="button"
                   onClick={importStudentRoster}
                   disabled={!studentImportFile || isStudentImporting}
-                  className="h-8 inline-flex items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-900 transition-colors hover:bg-neutral-50 hover:border-neutral-300 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="h-9 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-dark transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
                 >
                   {isStudentImporting ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
                   批量导入
@@ -588,19 +597,19 @@ export default function TeacherPage() {
               </div>
             </div>
             {students.length > 0 && (
-              <div className="mt-3 flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
+              <div className="mt-4 flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
                 {students.map((student) => (
                   <span
                     key={student.student_id}
-                    className="inline-flex h-8 items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-2.5 text-xs font-medium text-neutral-700"
+                    className="inline-flex h-8 items-center gap-2 rounded-lg border border-slate-200/80 bg-slate-50 px-2.5 text-xs font-semibold text-slate-600 shadow-sm"
                   >
-                    <span className="font-mono text-neutral-900">{student.student_id}</span>
-                    {student.name && <span>{student.name}</span>}
+                    <span className="font-mono text-dark font-bold">{student.student_id}</span>
+                    {student.name && <span className="text-slate-500">{student.name}</span>}
                     <button
                       type="button"
                       onClick={() => void removeStudent(student.student_id)}
                       title="删除学生"
-                      className="grid h-5 w-5 place-items-center rounded text-neutral-500 hover:bg-white hover:text-red-700"
+                      className="grid h-5 w-5 place-items-center rounded-md text-slate-400 hover:bg-white hover:text-red-600 hover:shadow-sm transition-all"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -610,58 +619,58 @@ export default function TeacherPage() {
             )}
           </div>
           {adminDraft ? (
-            <div className="max-w-6xl mx-auto bg-white border border-neutral-200 rounded-lg p-6">
+            <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm shadow-slate-200/40">
               <div className="flex items-center gap-3 mb-5">
-                <strong className="text-neutral-900 text-base font-semibold">实验配置</strong>
-                <span className="text-neutral-500 text-sm">
+                <strong className="text-dark text-base font-bold">实验配置</strong>
+                <span className="text-slate-400 text-sm">
                   {adminStatus || '上传 Markdown/TXT 或粘贴文本生成 v2 实验草稿，确认后保存发布。'}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 mb-3">
                 <Field.Root>
-                  <Field.Label className="text-neutral-900 text-xs font-semibold mb-1.5 block">实验ID</Field.Label>
+                  <Field.Label className="text-dark text-xs font-bold mb-1.5 block">实验ID</Field.Label>
                   <input
                     value={adminDraft.experiment_id}
                     onChange={(e) => updateDraft('experiment_id', e.target.value)}
                     disabled={isBuildRunning}
-                    className="w-full h-9 px-3 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 hover:border-neutral-300 transition-colors"
+                    className="w-full h-9 px-3 rounded-xl border-0 bg-slate-50 text-dark text-sm outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white disabled:opacity-50 placeholder:text-slate-400"
                   />
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label className="text-neutral-900 text-xs font-semibold mb-1.5 block">实验名称</Field.Label>
+                  <Field.Label className="text-dark text-xs font-bold mb-1.5 block">实验名称</Field.Label>
                   <input
                     value={adminDraft.name}
                     onChange={(e) => updateDraft('name', e.target.value)}
                     disabled={isBuildRunning}
-                    className="w-full h-9 px-3 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 hover:border-neutral-300 transition-colors"
+                    className="w-full h-9 px-3 rounded-xl border-0 bg-slate-50 text-dark text-sm outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white disabled:opacity-50 placeholder:text-slate-400"
                   />
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label className="text-neutral-900 text-xs font-semibold mb-1.5 block">系统类型</Field.Label>
+                  <Field.Label className="text-dark text-xs font-bold mb-1.5 block">系统类型</Field.Label>
                   <input
                     value={adminDraft.system}
                     onChange={(e) => updateDraft('system', e.target.value)}
                     disabled={isBuildRunning}
-                    className="w-full h-9 px-3 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 hover:border-neutral-300 transition-colors"
+                    className="w-full h-9 px-3 rounded-xl border-0 bg-slate-50 text-dark text-sm outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white disabled:opacity-50 placeholder:text-slate-400"
                   />
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label className="text-neutral-900 text-xs font-semibold mb-1.5 block">Docker镜像</Field.Label>
+                  <Field.Label className="text-dark text-xs font-bold mb-1.5 block">Docker镜像</Field.Label>
                   <input
                     value={adminDraft.image_name}
                     onChange={(e) => updateDraft('image_name', e.target.value)}
                     disabled={isBuildRunning}
-                    className="w-full h-9 px-3 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 hover:border-neutral-300 transition-colors"
+                    className="w-full h-9 px-3 rounded-xl border-0 bg-slate-50 text-dark text-sm outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white disabled:opacity-50 placeholder:text-slate-400"
                   />
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label className="text-neutral-900 text-xs font-semibold mb-1.5 block">实验状态</Field.Label>
+                  <Field.Label className="text-dark text-xs font-bold mb-1.5 block">实验状态</Field.Label>
                   <select
                     value={adminDraft.status}
                     onChange={(e) => updateDraft('status', e.target.value as ExperimentStatus)}
                     disabled={isBuildRunning}
-                    className="w-full h-9 px-3 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 hover:border-neutral-300 transition-colors"
+                    className="w-full h-9 px-3 rounded-xl border-0 bg-slate-50 text-dark text-sm outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white disabled:opacity-50"
                   >
                     <option value="draft">草稿</option>
                     <option value="published">已发布</option>
@@ -670,27 +679,27 @@ export default function TeacherPage() {
               </div>
 
               <Field.Root className="mb-3">
-                <Field.Label className="text-neutral-900 text-xs font-semibold mb-1.5 block">实验目标</Field.Label>
+                <Field.Label className="text-dark text-xs font-bold mb-1.5 block">实验目标</Field.Label>
                 <textarea
                   value={adminDraft.objective}
                   onChange={(e) => updateDraft('objective', e.target.value)}
                   rows={2}
                   disabled={isBuildRunning}
-                  className="w-full px-3 py-2 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 resize-y hover:border-neutral-300 transition-colors"
+                  className="w-full px-3 py-2 rounded-xl border-0 bg-slate-50 text-dark text-sm outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white disabled:opacity-50 resize-y placeholder:text-slate-400"
                 />
               </Field.Root>
 
-              <Separator className="my-4 bg-neutral-200" />
+              <Separator className="my-4 bg-slate-200/80" />
 
-              <div className="mb-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+              <div className="mb-4 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-4 hover:border-brand-300 hover:bg-brand-50/30 transition-all">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex min-w-0 items-start gap-3">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-neutral-900 text-white">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-sm shadow-brand-500/20">
                       <Upload size={18} />
                     </span>
                     <div className="min-w-0">
-                      <strong className="block text-sm font-semibold text-neutral-900">上传实验文档</strong>
-                      <span className="mt-1 block text-xs leading-relaxed text-neutral-500">
+                      <strong className="block text-sm font-bold text-dark">上传实验文档</strong>
+                      <span className="mt-1 block text-xs leading-relaxed text-slate-500">
                         支持 Markdown/TXT，上传后可由 DeepSeek 识别为可编辑的实验草稿。
                       </span>
                     </div>
@@ -698,9 +707,9 @@ export default function TeacherPage() {
 
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <label
-                      className={`h-9 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-900 transition-colors hover:border-neutral-300 hover:bg-neutral-50 ${isEditorBusy ? 'pointer-events-none opacity-50' : ''}`}
+                      className={`h-9 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-dark transition-all hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm shadow-sm ${isEditorBusy ? 'pointer-events-none opacity-50' : ''}`}
                     >
-                      <FileText size={13} />
+                      <FileText size={13} className="text-brand-500" />
                       选择文件
                       <input
                         type="file"
@@ -718,17 +727,17 @@ export default function TeacherPage() {
                       type="button"
                       onClick={importAdminFile}
                       disabled={!importFile || isEditorBusy}
-                      className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-900 transition-colors hover:border-neutral-300 hover:bg-neutral-50 active:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="h-9 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-dark transition-all hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm active:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
                     >
                       {isImportingDraft ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                       {isImportingDraft ? 'DeepSeek 分析中' : 'AI 识别文档草稿'}
                     </button>
                   </div>
                 </div>
-                <div className="mt-3 flex min-h-8 items-center rounded-md border border-dashed border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-500">
+                <div className="mt-3 flex min-h-9 items-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-400 shadow-sm">
                   {importFile ? (
-                    <span className="inline-flex min-w-0 items-center gap-2 text-neutral-700">
-                      <FileText size={13} className="shrink-0 text-neutral-700" />
+                    <span className="inline-flex min-w-0 items-center gap-2 text-dark">
+                      <FileText size={13} className="shrink-0 text-brand-500" />
                       <span className="truncate">{importFile.name}</span>
                     </span>
                   ) : (
@@ -738,22 +747,23 @@ export default function TeacherPage() {
               </div>
 
               {isImportingDraft && (
-                <div className="mb-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
-                    <Loader2 size={15} className="animate-spin" />
+                <div className="mb-4 rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50/80 to-white p-4 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-brand-500/5 via-transparent to-brand-500/5 animate-pulse" />
+                  <div className="relative flex items-center gap-2 text-sm font-bold text-dark">
+                    <Loader2 size={15} className="animate-spin text-brand-500" />
                     DeepSeek 正在分析中
                   </div>
-                  <div className="mt-1 text-xs text-neutral-500">正在提取实验目标、步骤流程和验证规则，完成后会自动填入草稿。</div>
-                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white">
-                    <div className="h-full w-2/3 animate-pulse rounded-full bg-neutral-900" />
+                  <div className="relative mt-1 text-xs text-slate-500">正在提取实验目标、步骤流程和验证规则，完成后会自动填入草稿。</div>
+                  <div className="relative mt-3 h-2 overflow-hidden rounded-full bg-white shadow-inner">
+                    <div className="h-full w-2/3 animate-pulse rounded-full bg-gradient-to-r from-brand-400 to-brand-500" />
                   </div>
                 </div>
               )}
 
               {importWarnings.length > 0 && (
-                <div className="space-y-1.5 mb-3">
+                <div className="space-y-1.5 mb-4">
                   {importWarnings.map((warning, i) => (
-                    <div key={i} className="flex items-center gap-2 px-3 py-2 border border-red-200 rounded-md text-red-700 bg-red-50 text-xs font-medium">
+                    <div key={i} className="flex items-center gap-2 px-3 py-2 border border-red-200 rounded-xl text-red-700 bg-red-50 text-xs font-semibold shadow-sm">
                       <AlertTriangle size={13} />
                       {warning}
                     </div>
@@ -762,11 +772,11 @@ export default function TeacherPage() {
               )}
 
               {importRawOutput && (
-                <details className="mb-3 border border-neutral-200 rounded-lg bg-white overflow-hidden">
-                  <summary className="px-3 py-2 cursor-pointer font-semibold text-xs text-neutral-900 hover:bg-neutral-50">
+                <details className="mb-4 border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
+                  <summary className="px-3 py-2 cursor-pointer font-bold text-xs text-dark hover:bg-slate-50 transition-colors">
                     查看 AI 原始输出
                   </summary>
-                  <pre className="max-h-[260px] m-0 p-3 overflow-auto border-t border-neutral-200 whitespace-pre-wrap font-mono text-xs text-neutral-700 bg-neutral-50">
+                  <pre className="max-h-[260px] m-0 p-3 overflow-auto border-t border-slate-200 whitespace-pre-wrap font-mono text-xs text-slate-600 bg-slate-50">
                     {importRawOutput}
                   </pre>
                 </details>
@@ -782,14 +792,14 @@ export default function TeacherPage() {
                     <Tabs.Tab
                       key={tab.value}
                       value={tab.value}
-                      className="min-h-16 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-left transition-colors hover:border-neutral-300 hover:bg-neutral-50 data-[active=true]:border-neutral-900 data-[active=true]:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                      className="min-h-16 rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 text-left transition-all hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm data-[active=true]:border-brand-400 data-[active=true]:bg-brand-50/60 data-[active=true]:shadow-md data-[active=true]:shadow-brand-100/30 focus:outline-none focus:ring-2 focus:ring-brand-400"
                     >
-                      <span className="flex items-center gap-2 text-xs font-semibold text-neutral-900">
-                        <span className="grid h-5 w-5 place-items-center rounded-md bg-neutral-900 text-[11px] text-white">{index + 1}</span>
-                        <Icon size={14} className="text-neutral-700" />
+                      <span className="flex items-center gap-2 text-xs font-bold text-dark">
+                        <span className="grid h-5 w-5 place-items-center rounded-md bg-gradient-to-br from-brand-500 to-brand-600 text-[11px] text-white shadow-sm shadow-brand-500/20">{index + 1}</span>
+                        <Icon size={14} className="text-brand-500" />
                         {tab.label}
                       </span>
-                      <span className="mt-1 block text-xs leading-relaxed text-neutral-500">{tab.description}</span>
+                      <span className="mt-1 block text-xs leading-relaxed text-slate-400">{tab.description}</span>
                     </Tabs.Tab>
                     );
                   })}
@@ -797,7 +807,7 @@ export default function TeacherPage() {
 
                 <Tabs.Panel value="text" className="space-y-3">
                   <Field.Root>
-                    <Field.Label className="text-neutral-900 text-xs font-semibold mb-1.5 block">
+                    <Field.Label className="text-dark text-xs font-bold mb-1.5 block">
                       Markdown/文本导入
                     </Field.Label>
                     <textarea
@@ -806,21 +816,24 @@ export default function TeacherPage() {
                       rows={9}
                       disabled={isEditorBusy}
                       placeholder="粘贴实验文档、步骤说明或 Markdown 代码块"
-                      className="w-full px-3 py-2 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 resize-y hover:border-neutral-300 transition-colors"
+                      className="w-full px-3 py-2 rounded-xl border-0 bg-slate-50 text-dark text-sm font-mono leading-relaxed outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white disabled:opacity-50 resize-y placeholder:text-slate-400"
                     />
                   </Field.Root>
                   <button
                     onClick={importAdminText}
                     disabled={isEditorBusy || !importText.trim()}
-                    className="h-8 inline-flex items-center gap-1.5 px-3 rounded-md font-medium text-xs text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="h-9 inline-flex items-center gap-1.5 px-4 rounded-xl font-semibold text-xs text-dark bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                   >
                     {isImportingDraft ? (
                       <>
-                        <Loader2 size={13} className="animate-spin" />
+                        <Loader2 size={13} className="animate-spin text-brand-500" />
                         DeepSeek 分析中
                       </>
                     ) : (
-                      '识别文本草稿'
+                      <>
+                        <Sparkles size={13} className="text-brand-500" />
+                        识别文本草稿
+                      </>
                     )}
                   </button>
                 </Tabs.Panel>
@@ -835,7 +848,7 @@ export default function TeacherPage() {
                   <button
                     onClick={saveAdminExperiment}
                     disabled={isEditorBusy}
-                    className="h-8 inline-flex items-center gap-1.5 px-3 rounded-md font-medium text-xs text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="h-9 inline-flex items-center gap-1.5 px-4 rounded-xl font-semibold text-xs text-dark bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                   >
                     <Save size={13} />
                     保存实验配置
@@ -844,7 +857,7 @@ export default function TeacherPage() {
 
                 <Tabs.Panel value="advanced" className="space-y-4">
                   <Field.Root>
-                    <Field.Label className="text-neutral-900 text-xs font-semibold mb-1.5 block">
+                    <Field.Label className="text-dark text-xs font-bold mb-1.5 block">
                       容器需求 JSON
                     </Field.Label>
                     <textarea
@@ -852,14 +865,14 @@ export default function TeacherPage() {
                       onChange={(e) => setAdminContainerSpecText(e.target.value)}
                       rows={10}
                       disabled={isEditorBusy}
-                      className="w-full px-3 py-2 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 resize-y hover:border-neutral-300 transition-colors"
+                      className="w-full px-3 py-2 rounded-xl border-0 bg-slate-50 text-dark text-sm font-mono leading-relaxed outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white disabled:opacity-50 resize-y placeholder:text-slate-400"
                     />
                   </Field.Root>
-                  <span className="block text-neutral-500 text-xs font-medium">
+                  <span className="block text-slate-400 text-xs font-semibold">
                     默认使用华为云 openEuler、清华 pip、npmmirror npm 源。
                   </span>
                   <Field.Root>
-                    <Field.Label className="text-neutral-900 text-xs font-semibold mb-1.5 block">
+                    <Field.Label className="text-dark text-xs font-bold mb-1.5 block">
                       步骤 JSON
                     </Field.Label>
                     <textarea
@@ -867,13 +880,13 @@ export default function TeacherPage() {
                       onChange={(e) => setAdminStepsText(e.target.value)}
                       rows={16}
                       disabled={isEditorBusy}
-                      className="w-full px-3 py-2 rounded-md border border-neutral-200 bg-white text-neutral-900 text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:opacity-50 resize-y hover:border-neutral-300 transition-colors"
+                      className="w-full px-3 py-2 rounded-xl border-0 bg-slate-50 text-dark text-sm font-mono leading-relaxed outline-none ring-1 ring-slate-200 transition-all hover:ring-slate-300 focus:ring-2 focus:ring-brand-400 focus:bg-white disabled:opacity-50 resize-y placeholder:text-slate-400"
                     />
                   </Field.Root>
                   <button
                     onClick={saveAdminExperiment}
                     disabled={isEditorBusy}
-                    className="h-8 inline-flex items-center gap-1.5 px-3 rounded-md font-medium text-xs text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="h-9 inline-flex items-center gap-1.5 px-4 rounded-xl font-semibold text-xs text-dark bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                   >
                     <Save size={13} />
                     保存实验配置
@@ -885,7 +898,7 @@ export default function TeacherPage() {
                     <button
                       onClick={saveAdminExperiment}
                       disabled={isBuildRunning}
-                      className="h-9 inline-flex items-center gap-1.5 px-4 rounded-md font-medium text-xs text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 active:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="h-9 inline-flex items-center gap-1.5 px-4 rounded-xl font-semibold text-xs text-dark bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
                     >
                       <Save size={14} />
                       保存草稿
@@ -893,7 +906,7 @@ export default function TeacherPage() {
                     <button
                       onClick={buildAdminExperiment}
                       disabled={isBuildRunning || !adminDraft.image_name}
-                      className="h-9 inline-flex items-center gap-1.5 px-4 rounded-md font-medium text-xs text-white bg-neutral-900 border border-neutral-900 hover:bg-neutral-800 active:bg-neutral-950 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="h-9 inline-flex items-center gap-1.5 px-4 rounded-xl font-semibold text-xs text-white bg-gradient-to-r from-brand-500 to-brand-600 border border-transparent hover:from-brand-600 hover:to-brand-700 hover:shadow-lg hover:shadow-brand-500/25 hover:-translate-y-px active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 transition-all shadow-md shadow-brand-500/20"
                     >
                       {isBuildRunning ? (
                         <>
@@ -909,35 +922,35 @@ export default function TeacherPage() {
                     </button>
                     {buildStatus && (
                       <span
-                        className={`h-6 inline-flex items-center gap-1 px-2.5 rounded-md text-xs font-medium border
+                        className={`h-6 inline-flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold border shadow-sm
                           ${buildStatus === 'succeeded'
-                            ? 'text-green-700 border-green-200 bg-green-50'
+                            ? 'text-emerald-700 border-emerald-200 bg-emerald-50'
                             : buildStatus === 'failed'
                             ? 'text-red-700 border-red-200 bg-red-50'
-                            : 'text-neutral-600 border-neutral-200 bg-neutral-50'}
+                            : 'text-slate-600 border-slate-200 bg-slate-50'}
                         `}
                       >
-                        {buildStatus === 'succeeded' && <CheckCircle2 size={11} />}
-                        {buildStatus === 'failed' && <XCircle size={11} />}
+                        {buildStatus === 'succeeded' && <CheckCircle2 size={11} className="text-emerald-500" />}
+                        {buildStatus === 'failed' && <XCircle size={11} className="text-red-500" />}
                         {buildStatus}
                       </span>
                     )}
                   </div>
 
                   {buildDockerfile && (
-                    <details open className="border border-neutral-200 rounded-lg bg-white overflow-hidden">
-                      <summary className="px-3 py-2 cursor-pointer font-semibold text-xs text-neutral-900 hover:bg-neutral-50">
+                    <details open className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
+                      <summary className="px-4 py-2.5 cursor-pointer font-bold text-xs text-dark hover:bg-slate-50 transition-colors">
                         Dockerfile 预览
                       </summary>
-                      <pre className="max-h-[300px] m-0 p-3 overflow-auto border-t border-neutral-200 whitespace-pre-wrap font-mono text-xs text-neutral-700 bg-neutral-50">
+                      <pre className="max-h-[300px] m-0 p-4 overflow-auto border-t border-slate-200 whitespace-pre-wrap font-mono text-xs text-slate-600 bg-slate-50">
                         {buildDockerfile}
                       </pre>
                     </details>
                   )}
 
                   {(buildLogs || buildError) && (
-                    <div className="border border-neutral-200 rounded-lg bg-white overflow-hidden">
-                      <strong className="block px-3 py-2 text-neutral-900 font-semibold text-xs border-b border-neutral-200">
+                    <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
+                      <strong className="block px-4 py-2.5 text-dark font-bold text-xs border-b border-slate-200">
                         {buildError ? (
                           <span className="flex items-center gap-1.5 text-red-700">
                             <XCircle size={13} />
@@ -947,7 +960,7 @@ export default function TeacherPage() {
                           '构建日志'
                         )}
                       </strong>
-                      <pre className="max-h-[300px] m-0 p-3 overflow-auto whitespace-pre-wrap font-mono text-xs text-neutral-700 bg-neutral-50">
+                      <pre className="max-h-[300px] m-0 p-4 overflow-auto whitespace-pre-wrap font-mono text-xs text-slate-600 bg-slate-50">
                         {buildLogs || buildError}
                       </pre>
                     </div>
@@ -956,9 +969,12 @@ export default function TeacherPage() {
               </Tabs.Root>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto border border-neutral-200 rounded-lg bg-white p-8 text-center">
-              <strong className="text-neutral-900 text-base font-semibold">暂无实验配置</strong>
-              <p className="mt-2 text-sm text-neutral-500">可以从左侧新建一个实验草稿。</p>
+            <div className="max-w-3xl mx-auto border border-slate-200/80 rounded-2xl bg-white p-8 text-center shadow-sm">
+              <div className="w-12 h-12 mx-auto grid place-items-center rounded-2xl bg-gradient-to-br from-brand-100 to-accent-100 text-brand-500 mb-4">
+                <FilePlus2 size={24} />
+              </div>
+              <strong className="text-dark text-base font-bold">暂无实验配置</strong>
+              <p className="mt-2 text-sm text-slate-400">可以从左侧新建一个实验草稿。</p>
             </div>
           )}
         </section>
