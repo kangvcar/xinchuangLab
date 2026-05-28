@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import LogoIcon from '@/components/LogoIcon';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -481,41 +480,25 @@ export default function TeacherPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <header className="h-14 flex items-center gap-4 px-4 bg-[#181925] shrink-0">
-        {/* Brand */}
-        <Link to="/" className="flex items-center gap-2.5 shrink-0 no-underline">
-          <LogoIcon variant="light" size={32} />
-          <strong className="text-white text-sm font-semibold hidden lg:block">信创Linux AI</strong>
-        </Link>
-
-        {/* Divider */}
-        <div className="w-px h-4 bg-white/20 shrink-0" />
-
-        {/* Page title */}
-        <div className="flex items-center gap-2">
-          <FlaskConical size={15} className="text-white/60" />
-          <span className="text-white/90 text-sm font-medium">教师实验管理</span>
+      <header className="h-14 flex items-center gap-4 px-6 bg-white border-b border-neutral-200">
+        <div className="flex items-center gap-2.5 min-w-[140px]">
+          <div className="w-8 h-8 grid place-items-center rounded-md text-white bg-neutral-900">
+            <FlaskConical size={18} />
+          </div>
+          <strong className="text-neutral-900 text-sm font-semibold">教师实验管理</strong>
         </div>
 
-        {/* Status badge */}
         {adminDraft && (
-          <span className={`h-6 inline-flex items-center rounded-full border px-2.5 text-xs font-medium ${statusBadgeClass(adminDraft.status)}`}>
+          <span className={`h-6 inline-flex items-center rounded-md border px-2 text-xs font-medium ${statusBadgeClass(adminDraft.status)}`}>
             {statusLabel(adminDraft.status)}
           </span>
         )}
 
-        {/* Unsaved indicator */}
-        {isDirty && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-            有未保存修改
-          </span>
-        )}
+        {isDirty && <span className="text-xs font-medium text-amber-700">有未保存修改</span>}
 
-        {/* Back */}
         <Link
           to="/lab"
-          className="ml-auto h-8 inline-flex items-center px-4 rounded-full text-xs font-medium border border-white/20 text-white/70 hover:text-white hover:bg-white/10 transition-colors no-underline"
+          className="ml-auto h-8 inline-flex items-center px-3 rounded-md font-medium text-xs border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 hover:border-neutral-300 active:bg-neutral-100 transition-colors no-underline"
         >
           返回学生端
         </Link>
