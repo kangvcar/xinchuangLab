@@ -77,7 +77,7 @@ export default function TerminalPanel({
   }, [fit]);
 
   return (
-    <section className="min-w-0 min-h-0 overflow-hidden rounded-xl bg-dark flex flex-col shadow-lg shadow-slate-900/20 border border-slate-800">
+    <section className="min-w-0 min-h-0 h-full overflow-hidden rounded-xl bg-dark flex flex-col shadow-lg shadow-slate-900/20 border border-slate-800">
       {/* Header - Dark themed to blend with terminal */}
       <div className="h-11 flex items-center justify-between px-3 border-b border-slate-700/80 bg-dark/95 shrink-0">
         {activeSession ? (

@@ -28,7 +28,7 @@ export default function TaskPanel({
   renderMarkdown,
 }: TaskPanelProps) {
   return (
-    <section className="min-w-0 min-h-0 overflow-hidden rounded-xl bg-white flex flex-col shadow-sm shadow-slate-200/50 border border-slate-200/80">
+    <section className="min-w-0 min-h-0 h-full overflow-hidden rounded-xl bg-white flex flex-col shadow-sm shadow-slate-200/50 border border-slate-200/80">
       <StepNav
         currentSteps={currentSteps}
         stepProgressMap={stepProgressMap}

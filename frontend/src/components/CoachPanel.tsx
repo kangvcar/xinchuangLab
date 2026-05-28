@@ -30,7 +30,7 @@ export default function CoachPanel({
   }, [aiRecords, analyzingCommand, streamingRecord]);
 
   return (
-    <section className="min-w-0 min-h-0 overflow-hidden rounded-xl bg-white flex flex-col shadow-sm shadow-slate-200/50 border border-slate-200/80">
+    <section className="min-w-0 min-h-0 h-full overflow-hidden rounded-xl bg-white flex flex-col shadow-sm shadow-slate-200/50 border border-slate-200/80">
       {/* Header */}
       <div className="h-11 flex items-center justify-between gap-3 px-4 border-b border-slate-200/80 bg-gradient-to-r from-brand-50/50 to-white shrink-0">
         <div className="inline-flex items-center gap-2 text-dark font-bold text-sm">
