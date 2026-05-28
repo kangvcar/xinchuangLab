@@ -32,25 +32,25 @@ export default function Topbar({
     experiments.find((exp) => exp.id === selectedExperimentId)?.name ?? selectedExperimentId;
 
   return (
-    <header className="h-14 flex items-center gap-6 px-6 bg-white border-b border-slate-200/80 shrink-0 shadow-sm shadow-slate-100/50">
+    <header className="h-14 flex items-center gap-3 sm:gap-6 px-3 sm:px-6 bg-white border-b border-slate-200/80 shrink-0 shadow-sm shadow-slate-100/50">
       {/* Brand */}
-      <div className="flex items-center gap-2.5 min-w-[178px]">
+      <div className="flex items-center gap-2.5 min-w-0 shrink-0">
         <LogoIcon variant="dark" size={32} />
-        <strong className="text-dark text-sm font-semibold whitespace-nowrap tracking-tight">
+        <strong className="hidden sm:block text-dark text-sm font-semibold whitespace-nowrap tracking-tight">
           信创Linux AI实时陪练实训平台
         </strong>
       </div>
 
       {/* Experiment Selector */}
-      <div className="flex items-center gap-2.5 min-w-[280px]">
-        <span className="text-slate-400 text-xs font-medium">实验模块</span>
+      <div className="flex items-center gap-2.5 min-w-0 flex-1 sm:flex-none sm:min-w-[200px]">
+        <span className="hidden sm:block text-slate-400 text-xs font-medium shrink-0">实验模块</span>
         <Select.Root
           value={selectedExperimentId}
           onValueChange={(value) => onSelectExperiment(value as string)}
         >
           <Select.Trigger
             disabled={busy}
-            className="h-9 min-w-[200px] max-w-[360px] px-3 pr-8 rounded-lg border border-slate-200 text-dark bg-white text-sm font-medium relative focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 disabled:opacity-50 disabled:cursor-not-allowed hover:border-slate-300 hover:bg-slate-50/50 transition-all shadow-sm"
+            className="h-9 w-full sm:w-auto sm:min-w-[180px] sm:max-w-[280px] lg:min-w-[200px] lg:max-w-[360px] px-3 pr-8 rounded-lg border border-slate-200 text-dark bg-white text-sm font-medium relative focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 disabled:opacity-50 disabled:cursor-not-allowed hover:border-slate-300 hover:bg-slate-50/50 transition-all shadow-sm"
           >
             <Select.Value className="block truncate">{selectedExperimentName}</Select.Value>
             <Select.Icon className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -85,14 +85,14 @@ export default function Topbar({
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-3 ml-auto">
-        <span className="inline-flex items-center gap-1.5 text-slate-600 font-medium text-xs bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200/80">
+      <div className="flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
+        <span className="hidden md:inline-flex items-center gap-1.5 text-slate-600 font-medium text-xs bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200/80">
           <UserRound size={13} className="text-brand-500" />
           {studentId}
         </span>
 
         {activeSession && (
-          <span className="inline-flex items-center gap-1.5 text-slate-500 font-medium text-xs bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200/80">
+          <span className="hidden sm:inline-flex items-center gap-1.5 text-slate-500 font-medium text-xs bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200/80">
             <Clock3 size={13} className="text-accent-500" />
             {timerText}
           </span>
@@ -101,7 +101,7 @@ export default function Topbar({
         <button
           onClick={onStartSession}
           disabled={Boolean(activeSession) || busy}
-          className="h-9 inline-flex items-center gap-1.5 px-4 rounded-lg font-medium text-xs border transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm
+          className="h-9 inline-flex items-center gap-1.5 px-3 sm:px-4 rounded-lg font-medium text-xs border transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm
             bg-gradient-to-r from-brand-500 to-brand-600 text-white border-transparent hover:from-brand-600 hover:to-brand-700 hover:shadow-md hover:shadow-brand-500/20 hover:-translate-y-px active:translate-y-0
             data-[active=true]:bg-white data-[active=true]:text-emerald-700 data-[active=true]:border-emerald-200 data-[active=true]:cursor-default data-[active=true]:from-white data-[active=true]:to-white data-[active=true]:hover:translate-y-0"
           data-active={Boolean(activeSession)}
@@ -113,12 +113,13 @@ export default function Topbar({
           ) : (
             <Play size={13} />
           )}
-          {activeSession ? '运行中' : busy ? '启动中...' : '开始实验'}
+          <span className="hidden sm:inline">{activeSession ? '运行中' : busy ? '启动中...' : '开始实验'}</span>
+          <span className="sm:hidden">{activeSession ? '运行' : busy ? '...' : '开始'}</span>
         </button>
 
         <Link
           to="/teacher"
-          className="h-9 inline-flex items-center gap-1.5 px-3 rounded-lg font-medium text-xs border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-dark hover:border-slate-300 active:bg-slate-100 transition-all no-underline shadow-sm"
+          className="hidden sm:inline-flex h-9 items-center gap-1.5 px-3 rounded-lg font-medium text-xs border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-dark hover:border-slate-300 active:bg-slate-100 transition-all no-underline shadow-sm"
         >
           教师端
         </Link>

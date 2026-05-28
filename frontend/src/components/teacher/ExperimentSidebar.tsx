@@ -28,6 +28,7 @@ interface ExperimentSidebarProps {
   canCopySelected: boolean;
   canDeactivateSelected: boolean;
   disabled?: boolean;
+  hideHeader?: boolean;
 }
 
 const FILTERS: Array<{ value: StatusFilter; label: string }> = [
@@ -61,6 +62,7 @@ export default function ExperimentSidebar({
   canCopySelected,
   canDeactivateSelected,
   disabled = false,
+  hideHeader = false,
 }: ExperimentSidebarProps) {
   const visibleExperiments = sortExperiments(
     experiments.filter(
@@ -71,6 +73,7 @@ export default function ExperimentSidebar({
 
   return (
     <aside className="w-full lg:w-[320px] shrink-0 border-r border-slate-200/80 bg-slate-50/80 flex flex-col min-h-0">
+      {!hideHeader && (
       <div className="p-4 border-b border-slate-200/80 bg-white">
         <div className="flex items-center justify-between gap-3 mb-3">
           <strong className="text-sm font-bold text-dark">实验库</strong>
@@ -144,8 +147,9 @@ export default function ExperimentSidebar({
           </button>
         </div>
       </div>
+      )}
 
-      <div className="min-h-0 max-h-[46rem] overflow-y-auto p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto p-2">
         {visibleExperiments.length === 0 ? (
           <div className="px-3 py-8 text-center text-xs text-slate-400">
             <Search size={20} className="mx-auto mb-2 text-slate-300" />

@@ -38,6 +38,8 @@
     color: #475569;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   code {
@@ -66,6 +68,14 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+  }
+
+  /* Hide scrollbars on touch devices for cleaner mobile UI */
+  @media (hover: none) and (pointer: coarse) {
+    ::-webkit-scrollbar {
+      width: 0px;
+      height: 0px;
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type FormEvent } from 'react';
 import { marked } from 'marked';
-import { Loader2, LogIn } from 'lucide-react';
+import { Loader2, LogIn, ClipboardList, Bot, Terminal } from 'lucide-react';
 import LogoIcon from '@/components/LogoIcon';
 import Topbar from '@/components/Topbar';
 import StepNav from '@/components/StepNav';
@@ -112,6 +112,7 @@ export default function StudentPage() {
   const [activeStepId, setActiveStepId] = useState<number | null>(null);
   const [streamingRecord, setStreamingRecord] = useState<AICoachRecord | null>(null);
   const [experimentCompleted, setExperimentCompleted] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'task' | 'coach' | 'terminal'>('task');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const selectedExperiment = useMemo(
@@ -628,6 +629,12 @@ export default function StudentPage() {
     );
   }
 
+  const tabConfig = [
+    { key: 'task' as const, label: '任务', icon: ClipboardList },
+    { key: 'coach' as const, label: 'AI陪练', icon: Bot },
+    { key: 'terminal' as const, label: '终端', icon: Terminal },
+  ];
+
   return (
     <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
       <Topbar
@@ -642,7 +649,8 @@ export default function StudentPage() {
         busy={busy}
       />
 
-      <main className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(360px,40%)_minmax(560px,60%)] gap-4 p-4">
+      {/* Desktop layout */}
+      <main className="flex-1 min-h-0 hidden lg:grid grid-cols-1 lg:grid-cols-[minmax(360px,40%)_minmax(560px,60%)] gap-4 p-4">
         <aside className="min-w-0 min-h-0 grid grid-rows-[1fr_1fr] gap-4">
           <TaskPanel
             currentSteps={currentSteps}
@@ -678,6 +686,74 @@ export default function StudentPage() {
           onSendMockCommand={sendMockCommand}
           busy={busy}
         />
+      </main>
+
+      {/* Mobile layout with bottom tabs */}
+      <main className="flex-1 min-h-0 flex flex-col lg:hidden">
+        <div className="flex-1 min-h-0 p-3 pb-0">
+          {mobileTab === 'task' && (
+            <TaskPanel
+              currentSteps={currentSteps}
+              stepProgressMap={stepProgressMap}
+              currentQuestion={currentQuestion}
+              displayedStep={displayedStep}
+              displayedStepStatus={displayedStepStatus}
+              progressPercent={progressPercent}
+              onSelectStep={selectStep}
+              onConfirmStep={confirmStep}
+              renderMarkdown={renderMarkdown}
+            />
+          )}
+          {mobileTab === 'coach' && (
+            <CoachPanel
+              aiRecords={aiRecords}
+              analyzingCommand={analyzingCommand}
+              statusText={statusText}
+              renderMarkdown={renderMarkdown}
+              streamingRecord={streamingRecord}
+              experimentCompleted={experimentCompleted}
+            />
+          )}
+          {mobileTab === 'terminal' && (
+            <TerminalPanel
+              activeSession={activeSession}
+              selectedExperimentName={selectedExperiment?.name}
+              runtimeLabel={runtimeLabel}
+              hasTerminalFrame={Boolean(activeSession?.terminal_url)}
+              onStartSession={startSession}
+              onStopSession={stopSession}
+              onResetSession={resetSession}
+              onGenerateReport={generateReport}
+              onExportDocx={exportDocx}
+              onSendMockCommand={sendMockCommand}
+              busy={busy}
+            />
+          )}
+        </div>
+
+        {/* Bottom Tab Bar */}
+        <nav className="shrink-0 flex items-center justify-around bg-white border-t border-slate-200/80 px-2 safe-area-pb">
+          {tabConfig.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = mobileTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setMobileTab(tab.key)}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 h-14 min-w-[64px] transition-colors ${
+                  isActive
+                    ? 'text-brand-600'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                <span className={`text-[11px] font-semibold ${isActive ? 'text-brand-600' : ''}`}>
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
       </main>
     </div>
   );

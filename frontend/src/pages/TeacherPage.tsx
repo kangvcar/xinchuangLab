@@ -8,6 +8,7 @@ import {
   FlaskConical,
   Loader2,
   ListChecks,
+  PanelLeft,
   Rocket,
   Save,
   Send,
@@ -17,6 +18,7 @@ import {
   Upload,
   UserPlus,
   Users,
+  X,
   XCircle,
 } from 'lucide-react';
 import { Tabs } from '@base-ui/react/tabs';
@@ -82,6 +84,7 @@ export default function TeacherPage() {
   const [isStudentImporting, setIsStudentImporting] = useState(false);
   const [studentRosterStatus, setStudentRosterStatus] = useState('');
   const [isImportingDraft, setIsImportingDraft] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const buildPollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isBuildRunning = buildStatus === 'queued' || buildStatus === 'running';
@@ -266,6 +269,7 @@ export default function TeacherPage() {
     if (experimentId === selectedExperimentId) return;
     if (!confirmDiscardDirty()) return;
     setSelectedExperimentId(experimentId);
+    setMobileSidebarOpen(false);
   }, [confirmDiscardDirty, selectedExperimentId]);
 
   const createBlankExperiment = useCallback(() => {
@@ -482,66 +486,122 @@ export default function TeacherPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="h-14 flex items-center gap-4 px-6 bg-white/80 backdrop-blur-sm border-b border-slate-200/80 shadow-sm shadow-slate-100/50">
-        <div className="flex items-center gap-2.5 min-w-[140px]">
+      <header className="h-14 flex items-center gap-3 sm:gap-4 px-4 sm:px-6 bg-white/80 backdrop-blur-sm border-b border-slate-200/80 shadow-sm shadow-slate-100/50">
+        <div className="flex items-center gap-2.5 min-w-0 shrink-0">
           <div className="w-8 h-8 grid place-items-center rounded-lg text-white bg-gradient-to-br from-brand-500 to-brand-600 shadow-sm shadow-brand-500/20">
             <FlaskConical size={18} />
           </div>
-          <strong className="text-dark text-sm font-bold tracking-tight">教师实验管理</strong>
+          <strong className="hidden sm:block text-dark text-sm font-bold tracking-tight">教师实验管理</strong>
         </div>
 
         {adminDraft && (
-          <span className={`h-6 inline-flex items-center rounded-lg border px-2.5 text-xs font-semibold ${statusBadgeClass(adminDraft.status)} shadow-sm`}>
+          <span className={`hidden md:inline-flex h-6 items-center rounded-lg border px-2.5 text-xs font-semibold ${statusBadgeClass(adminDraft.status)} shadow-sm shrink-0`}>
             {statusLabel(adminDraft.status)}
           </span>
         )}
 
         {isDirty && (
-          <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+          <span className="hidden lg:inline-flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
             有未保存修改
           </span>
         )}
 
+        <button
+          type="button"
+          onClick={() => setMobileSidebarOpen(true)}
+          className="lg:hidden ml-auto mr-2 h-8 inline-flex items-center gap-1.5 px-3 rounded-lg font-semibold text-xs border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-dark hover:border-slate-300 active:bg-slate-100 transition-all shadow-sm shrink-0"
+        >
+          <PanelLeft size={14} />
+          <span className="hidden sm:inline">实验库</span>
+        </button>
+
         <Link
           to="/lab"
-          className="ml-auto h-8 inline-flex items-center px-3 rounded-lg font-semibold text-xs border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-dark hover:border-slate-300 active:bg-slate-100 transition-all no-underline shadow-sm"
+          className="h-8 inline-flex items-center px-3 rounded-lg font-semibold text-xs border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-dark hover:border-slate-300 active:bg-slate-100 transition-all no-underline shadow-sm shrink-0"
         >
-          返回学生端
+          <span className="hidden sm:inline">返回学生端</span>
+          <span className="sm:hidden">学生端</span>
         </Link>
       </header>
 
-      <main className="flex-1 min-h-0 flex flex-col lg:flex-row">
-        <ExperimentSidebar
-          experiments={experiments}
-          selectedExperimentId={selectedExperimentId}
-          searchQuery={searchQuery}
-          statusFilter={statusFilter}
-          sortMode={sortMode}
-          onSearchChange={setSearchQuery}
-          onStatusFilterChange={setStatusFilter}
-          onSortModeChange={setSortMode}
-          onSelect={selectExperiment}
-          onCreateBlank={createBlankExperiment}
-          onCopySelected={copySelectedExperiment}
-          onDeactivateSelected={deactivateSelectedExperiment}
-          onMoveExperiment={moveExperimentOrder}
-          canCopySelected={Boolean(selectedExperiment)}
-          canDeactivateSelected={Boolean(selectedExperiment && normalizeExperimentStatus(selectedExperiment.status) !== 'inactive')}
-          disabled={isBuildRunning}
-        />
+      <main className="flex-1 min-h-0 flex flex-col lg:flex-row relative">
+        {/* Desktop sidebar */}
+        <div className="hidden lg:block">
+          <ExperimentSidebar
+            experiments={experiments}
+            selectedExperimentId={selectedExperimentId}
+            searchQuery={searchQuery}
+            statusFilter={statusFilter}
+            sortMode={sortMode}
+            onSearchChange={setSearchQuery}
+            onStatusFilterChange={setStatusFilter}
+            onSortModeChange={setSortMode}
+            onSelect={selectExperiment}
+            onCreateBlank={createBlankExperiment}
+            onCopySelected={copySelectedExperiment}
+            onDeactivateSelected={deactivateSelectedExperiment}
+            onMoveExperiment={moveExperimentOrder}
+            canCopySelected={Boolean(selectedExperiment)}
+            canDeactivateSelected={Boolean(selectedExperiment && normalizeExperimentStatus(selectedExperiment.status) !== 'inactive')}
+            disabled={isBuildRunning}
+          />
+        </div>
 
-        <section className="flex-1 min-w-0 overflow-auto p-6">
-          <div className="max-w-6xl mx-auto mb-5 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-200/40">
+        {/* Mobile sidebar drawer */}
+        {mobileSidebarOpen && (
+          <div className="fixed inset-0 z-40 lg:hidden">
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => setMobileSidebarOpen(false)}
+            />
+            <div className="absolute left-0 top-0 bottom-0 w-[320px] max-w-[85vw] bg-slate-50/95 backdrop-blur-md shadow-2xl flex flex-col">
+              <div className="h-14 flex items-center justify-between px-4 border-b border-slate-200/80 bg-white shrink-0">
+                <strong className="text-sm font-bold text-dark">实验库</strong>
+                <button
+                  type="button"
+                  onClick={() => setMobileSidebarOpen(false)}
+                  className="h-8 w-8 grid place-items-center rounded-lg text-slate-500 hover:text-dark hover:bg-slate-100 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <ExperimentSidebar
+                  experiments={experiments}
+                  selectedExperimentId={selectedExperimentId}
+                  searchQuery={searchQuery}
+                  statusFilter={statusFilter}
+                  sortMode={sortMode}
+                  onSearchChange={setSearchQuery}
+                  onStatusFilterChange={setStatusFilter}
+                  onSortModeChange={setSortMode}
+                  onSelect={selectExperiment}
+                  onCreateBlank={createBlankExperiment}
+                  onCopySelected={copySelectedExperiment}
+                  onDeactivateSelected={deactivateSelectedExperiment}
+                  onMoveExperiment={moveExperimentOrder}
+                  canCopySelected={Boolean(selectedExperiment)}
+                  canDeactivateSelected={Boolean(selectedExperiment && normalizeExperimentStatus(selectedExperiment.status) !== 'inactive')}
+                  disabled={isBuildRunning}
+                  hideHeader
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <section className="flex-1 min-w-0 overflow-auto p-4 sm:p-6">
+          <div className="max-w-6xl mx-auto mb-5 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-sm shadow-slate-200/40">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex min-w-0 items-center gap-2.5 flex-wrap">
                 <span className="w-7 h-7 grid place-items-center rounded-lg bg-brand-50 text-brand-600">
                   <Users size={14} />
                 </span>
                 <strong className="text-sm font-bold text-dark">学生准入</strong>
                 <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">{students.length} 个学号</span>
                 {studentRosterStatus && (
-                  <span className="truncate text-xs font-semibold text-slate-400">{studentRosterStatus}</span>
+                  <span className="truncate text-xs font-semibold text-slate-400 w-full sm:w-auto">{studentRosterStatus}</span>
                 )}
               </div>
               <form
@@ -597,7 +657,7 @@ export default function TeacherPage() {
               </div>
             </div>
             {students.length > 0 && (
-              <div className="mt-4 flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
+              <div className="mt-4 flex max-h-28 sm:max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
                 {students.map((student) => (
                   <span
                     key={student.student_id}
@@ -619,7 +679,7 @@ export default function TeacherPage() {
             )}
           </div>
           {adminDraft ? (
-            <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm shadow-slate-200/40">
+            <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-6 shadow-sm shadow-slate-200/40">
               <div className="flex items-center gap-3 mb-5">
                 <strong className="text-dark text-base font-bold">实验配置</strong>
                 <span className="text-slate-400 text-sm">
@@ -785,21 +845,21 @@ export default function TeacherPage() {
               <ValidationSummary errors={validationErrors} warnings={validationWarnings} />
 
               <Tabs.Root defaultValue="text" className="mt-4">
-                <Tabs.List className="mb-4 grid grid-cols-1 gap-2 md:grid-cols-4">
+                <Tabs.List className="mb-4 flex overflow-x-auto scrollbar-none gap-2 md:grid md:grid-cols-4 pb-1">
                   {EDITOR_TABS.map((tab, index) => {
                     const Icon = tab.icon;
                     return (
                     <Tabs.Tab
                       key={tab.value}
                       value={tab.value}
-                      className="min-h-16 rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 text-left transition-all hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm data-[active=true]:border-brand-400 data-[active=true]:bg-brand-50/60 data-[active=true]:shadow-md data-[active=true]:shadow-brand-100/30 focus:outline-none focus:ring-2 focus:ring-brand-400"
+                      className="min-h-14 md:min-h-16 shrink-0 rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 text-left transition-all hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm data-[active=true]:border-brand-400 data-[active=true]:bg-brand-50/60 data-[active=true]:shadow-md data-[active=true]:shadow-brand-100/30 focus:outline-none focus:ring-2 focus:ring-brand-400 w-[140px] md:w-auto"
                     >
                       <span className="flex items-center gap-2 text-xs font-bold text-dark">
                         <span className="grid h-5 w-5 place-items-center rounded-md bg-gradient-to-br from-brand-500 to-brand-600 text-[11px] text-white shadow-sm shadow-brand-500/20">{index + 1}</span>
                         <Icon size={14} className="text-brand-500" />
                         {tab.label}
                       </span>
-                      <span className="mt-1 block text-xs leading-relaxed text-slate-400">{tab.description}</span>
+                      <span className="mt-1 block text-xs leading-relaxed text-slate-400 truncate">{tab.description}</span>
                     </Tabs.Tab>
                     );
                   })}
