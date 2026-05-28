@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Bot, Sparkles, PartyPopper, FileText } from 'lucide-react';
+import { Bot, Sparkles, PartyPopper } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { AICoachRecord } from '@/types';
 
@@ -21,6 +21,7 @@ export default function CoachPanel({
   experimentCompleted,
 }: CoachPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const displayedRecords = streamingRecord ? [...aiRecords, streamingRecord] : aiRecords;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -70,32 +71,8 @@ export default function CoachPanel({
           )}
         </AnimatePresence>
 
-        {/* Streaming record */}
-        <AnimatePresence>
-          {streamingRecord && (
-            <motion.article
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="border border-brand-200 rounded-xl p-3.5 bg-gradient-to-r from-brand-50/60 to-white relative overflow-hidden"
-            >
-              {/* Pulsing left accent line */}
-              <div className="absolute left-0 top-3 bottom-3 w-1 rounded-full bg-gradient-to-b from-brand-400 to-brand-600 animate-pulse" />
-              <time className="block mb-1.5 text-brand-400 text-[11px] font-semibold">
-                正在输出…
-              </time>
-              <div
-                className="markdown-content text-sm text-slate-700"
-                dangerouslySetInnerHTML={{ __html: String(renderMarkdown(streamingRecord.ai_response)) }}
-              />
-              {/* Blinking cursor */}
-              <span className="inline-block w-0.5 h-4 bg-brand-500 ml-0.5 align-middle animate-pulse" />
-            </motion.article>
-          )}
-        </AnimatePresence>
-
         <AnimatePresence initial={false}>
-          {aiRecords.map((record, index) => (
+          {displayedRecords.map((record, index) => (
             <motion.article
               key={record.id || index}
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
@@ -113,6 +90,9 @@ export default function CoachPanel({
                 className="markdown-content text-sm text-slate-600"
                 dangerouslySetInnerHTML={{ __html: String(renderMarkdown(record.ai_response)) }}
               />
+              {streamingRecord?.id === record.id && (
+                <span className="inline-block w-0.5 h-4 bg-brand-500 ml-0.5 align-middle animate-pulse" />
+              )}
             </motion.article>
           ))}
         </AnimatePresence>
@@ -145,7 +125,7 @@ export default function CoachPanel({
           </motion.article>
         )}
 
-        {aiRecords.length === 0 && !analyzingCommand && !streamingRecord && !experimentCompleted && (
+        {displayedRecords.length === 0 && !analyzingCommand && !experimentCompleted && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

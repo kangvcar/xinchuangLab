@@ -125,3 +125,66 @@ def test_deepseek_empty_response_raises(monkeypatch: pytest.MonkeyPatch) -> None
                 step_progress=[{"step_id": 1, "status": "pending"}],
             )
         )
+
+
+def test_deepseek_explain_stream_yields_sse_chunks(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict = {}
+
+    class FakeStreamResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        async def aiter_lines(self):
+            lines = [
+                "",
+                'data: {"choices":[{"delta":{"content":"第一段"}}]}',
+                'data: {"choices":[{"delta":{"content":"第二段"}}]}',
+                'data: {"choices":[{"delta":{}}]}',
+                "data: [DONE]",
+            ]
+            for line in lines:
+                yield line
+
+    class FakeStreamContext:
+        async def __aenter__(self):
+            return FakeStreamResponse()
+
+        async def __aexit__(self, *args):
+            return None
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs):
+            return None
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+        def stream(self, method, url, headers, json):
+            captured["method"] = method
+            captured["url"] = url
+            captured["payload"] = json
+            return FakeStreamContext()
+
+    monkeypatch.setattr(ai_provider.httpx, "AsyncClient", FakeClient)
+
+    provider = DeepSeekCoachProvider(settings())
+
+    async def collect_chunks() -> list[str]:
+        return [
+            chunk
+            async for chunk in provider.explain_stream(
+                experiment=experiment(),
+                command_context="命令：pwd",
+                knowledge_context="",
+                step_progress=[{"step_id": 1, "status": "pending"}],
+            )
+        ]
+
+    chunks = asyncio.run(collect_chunks())
+
+    assert chunks == ["第一段", "第二段"]
+    assert captured["method"] == "POST"
+    assert captured["payload"]["stream"] is True

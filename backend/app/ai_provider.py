@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import AsyncIterator
+from typing import Any, AsyncIterator
 
 import httpx
 
@@ -110,9 +110,60 @@ class DeepSeekCoachProvider(CoachProvider):
         knowledge_context: str,
         step_progress: list[dict[str, Any]] | None = None,
     ) -> str:
+        url, headers, payload = self._build_request(
+            experiment=experiment,
+            command_context=command_context,
+            knowledge_context=knowledge_context,
+            step_progress=step_progress,
+        )
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            data = response.json()
+        content = str(data["choices"][0]["message"].get("content") or "").strip()
+        if not content:
+            raise RuntimeError("DeepSeek returned empty response")
+        return content
+
+    async def explain_stream(
+        self,
+        *,
+        experiment: dict,
+        command_context: str,
+        knowledge_context: str,
+        step_progress: list[dict[str, Any]] | None = None,
+    ) -> AsyncIterator[str]:
+        url, headers, payload = self._build_request(
+            experiment=experiment,
+            command_context=command_context,
+            knowledge_context=knowledge_context,
+            step_progress=step_progress,
+            stream=True,
+        )
+        has_content = False
+        async with httpx.AsyncClient(timeout=30) as client:
+            async with client.stream("POST", url, headers=headers, json=payload) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    content = _extract_stream_delta(line)
+                    if not content:
+                        continue
+                    has_content = True
+                    yield content
+        if not has_content:
+            raise RuntimeError("DeepSeek returned empty response")
+
+    def _build_request(
+        self,
+        *,
+        experiment: dict,
+        command_context: str,
+        knowledge_context: str,
+        step_progress: list[dict[str, Any]] | None = None,
+        stream: bool = False,
+    ) -> tuple[str, dict[str, str], dict[str, Any]]:
         if not self.settings.deepseek_api_key:
             raise RuntimeError("DEEPSEEK_API_KEY is not configured")
-
         progress_text = _build_progress_text(experiment, step_progress)
         current_step_text = _build_current_step_text(experiment, step_progress)
 
@@ -142,19 +193,14 @@ class DeepSeekCoachProvider(CoachProvider):
             "temperature": 0.2,
             "max_tokens": 420,
         }
+        if stream:
+            payload["stream"] = True
         headers = {
             "Authorization": f"Bearer {self.settings.deepseek_api_key}",
             "Content-Type": "application/json",
         }
         url = f"{self.settings.deepseek_base_url}/chat/completions"
-        async with httpx.AsyncClient(timeout=30) as client:
-            response = await client.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-        content = str(data["choices"][0]["message"].get("content") or "").strip()
-        if not content:
-            raise RuntimeError("DeepSeek returned empty response")
-        return content
+        return url, headers, payload
 
 
 def create_coach_provider(settings: Settings) -> CoachProvider:
@@ -163,6 +209,24 @@ def create_coach_provider(settings: Settings) -> CoachProvider:
     if settings.ai_mode == "auto" and settings.deepseek_api_key:
         return DeepSeekCoachProvider(settings)
     return MockCoachProvider()
+
+
+def _extract_stream_delta(line: str) -> str | None:
+    line = line.strip()
+    if not line.startswith("data:"):
+        return None
+    data = line.removeprefix("data:").strip()
+    if not data or data == "[DONE]":
+        return None
+    payload = json.loads(data)
+    choices = payload.get("choices")
+    if not isinstance(choices, list) or not choices:
+        return None
+    delta = choices[0].get("delta") if isinstance(choices[0], dict) else None
+    if not isinstance(delta, dict):
+        return None
+    content = delta.get("content")
+    return content if isinstance(content, str) and content else None
 
 
 def _build_progress_text(
